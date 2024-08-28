@@ -14,8 +14,8 @@ export default function Mainhero() {
                 <div className="contentright">
                     <Image
                         src="/images/hero.png"
-                        width={500}
-                        height={500}
+                        width={1880}
+                        height={1576}
                         alt="hero"
                     />
                 </div>
