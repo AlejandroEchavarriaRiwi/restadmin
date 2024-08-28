@@ -1,4 +1,10 @@
 import "./style/footerStyle.sass"
+import { FaSquareFacebook } from "react-icons/fa6";
+import { FaLinkedin } from "react-icons/fa";
+import { FaInstagramSquare } from "react-icons/fa";
+import { FaYoutubeSquare } from "react-icons/fa";
+
+
 
 export default function MainFooter() {
     return (
@@ -14,7 +20,12 @@ export default function MainFooter() {
                     <h3>info@RestAdmin.com</h3>
                     <br />
                     <p>Tambien puedes encontrarnos aqui:</p>
-                    <p>Iconos</p>
+                    <div className="Icons">
+                        <FaSquareFacebook className="Icon" />
+                        <FaLinkedin className="Icon"/>
+                        <FaInstagramSquare className="Icon"/>
+                        <FaYoutubeSquare className="Icon"/>
+                    </div>
                 </div>
             </div>
 
