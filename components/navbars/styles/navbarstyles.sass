@@ -1,31 +1,91 @@
 .mainnav
-    display: flex
-    justify-content: space-around
-    height: 100px
-    text-align: center
+  display: flex
+  justify-content: space-around
+  height: 100px
+  text-align: center
+
 .logo
-    display: flex
-    align-items: center
-.logo img
-    width: auto
-    height: 40px
+  display: flex
+  align-items: center
+  font-size: xx-large
+  color: #F2CF5B
+  font-weight: bold
+
+  span
+    color: #4655C4
+
 ul
-    display: flex
-    align-items: center
-ul button
+  display: flex
+  align-items: center
+
+  button
     background: #F2CF5B
     color: white
     border-radius: 6px
     height: 50px
-ul button:hover
-    background: #f0d57d
-    color: gray
-.navcenter li
+
+    &:hover
+      background: #f0d57d
+      color: gray
+
+.navcenter
+  li
     display: flex
+    position: relative
 
 .link
-    font-weight: bold
-    padding: 0px 20px
+  font-weight: bold
+  padding: 0px 20px
+  display: flex
+  align-items: center
+  text-decoration: none
+  color: inherit
 
+  svg
+    margin-left: 0.25rem
+    transition: transform 0.3s ease
 
+.submenu
+  position: absolute
+  display: flex
+  flex-direction: column
+  margin-top: 10px
+  top: 100%
+  left: 0
+  background-color: white
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1)
+  opacity: 0
+  visibility: hidden
+  transition: opacity 0.3s ease, visibility 0.3s ease
+  z-index: 1000
+  
+  &.open
+    opacity: 1
+    visibility: visible
 
+  li
+    display: block
+    margin: 0
+    
+    a
+      display: block
+      padding: 10px 20px
+      color: inherit
+      text-decoration: none
+      font-weight: normal
+
+      &:hover
+        background-color: #f0f0f0
+
+// Animación para la flecha
+.link svg
+  transition: transform 0.3s ease
+
+.submenu.open + .link svg
+  transform: rotate(180deg)
+
+.navright 
+    li
+        display: flex
+        flex-direction: row
+        justify-content: space-between
