@@ -78,7 +78,7 @@ export default function Mainnav() {
         <li>
           <Link className="link" href="#">Entrar</Link>
           <button>
-            <Link className="link" href="#"><span>Agenda una demo</span></Link>
+            <Link className="link" href="#">Agenda una demo</Link>
           </button>
         </li>
       </ul>
