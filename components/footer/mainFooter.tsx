@@ -1,5 +1,4 @@
 import "./style/footerStyle.sass"
-import Image from "next/image"
 
 export default function MainFooter() {
     return (
@@ -7,7 +6,7 @@ export default function MainFooter() {
             <div className="parteSuperior">
                 <div className="parteIzquierda">
                     <h2>Software Punto de venta</h2>
-                    <p>Vendty es un Sistema de Punto de Venta para restaurantes
+                    <p>RestAdmin es un Sistema de Punto de Venta para restaurantes
                         hecho para Colombia. Ideal para  restaurantes y cafeterias</p>
                 </div>
                 <div className="parteDerecha">
@@ -21,12 +20,7 @@ export default function MainFooter() {
 
             <div className="parteInferior">
                 <div className="logo">
-                    <Image
-                        src="/images/logoletrasrestadmin.png"
-                        width={500}
-                        height={500}
-                        alt="Picture of the author"
-                    />
+                    <h1><span>Rest</span>Admin</h1>
                 </div>
                 <div className="politicas">
                     <h4>&copy; 2024 Todos los derechos reservados | RestAdmin</h4>
