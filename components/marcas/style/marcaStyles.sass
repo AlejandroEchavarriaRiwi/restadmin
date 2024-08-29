@@ -2,13 +2,17 @@
     display: grid
     grid-template-columns: repeat(5, 1fr)
     margin: 60px
+    justify-content: center
+
+    .img
+        justify-self: center
 @media screen and (max-width: 768px)
     .marcas
         width: 100%
         display: grid
         grid-template-columns: repeat(2, 1fr)
         justify-content: center
-        margin: 15px
+        margin: 0px
         gap: 10px
 
         // La última imagen ocupa dos columnas también en pantallas pequeñas
