@@ -4,7 +4,23 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import "./styles/navbarstyles.sass";
 
-const SubMenu = ({ items, isOpen }) => (
+interface SubItem {
+  label: string;
+  href: string;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  subItems?: SubItem[];
+}
+
+interface SubMenuProps {
+  items: SubItem[];
+  isOpen: boolean;
+}
+
+const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen }) => (
   <ul className={`submenu ${isOpen ? 'open' : ''}`}>
     {items.map((item, index) => (
       <li key={index}>
@@ -15,9 +31,9 @@ const SubMenu = ({ items, isOpen }) => (
 );
 
 export default function Mainnav() {
-  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       label: "Restaurantes",
       href: "#",
@@ -48,7 +64,7 @@ export default function Mainnav() {
     { label: "Precios", href: "#" },
   ];
 
-  const handleMouseEnter = (index) => {
+  const handleMouseEnter = (index: number) => {
     setOpenSubmenu(index);
   };
 
@@ -62,7 +78,7 @@ export default function Mainnav() {
         <h1><span>Rest</span>Admin</h1>
       </div>
       <button className='loginresponsive'>
-          <Link className="link" href="/login">Ingresar</Link>
+        <Link className="link" href="/login">Ingresar</Link>
       </button>
       <ul className="navcenter">
         {navItems.map((item, index) => (
