@@ -15,6 +15,13 @@ const config: Config = {
       },
     },
   },
+  corePlugins: {
+    preflight: false,  // Desactiva preflight (estilos base)
+    container: false,  // Ejemplo: desactiva el plugin container
+    float: false,      // Ejemplo: desactiva el plugin float
+    // Puedes desactivar más plugins según sea necesario
+  },
   plugins: [],
 };
+
 export default config;
