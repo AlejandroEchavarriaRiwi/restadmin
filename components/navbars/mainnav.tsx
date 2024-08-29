@@ -61,6 +61,9 @@ export default function Mainnav() {
       <div className="logo">
         <h1><span>Rest</span>Admin</h1>
       </div>
+      <button className='loginresponsive'>
+          <Link className="link" href="/login">Ingresar</Link>
+      </button>
       <ul className="navcenter">
         {navItems.map((item, index) => (
           <li key={index} onMouseEnter={() => handleMouseEnter(index)} onMouseLeave={handleMouseLeave}>
@@ -76,9 +79,9 @@ export default function Mainnav() {
       </ul>
       <ul className="navright">
         <li>
-          <Link className="link" href="#">Entrar</Link>
+          <Link className="link" href="/login">Entrar</Link>
           <button>
-            <Link className="link" href="#"><span>Agenda una demo</span></Link>
+            <Link className="link" href="#">Agenda una demo</Link>
           </button>
         </li>
       </ul>

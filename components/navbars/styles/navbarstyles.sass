@@ -7,7 +7,7 @@
 .logo
   display: flex
   align-items: center
-  font-size: xx-large
+  font-size: 3rem
   color: #F2CF5B
   font-weight: bold
 
@@ -19,14 +19,20 @@ ul
   align-items: center
 
   button
-    background: #F2CF5B
-    color: white
-    border-radius: 6px
-    height: 50px
+        font-family: inherit
+        font-size: inherit
+        font-weight: bold
+        background: #F2CF5B
+        color: white
+        border-radius: 6px
+        height: 50px
+        padding: 0px 15px
+        color: white
+        border: 0
 
-    &:hover
-      background: #f0d57d
-      color: gray
+        &:hover
+          background: #f0d57d
+          color: gray
 
 .navcenter
   li
@@ -37,6 +43,7 @@ ul
   font-weight: bold
   padding: 0px 20px
   display: flex
+  text-align: center
   align-items: center
   text-decoration: none
   color: inherit
@@ -85,7 +92,46 @@ ul
   transform: rotate(180deg)
 
 .navright 
-    li
+      li
         display: flex
         flex-direction: row
         justify-content: space-between
+
+.loginresponsive
+    display: none
+
+.navbarcontainer
+    width: 200px
+    background-color: #637AD6
+    height: 100vh
+    display: flex
+    flex-direction: column
+    align-items: center
+    text-align: center
+
+@media screen and (max-width: 768px)
+  .mainnav
+    display: flex
+    flex-direction: column
+    align-items: center
+    margin-bottom: 10px
+  .navcenter
+    display: none
+  
+  .navright
+    display: none
+  
+  .loginresponsive
+    display: flex
+    font-family: inherit
+    text-decoration: none
+    font-size: inherit
+    font-weight: bold
+    background: #F2CF5B
+    color: white
+    border-radius: 6px
+    height: 50px
+    padding: 13px 15px
+    color: white
+    border: 0
+    margin-top: 10px
