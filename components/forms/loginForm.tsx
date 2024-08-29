@@ -38,19 +38,19 @@ export function LoginForm() {
     };
 
     return (
-        <div className="font-[sans-serif] relative">
+        <div className="relative">
             <div className="flex flex-col items-center justify-center min-h-screen px-4 py-6">
                 <div className="grid items-center w-full max-w-6xl gap-4 md:grid-cols-2">
                     <div className="border border-gray-300 rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto">
                         <form className="space-y-4 login-form" onSubmit={handleSubmit}>
                             <div className="mb-8">
-                                <h3 className="text-3xl font-extrabold text-gray-100">Inicia sesión</h3>
+                                <h3 className="text-3xl font-extrabold text-black">Inicia sesión</h3>
                                 <p className="mt-4 text-sm leading-relaxed text-gray-500">
                                     Inicia sesión para ingresar a un nuevo mundo de posibilidades.
                                 </p>
                             </div>
                             <div>
-                                <label htmlFor="email" className="block mb-2 text-sm text-gray-100">Correo electrónico</label>
+                                <label htmlFor="email" className="block mb-2 text-sm text-gray-900">Correo electrónico</label>
                                 <div className="relative flex items-center">
                                     <input
                                         name="email"
@@ -68,7 +68,7 @@ export function LoginForm() {
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="password" className="block mb-2 text-sm text-gray-100">Contraseña</label>
+                                <label htmlFor="password" className="block mb-2 text-sm text-gray-900">Contraseña</label>
                                 <div className="relative flex items-center">
                                     <input
                                         name="password"
@@ -93,17 +93,17 @@ export function LoginForm() {
                                 </div>
                             </div>
                             <div className="!mt-8">
-                                <button type="submit" className="w-full px-4 py-3 text-sm tracking-wide text-black bg-orange-500 rounded-lg shadow-xl hover:bg-orange-600 focus:outline-none">
+                                <button type="submit" className="w-full px-4 py-3 text-sm tracking-wide text-black bg-amber-300 rounded-lg shadow-xl hover:bg-amber-400 focus:outline-none">
                                     Ingresar
                                 </button>
                             </div>
-                            <p className="text-sm !mt-8 text-center text-gray-100">
-                                No tienes una cuenta?<a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/register' }} className="ml-1 font-semibold text-orange-500 hover:underline whitespace-nowrap">Registrate aquí</a>
+                            <p className="text-sm !mt-8 text-center text-gray-900">
+                                No tienes una cuenta?<a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/register' }} className="ml-1 font-semibold text-amber-400 hover:underline whitespace-nowrap">Registrate aquí</a>
                             </p>
                         </form>
                     </div>
                     <div className="lg:h-[400px] md:h-[300px] max-md:mt-8">
-                        <img src="https://buzzoid.com/wp-content/uploads/2024/07/How_to_Make_Instagram_Dark_Mode_on_PC_compressed.png" className="block object-cover w-full h-full mx-auto max-md:w-4/5 rounded-lg" alt="Dining Experience" />
+                        <img src="/images/login.png" className="block object-cover w-full h-full mx-auto max-md:w-4/5 rounded-lg" alt="Dining Experience" />
                     </div>
                 </div>
             </div>
