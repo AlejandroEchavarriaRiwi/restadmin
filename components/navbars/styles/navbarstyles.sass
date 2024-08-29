@@ -1,3 +1,9 @@
+// Variables
+$primary-color: #F2CF5B
+$secondary-color: #4655C4
+$hover-color: #f0d57d
+$background-color: #637AD6
+
 .mainnav
   display: flex
   justify-content: space-around
@@ -8,31 +14,30 @@
   display: flex
   align-items: center
   font-size: 3rem
-  color: #F2CF5B
+  color: $primary-color
   font-weight: bold
 
   span
-    color: #4655C4
+    color: $secondary-color
 
 ul
   display: flex
   align-items: center
 
   button
-        font-family: inherit
-        font-size: inherit
-        font-weight: bold
-        background: #F2CF5B
-        color: white
-        border-radius: 6px
-        height: 50px
-        padding: 0px 15px
-        color: white
-        border: 0
+    font-family: inherit
+    font-size: inherit
+    font-weight: bold
+    background: $primary-color
+    color: white
+    border-radius: 6px
+    height: 50px
+    padding: 0 15px
+    border: 0
 
-        &:hover
-          background: #f0d57d
-          color: gray
+    &:hover
+      background: $hover-color
+      color: gray
 
 .navcenter
   li
@@ -41,7 +46,7 @@ ul
 
 .link
   font-weight: bold
-  padding: 0px 20px
+  padding: 0 20px
   display: flex
   text-align: center
   align-items: center
@@ -60,7 +65,7 @@ ul
   top: 100%
   left: 0
   background-color: white
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1)
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1)
   opacity: 0
   visibility: hidden
   transition: opacity 0.3s ease, visibility 0.3s ease
@@ -84,7 +89,7 @@ ul
       &:hover
         background-color: #f0f0f0
 
-// Animación para la flecha
+// Arrow animation
 .link svg
   transition: transform 0.3s ease
 
@@ -92,22 +97,43 @@ ul
   transform: rotate(180deg)
 
 .navright 
-      li
-        display: flex
-        flex-direction: row
-        justify-content: space-between
+  li
+    display: flex
+    flex-direction: row
+    justify-content: space-between
 
 .loginresponsive
-    display: none
+  display: none
 
 .navbarcontainer
-    width: 200px
-    background-color: #637AD6
-    height: 100vh
-    display: flex
-    flex-direction: column
-    align-items: center
-    text-align: center
+  position: fixed
+  top: 0
+  left: 0
+  width: 220px
+  background-color: $background-color
+  height: 100%
+  display: flex
+  flex-direction: column
+  align-items: center
+  text-align: center
+  overflow-y: auto
+  z-index: 10
+  padding: 20px
+  
+  &::-webkit-scrollbar
+    width: 0px
+
+  &::-webkit-scrollbar-track 
+    background: $primary-color
+
+  &::-webkit-scrollbar-thumb
+    background-color: $secondary-color
+    border-radius: 5px
+    border: 1px solid #e0e0e0
+
+  // For Firefox
+  scrollbar-width: none
+  scrollbar-color: $primary-color $secondary-color 
 
 @media screen and (max-width: 768px)
   .mainnav
@@ -115,6 +141,7 @@ ul
     flex-direction: column
     align-items: center
     margin-bottom: 10px
+
   .navcenter
     display: none
   
@@ -127,11 +154,10 @@ ul
     text-decoration: none
     font-size: inherit
     font-weight: bold
-    background: #F2CF5B
+    background: $primary-color
     color: white
     border-radius: 6px
     height: 50px
     padding: 13px 15px
-    color: white
     border: 0
     margin-top: 10px
