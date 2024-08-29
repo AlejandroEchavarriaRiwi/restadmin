@@ -1,9 +1,9 @@
 import { BodyRequestCreateUser, RequestLoginUser, ResponseCreateUser, ResponseLoginUser } from "../models/user.models";
-export class UserController{
 
+export class UserController {
     private domain: string;
 
-    constructor(private urlApi:string){
+    constructor(private urlApi: string) {
         this.domain = urlApi;
     }
 
@@ -30,40 +30,48 @@ export class UserController{
     }
 
     async login(data: RequestLoginUser): Promise<ResponseLoginUser> {
-        const endPointLogin: string = 'auth/login'
-        const headers: Record<string,string> = {
-            'Content-Type':'application/json'
-        }
-        const reqOptions: RequestInit = {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(data)
-        }
+        const endPointLogin: string = '/users'
         const url = this.urlApi + endPointLogin
-        const result: Response = await fetch(url, reqOptions)
-    
-        if(result.status !== 201){
-            const errorBody = await result.json()
-            console.log(`Response body: ${errorBody.message}`)
-            throw new Error("User or password incorrect")
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Failed to fetch users");
+            }
+            const users = await response.json();
+
+            const user = users.find((u: any) => u.email === data.email && u.password === data.password);
+
+            if (user) {
+                return {
+                    message: "Login successful",
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        roles: user.roles
+                    }
+                };
+            } else {
+                throw new Error("Invalid email or password");
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            throw new Error("User or password incorrect");
         }
-        
-        const responseBodyLogin: ResponseLoginUser = await result.json()
-        console.log(responseBodyLogin)
-        return responseBodyLogin
     }
 }
 
-export function showPreloader(){
+export function showPreloader() {
     const preloader = document.getElementById('preloader')
-    if (preloader){
+    if (preloader) {
         preloader.style.display = 'flex';
     }
 }
 
-export function hidePreloader(){
+export function hidePreloader() {
     const preloader = document.getElementById('preloader')
-    if (preloader){
+    if (preloader) {
         preloader.style.display = 'none';
     }
 }

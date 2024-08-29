@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/navbar';
+
 
 export default function DashboardLayout({
     children,
@@ -21,7 +21,6 @@ export default function DashboardLayout({
     return (
         <div className="relative min-h-screen">
             <main className="relative z-10">
-                <Navbar/>
                 <div>
                     {children}
                 </div>

@@ -1,7 +1,6 @@
-import GetPosts from "@/components/getposts";
 
 export default function Dashboard(){
     return(
-        <GetPosts/>
+        <h1>Hola Dashboard</h1>
     )
 }
