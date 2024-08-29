@@ -1,0 +1,17 @@
+.marcas
+    display: grid
+    grid-template-columns: repeat(5, 1fr)
+    margin: 60px
+@media screen and (max-width: 768px)
+    .marcas
+        width: 100%
+        display: grid
+        grid-template-columns: repeat(2, 1fr)
+        justify-content: center
+        margin: 15px
+        gap: 10px
+
+        // La última imagen ocupa dos columnas también en pantallas pequeñas
+        & > :last-child
+            grid-column: span 2  /* Hace que la última imagen ocupe dos columnas */
+            justify-self: center  /* Opcional: centra la imagen dentro de las dos columnas */
