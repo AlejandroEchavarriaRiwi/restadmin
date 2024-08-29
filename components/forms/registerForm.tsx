@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
-import { UserController } from "../controllers/user.controller";
-import InputAlert from "@/app/alerts/successAlert";
+import { UserController } from "../../controllers/user.controller";
+import InputAlert from "../alerts/successAlert";
 
 
 export function RegisterForm() {
@@ -12,14 +12,14 @@ export function RegisterForm() {
     useEffect(() => {
         localStorage.removeItem('email');
     }, []);
-    
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const userController = new UserController('https://api-posts.codificando.xyz/');
 
         try {
             const createResult = await userController.createUser({ email, password });
-            if(createResult)
+            if (createResult)
                 await InputAlert('Usuario creado exitosamente', 'success')
             localStorage.clear()
             window.location.href = '/login'
@@ -29,13 +29,13 @@ export function RegisterForm() {
     };
 
     return (
-<div className="font-[sans-serif] relative">
+        <div className="font-[sans-serif] relative">
             <div className="flex flex-col items-center justify-center min-h-screen px-4 py-6">
                 <div className="grid items-center w-full max-w-6xl gap-4 md:grid-cols-2">
                     <div className="border border-gray-300 rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto">
                         <form className="space-y-4 login-form" onSubmit={handleSubmit}>
                             <div className="mb-8">
-                                <h3 className="text-3xl font-extrabold text-gray-100">Registro</h3>
+                                <h3 className="text-3xl font-extrabold text-black">Registro</h3>
                                 <p className="mt-4 text-sm leading-relaxed text-gray-500">
                                     Registrate para usar esta maravillosa pagina.
                                 </p>
@@ -90,7 +90,7 @@ export function RegisterForm() {
                                 </button>
                             </div>
                             <p className="text-sm !mt-8 text-center text-gray-100">
-                                ya tienes una cuenta? <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/login'}} className="ml-1 font-semibold text-orange-500 hover:underline whitespace-nowrap">Inicia sesión aquí</a>
+                                ya tienes una cuenta? <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/login' }} className="ml-1 font-semibold text-orange-500 hover:underline whitespace-nowrap">Inicia sesión aquí</a>
                             </p>
                         </form>
                     </div>
