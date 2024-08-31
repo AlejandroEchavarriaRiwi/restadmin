@@ -6,9 +6,10 @@ $background-color: #637AD6
 
 .mainnav
   display: flex
-  justify-content: space-around
+  justify-content: space-between
   height: 100px
-  text-align: center
+  text-align: left
+  padding: 0 20px
 
 .logo
   display: flex
@@ -48,13 +49,13 @@ ul
   font-weight: bold
   padding: 0 20px
   display: flex
-  text-align: center
+  text-align: left
   align-items: center
   text-decoration: none
   color: inherit
 
   svg
-    margin-left: 0.25rem
+    margin-left: 0.5rem
     transition: transform 0.3s ease
 
 .submenu
@@ -105,7 +106,7 @@ ul
 .loginresponsive
   display: none
 
-.navbarcontainer
+.navbarcontainer //slider bar dashboard
   position: fixed
   top: 0
   left: 0
@@ -114,8 +115,8 @@ ul
   height: 100%
   display: flex
   flex-direction: column
-  align-items: center
-  text-align: center
+  align-items: flex-start
+  text-align: left
   overflow-y: auto
   z-index: 10
   padding: 20px
@@ -135,29 +136,107 @@ ul
   scrollbar-width: none
   scrollbar-color: $primary-color $secondary-color 
 
+// Mobile styles
 @media screen and (max-width: 768px)
+  .contentleft
+    margin-top:100px
+
   .mainnav
-    display: flex
+    position: relative
     flex-direction: column
-    align-items: center
+    align-items: flex-start
+    padding: 10px
+
+  .logo
     margin-bottom: 10px
 
-  .navcenter
+  .navcenter, .navright
     display: none
-  
-  .navright
+
+  .menu-toggle
+    display: flex
+    justify-content: flex-start
+    font-size: 24px
+    background: none
+    border: none
+    color: $primary-color
+    cursor: pointer
+
+  .mobile-menu
     display: none
+    position: absolute
+    top: 90%
+    left: 0
+    width: 100%
+    background-color: white
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1)
+    z-index: 1000
   
+  
+    &.open
+      display: block
+
+    .mobile-nav-items
+      flex-direction: column
+      width: 100%
+
+      li
+        width: 100%
+        text-align: left
+
+        a
+          padding: 15px
+          display: flex
+          justify-content: space-between
+          align-items: center
+          color: $secondary-color
+
+          svg
+            margin-left: 0.5rem
+
+    .submenu
+      position: static
+      box-shadow: none
+      background-color: #f9f9f9
+      max-height: 0
+      overflow: hidden
+      transition: max-height 0.3s ease-out, opacity 0.3s ease
+      
+      &.open
+        opacity: 1
+        visibility: visible
+
+      li a
+        padding-left: 30px
+        color: $background-color
+
   .loginresponsive
     display: flex
-    font-family: inherit
-    text-decoration: none
-    font-size: inherit
-    font-weight: bold
-    background: $primary-color
-    color: white
-    border-radius: 6px
-    height: 50px
-    padding: 13px 15px
-    border: 0
-    margin-top: 10px
+    align-items: center
+    justify-content: center
+    width: 100%
+    height: 100vh
+    margin-top: 20px
+
+    a
+      padding: 10px 50px
+      border-radius: 8px
+      background: $primary-color
+      margin: 10px
+      color: white
+      font-weight: bold
+
+    .link
+
+  .navright
+    button
+      width: 100%
+      margin-top: 10px
+
+// Desktop styles (unchanged)
+@media screen and (min-width: 769px)
+  .menu-toggle, .mobile-menu
+    display: none
+
+  .navcenter, .navright
+    display: flex
