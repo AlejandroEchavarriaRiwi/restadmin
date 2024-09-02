@@ -141,12 +141,14 @@ export default function Mainnav() {
 
   return (
     <nav className="mainnav">
-      <div className="logo">
-        <h1><span>Rest</span>Admin</h1>
+      <div className='highPart'>
+        <div className="logo">
+          <h1><span>Rest</span>Admin</h1>
+          </div>
+        <button className="menu-toggle" onClick={toggleMobileMenu}>
+          {mobileMenuOpen ? <X size={24} /> : '☰'}
+        </button>
       </div>
-      <button className="menu-toggle" onClick={toggleMobileMenu}>
-        {mobileMenuOpen ? <X size={24} /> : '☰'}
-      </button>
       <div className="loginresponsive">
         <Link className="link" href="/login">Entrar</Link>
       </div>
