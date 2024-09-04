@@ -144,7 +144,7 @@ export default function Mainnav() {
       <div className='highPart'>
         <div className="logo">
           <h1><span>Rest</span>Admin</h1>
-          </div>
+        </div>
         <button className="menu-toggle" onClick={toggleMobileMenu}>
           {mobileMenuOpen ? <X size={24} /> : '☰'}
         </button>
