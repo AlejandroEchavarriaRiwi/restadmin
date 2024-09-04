@@ -6,6 +6,7 @@ import { ImStatsDots } from "react-icons/im";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { MdOutlineInventory } from "react-icons/md";
 import { FaPeopleRobbery } from "react-icons/fa6";
+import Link from "next/link";
 
 
 
@@ -24,10 +25,13 @@ export default function NavBarAsideDashboard() {
                 <h3 className="font-bold mt-3">KFC</h3>
                 <h3 className="text-xs">Administrador</h3>
             </div>
-            <div className="flex flex-col items-center font-semibold text-xs">
+            <Link href="/dashboard/tables">            
+                <div className="flex flex-col items-center font-semibold text-xs">
                 <MdTableRestaurant className="text-7xl text-amarillo" />
                 MESAS
-            </div>
+                </div>
+            </Link>
+
             <div className="flex flex-col items-center font-semibold text-xs">
                 <RiStackOverflowFill className="text-7xl text-amarillo" />
                 MOVIMIENTOS
