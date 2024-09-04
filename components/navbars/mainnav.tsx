@@ -153,9 +153,6 @@ export default function Mainnav() {
         <Link className="link" href="/login">Entrar</Link>
       </div>
       <div ref={mobileMenuRef} className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        <button className="close-menu" onClick={closeMobileMenu}>
-          <X size={24} />
-        </button>
         {renderNavItems(true)}
         <ul className="navright">
           <li>
