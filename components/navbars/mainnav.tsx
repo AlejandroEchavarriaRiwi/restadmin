@@ -144,7 +144,7 @@ export default function Mainnav() {
       <div className='highPart'>
         <div className="logo">
           <h1><span>Rest</span>Admin</h1>
-          </div>
+        </div>
         <button className="menu-toggle" onClick={toggleMobileMenu}>
           {mobileMenuOpen ? <X size={24} /> : '☰'}
         </button>
@@ -153,9 +153,6 @@ export default function Mainnav() {
         <Link className="link" href="/login">Entrar</Link>
       </div>
       <div ref={mobileMenuRef} className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        <button className="close-menu" onClick={closeMobileMenu}>
-          <X size={24} />
-        </button>
         {renderNavItems(true)}
         <ul className="navright">
           <li>
