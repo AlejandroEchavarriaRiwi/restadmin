@@ -490,5 +490,63 @@
       "id": "`412434243`",
       "name": "4"
     }
+  ],
+  "menu": [
+    {
+      "id": "1101",
+      "name": "hamburger",
+      "price": "10.000",
+      "cost": "20.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725492781/zegjp4j3jqa30fxzn1rv.jpg"
+    },
+    {
+      "id": "d381",
+      "name": "salchipapa",
+      "price": "5.000",
+      "cost": "10.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725495594/egtkbmd3trwjll3tq8g8.jpg"
+    },
+    {
+      "id": "d9ab",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "57fe",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "57fe",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "57fe",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "57fe",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "57fe",
+      "name": "papas",
+      "price": "3.000",
+      "cost": "5.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    }
   ]
 }
