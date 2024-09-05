@@ -35,7 +35,8 @@ export default function Tables() {
     }, []); // El array vacío como segundo argumento hace que este efecto se ejecute solo una vez al montar el componente
 
     return (
-        <main className="ml-60">
+        <main className="ml-[220px]">
+            <div>Navbar</div>
             <Container>
                 {tables.length > 0 ? (
                     tables.map((table) => (
