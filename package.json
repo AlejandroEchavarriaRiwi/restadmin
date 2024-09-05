@@ -11,6 +11,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.0.2",
+    "@radix-ui/react-dialog": "^1.1.1",
     "@reduxjs/toolkit": "^2.2.7",
     "concurrently": "^8.2.2",
     "lucide-react": "^0.436.0",
