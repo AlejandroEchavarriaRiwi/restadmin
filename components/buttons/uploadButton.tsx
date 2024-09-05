@@ -3,14 +3,25 @@
 import React, { useState } from 'react';
 import { CldUploadWidget } from 'next-cloudinary';
 import useFormStore from '../../app/dashboard/store';
-import InputAlert from '../alerts/successAlert';
+import SubmitAlert from '../alerts/submitAlert';
 
-const FormWithImageUpload: React.FC = () => {
+interface Product {
+    name: string;
+    price: number;
+    cost: number;
+    imageUrl: string;
+}
+
+interface FormWithImageUploadProps {
+    setIsModalOpen: (isOpen: boolean) => void; // Función para cerrar el modal
+    onProductAdded: (product: Product) => void; // Función para añadir el nuevo producto a la lista
+}
+
+const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpen, onProductAdded }) => {
     const { name, price, cost, setName, setPrice, setCost, setImageUrl } = useFormStore();
     const [localImageUrl, setLocalImageUrl] = useState('');
 
     const handleUploadSuccess = (result: any) => {
-        // Verificación para asegurarse de que `result.info` y `secure_url` estén presentes
         if (result && result.info && result.info.secure_url) {
             setLocalImageUrl(result.info.secure_url);
             setImageUrl(result.info.secure_url);
@@ -38,8 +49,21 @@ const FormWithImageUpload: React.FC = () => {
             const data = await response.json();
             console.log('Form submitted:', data);
 
-            // Mostrar la alerta de éxito
-            InputAlert("El producto fue añadido exitosamente", "success");
+            const newProduct: Product = {
+                name,
+                price,
+                cost,
+                imageUrl: localImageUrl,
+            };
+
+            // Añadir el nuevo producto a la lista sin recargar la página
+            onProductAdded(newProduct);
+
+            // Mostrar la alerta de éxito y cerrar el modal cuando el usuario pulse "OK"
+            SubmitAlert("El producto fue añadido exitosamente", "success", () => {
+                setIsModalOpen(false);
+            });
+
         } catch (error) {
             console.error('Error submitting form:', error);
         }
@@ -63,7 +87,7 @@ const FormWithImageUpload: React.FC = () => {
                         type="number"
                         id="price"
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) => setPrice(e.target.valueAsNumber)}
                     />
                 </div>
                 <div>
@@ -72,7 +96,7 @@ const FormWithImageUpload: React.FC = () => {
                         type="number"
                         id="cost"
                         value={cost}
-                        onChange={(e) => setCost(e.target.value)}
+                        onChange={(e) => setCost(e.target.valueAsNumber)}
                     />
                 </div>
                 <CldUploadWidget
