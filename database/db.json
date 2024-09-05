@@ -547,6 +547,27 @@
       "price": "3.000",
       "cost": "5.000",
       "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725496047/qbzhuyy2xxob80y0fon8.jpg"
+    },
+    {
+      "id": "88b1",
+      "name": "salchipapa",
+      "price": "7.000",
+      "cost": "14.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725539040/sjvg1xkabbjtpvluubrn.jpg"
+    },
+    {
+      "id": "ec78",
+      "name": "salchipapa",
+      "price": "7.000",
+      "cost": "14.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725539605/j9sqso6gnyx3xblqqznr.jpg"
+    },
+    {
+      "id": "3233",
+      "name": "salchipapa",
+      "price": "7.000",
+      "cost": "14.000",
+      "imageUrl": "https://res.cloudinary.com/dfdvjpaja/image/upload/v1725539660/cdzvuim3e2wfnkzcx3ha.jpg"
     }
   ]
 }
