@@ -44,10 +44,12 @@ export default function NavBarAsideDashboard() {
                 <ImStatsDots className="text-5xl text-amarillo m-2" />
                 ESTADISTICAS
             </div>
+            <Link href="/dashboard/menu">
             <div className="flex flex-col items-center font-semibold text-xs">
                 <BiSolidFoodMenu className="text-6xl text-amarillo" />
                 MENU
             </div>
+            </Link>
             <div className="flex flex-col items-center font-semibold text-xs">
                 <MdOutlineInventory className="text-6xl text-amarillo" />
                 INVENTARIO
