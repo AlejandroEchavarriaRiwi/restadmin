@@ -64,60 +64,82 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                 setIsModalOpen(false);
             });
 
+            useFormStore
+
         } catch (error) {
             console.error('Error submitting form:', error);
         }
     };
 
     return (
-        <div className="p-4">
-            <form onSubmit={handleSubmit}>
+        <div className="p-4 max-w-md mx-auto bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-4">Agregar Nuevo Producto</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="name">Nombre:</label>
+                    <label htmlFor="name" className="block font-semibold mb-1">Nombre:</label>
                     <input
                         type="text"
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2"
+                        placeholder="Ingresa el nombre del producto"
                     />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
+                        <input
+                            type="number"
+                            id="price"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.valueAsNumber)}
+                            className="w-full border rounded-lg px-3 py-2"
+                            placeholder="Ingresa el precio"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="cost" className="block font-semibold mb-1">Costo:</label>
+                        <input
+                            type="number"
+                            id="cost"
+                            value={cost}
+                            onChange={(e) => setCost(e.target.valueAsNumber)}
+                            className="w-full border rounded-lg px-3 py-2"
+                            placeholder="Ingresa el costo"
+                        />
+                    </div>
                 </div>
                 <div>
-                    <label htmlFor="price">Precio:</label>
-                    <input
-                        type="number"
-                        id="price"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.valueAsNumber)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="cost">Costo:</label>
-                    <input
-                        type="number"
-                        id="cost"
-                        value={cost}
-                        onChange={(e) => setCost(e.target.valueAsNumber)}
-                    />
-                </div>
-                <CldUploadWidget
-                    uploadPreset="my_preset"
-                    onSuccess={handleUploadSuccess}
-                >
-                    {({ open }) => (
-                        <button
-                            type="button"
-                            className="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
-                            onClick={() => open()}
-                        >
-                            Cargar imagen
-                        </button>
+                    <label htmlFor="image" className="block font-semibold mb-1">Imagen del producto:</label>
+                    <CldUploadWidget
+                        uploadPreset="my_preset"
+                        onSuccess={handleUploadSuccess}
+                    >
+                        {({ open }) => (
+                            <button
+                                type="button"
+                                className="px-4 py-2 bg-azulmedio text-white rounded-lg hover:bg-azuloscuro"
+                                onClick={() => open()}
+                            >
+                                Cargar imagen
+                            </button>
+                        )}
+                    </CldUploadWidget>
+                    {localImageUrl && (
+                        <img
+                            src={localImageUrl}
+                            alt="Producto"
+                            className="mt-4 rounded-md"
+                            style={{ width: '200px', height: '200px', objectFit: 'cover' }}
+                        />
                     )}
-                </CldUploadWidget>
+                </div>
                 <button
                     type="submit"
-                    className="px-4 py-2 font-bold text-white bg-green-500 rounded hover:bg-green-700"
+                    className="w-full py-2 bg-amarillo text-white rounded-lg "
                 >
-                    Submit
+                    Guardar Producto
                 </button>
             </form>
         </div>
