@@ -9,17 +9,16 @@ const Container = styled.div`
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-    gap: 20px
-
+    gap: 20px;
 `;
 
-export default function Menu(){
+export default function Menu() {
 
     interface Product {
         id: Key | null | undefined;
         name: string;
-        price: string;
-        cost: string;
+        price: number;
+        cost: number;
         imageUrl: string;
     }
 
@@ -33,7 +32,7 @@ export default function Menu(){
             .then((data) => {
                 if (Array.isArray(data)) {
                     setProducts(data);
-                    console.log(data)
+                    console.log(data);
                 } else {
                     console.error("Formato de datos incorrecto");
                 }
@@ -41,37 +40,46 @@ export default function Menu(){
             .catch((error) => console.error("Error fetching data:", error));
     }, []); // El array vacío como segundo argumento hace que este efecto se ejecute solo una vez al montar el componente
 
+    // Función para añadir un nuevo producto a la lista
+    const handleProductAdded = (newProduct: Omit<Product, 'id'>) => {
+        // Genera un ID para el nuevo producto, puedes usar la longitud de productos o una función generadora
+        const productWithId: Product = { ...newProduct, id: products.length + 1 };
+
+        // Actualiza la lista de productos
+        setProducts([...products, productWithId]);
+    };
+
     return (
         <div className="ml-[230px]">
-        <Container>
-            {products.length > 0 ? (
-                products.map((product) => (
-                    <div key={product.id} >
-                        {product.imageUrl && (
-                            <img
-                                src={product.imageUrl}
-                                alt={product.name}
-                                className="w-32 h-32 object-cover" // Ajusta el tamaño de la imagen
-                            />
-                        )}
-                        <h1>{product.name}</h1>
-                        <h3>{product.price}</h3>
-                        <h3>{product.cost}</h3>
-                    </div>
-                ))
-            ) : (
-                <p>No hay productos disponibles</p>
-            )}
+            <div className="navbarSide">
+                <button
+                    className="px-4 py-2 mt-4 font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
+                    onClick={() => setIsModalOpen(true)} // Abre el modal al hacer clic
+                >
+                    Agregar Producto
+                </button>
+            </div>
 
+            <Container>
+                {products.length > 0 ? (
+                    products.map((product) => (
+                        <div key={product.id} >
+                            {product.imageUrl && (
+                                <img
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    className="w-32 h-32 object-cover" // Ajusta el tamaño de la imagen
+                                />
+                            )}
+                            <h1>{product.name}</h1>
+                            <h3>{product.price}</h3>
+                            <h3>{product.cost}</h3>
+                        </div>
+                    ))
+                ) : (
+                    <p>No hay productos disponibles</p>
+                )}
             </Container>
-
-            {/* Botón para abrir el modal */}
-            <button
-                className="px-4 py-2 mt-4 font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
-                onClick={() => setIsModalOpen(true)} // Abre el modal al hacer clic
-            >
-                Agregar Producto
-            </button>
 
             {/* Modal */}
             {isModalOpen && (
@@ -86,7 +94,10 @@ export default function Menu(){
                         </button>
 
                         {/* Componente dentro del modal */}
-                        <FormWithImageUpload />
+                        <FormWithImageUpload 
+                            setIsModalOpen={setIsModalOpen} // Pasa la función para cerrar el modal
+                            onProductAdded={handleProductAdded} // Pasa la función para añadir el nuevo producto
+                        />
                     </div>
                 </div>
             )}
