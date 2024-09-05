@@ -36,3 +36,6 @@ database/*.json
 *.tsbuildinfo
 next-env.d.ts
 
+#json
+database/*.json
+
