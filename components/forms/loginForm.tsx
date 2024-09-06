@@ -4,31 +4,78 @@ import { UserController } from "../../controllers/user.controller";
 import InputAlert from "../alerts/successAlert";
 import { showPreloader, hidePreloader } from "../../controllers/user.controller";
 
+interface User {
+    id: string;
+    email: string;
+    roles: { roleId: number; roleName: string }[];
+    name: string;
+}
+
 export function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
-        localStorage.removeItem('email');
-        localStorage.removeItem('roles');
+        localStorage.removeItem('user');
     }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const userController = new UserController('http://localhost:8001'); // Asumiendo que json-server está corriendo en el puerto 3000
+        const userController = new UserController('http://localhost:8001');
 
         showPreloader();
 
         try {
+            console.log("Intentando iniciar sesión...");
             const loginResult = await userController.login({ email, password });
+            console.log("Resultado del login:", loginResult);
+
             hidePreloader();
             await InputAlert('Bienvenido', 'success');
-            localStorage.setItem("email", email);
-            localStorage.setItem("roles", loginResult.user.roles);
-            window.location.href = '/dashboard';
+
+            // Procesar los roles
+            let processedRoles: { roleId: number; roleName: string }[];
+            if (Array.isArray(loginResult.user.roles) && loginResult.user.roles.length === 2) {
+                processedRoles = [{
+                    roleId: loginResult.user.roles[0] as number,
+                    roleName: loginResult.user.roles[1] as string
+                }];
+            } else {
+                console.error("Formato de roles inesperado:", loginResult.user.roles);
+                processedRoles = [{ roleId: 0, roleName: "Unknown" }];
+            }
+
+            console.log("Roles procesados:", processedRoles);
+
+            const user: User = {
+                id: loginResult.user.id,
+                email: loginResult.user.email,
+                roles: processedRoles,
+                name: loginResult.user.name
+            };
+
+            console.log("Usuario a guardar:", user);
+            localStorage.setItem("user", JSON.stringify(user));
+
+            console.log("Usuario guardado en localStorage");
+
+            // Redirección basada en rol
+            let redirectPath = '/dashboard';
+            if (processedRoles[0].roleId === 1) {
+                redirectPath = '/dashboard/createusers';
+            } else if (processedRoles[0].roleId === 2) {
+                redirectPath = '/dashboard/pos';
+            } else if (processedRoles[0].roleId === 3) {
+                redirectPath = '/dashboard/tables';
+            }
+
+            console.log("Redirigiendo a:", redirectPath);
+            window.location.href = redirectPath;
+
         } catch (error) {
             hidePreloader();
+            console.error("Error durante el login:", error);
             if (error instanceof Error) {
                 await InputAlert(error.message, 'error');
             } else {
