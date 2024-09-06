@@ -33,9 +33,16 @@ const Container = styled.div`
 `;
 
 const MenuSection = styled.div`
-  width:70%;
+  width: 70%;
   overflow-y: auto;
+  padding: 15px;
   max-height: calc(100vh - 40px);
+
+  h1 {
+    margin-left: 10px;
+    font-weight: bold;
+    font-size: 1.5rem; // Ajustado a un tamaño más razonable
+  }
 `;
 
 const OrderSection = styled.div`
@@ -46,9 +53,16 @@ const OrderSection = styled.div`
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   height: 100vh;
   overflow-y: auto;
+  h2 {
+    margin-bottom: 30px;
+    font-weight: bold;
+    font-size: 1.5rem; // Ajustado a un tamaño más razonable
+  }
 `;
 
 const CategoryTitle = styled.h2`
+  font-weight: bold;
+  margin-left: 10px;
   margin-bottom: 15px;
   padding-bottom: 5px;
   border-bottom: 2px solid #007bff;
@@ -127,9 +141,11 @@ const OrderItemName = styled.p`
 const OrderItemQuantity = styled.span`
   background-color: #4655c4;
   color: white;
-  padding: 2px 8px;
+  padding: 2px 0px;
+  display: flex;
+  justify-content: center;
   text-align: center;
-  width: 30px;
+  width: 40px;
   border-radius: 4px;
 
 `;
@@ -147,6 +163,7 @@ const TotalSection = styled.div`
   font-size: 1.2em;
   font-weight: bold;
   margin-top: 20px;
+  margin-bottom: 20px;
   text-align: right;
 `;
 
