@@ -318,21 +318,21 @@ export default function Tables() {
     }
   };
 
-  const handleInvoice = async () => {
+  const handlePreInvoice = async () => {
     if (selectedTable) {
       try {
         // Fetch the order for the selected table
         const orderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
         const orders = await orderResponse.json();
-
+  
         if (orders.length === 0) {
           throw new Error('No order found for this table');
         }
-
+  
         const order = orders[0]; // Assume there's only one order per table
-
-        // Create a new invoice in 'factura'
-        const invoiceResponse = await fetch('http://localhost:8001/factura', {
+  
+        // Create a new pre-invoice in 'preinvoices'
+        const preInvoiceResponse = await fetch('http://localhost:8001/preinvoices', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -345,48 +345,56 @@ export default function Tables() {
             date: new Date().toISOString()
           }),
         });
-
-        if (!invoiceResponse.ok) {
-          throw new Error(`Failed to create invoice. Status: ${invoiceResponse.status}`);
+  
+        if (!preInvoiceResponse.ok) {
+          throw new Error(`Failed to create pre-invoice. Status: ${preInvoiceResponse.status}`);
         }
-
-        console.log('Invoice created successfully');
-
+  
+        console.log('Pre-invoice created successfully');
+  
         // Delete the order from 'orders'
-        await fetch(`http://localhost:8001/orders/${order.id}`, {
+        const deleteOrderResponse = await fetch(`http://localhost:8001/orders/${order.id}`, {
           method: 'DELETE',
         });
-
+  
+        if (!deleteOrderResponse.ok) {
+          throw new Error(`Failed to delete order. Status: ${deleteOrderResponse.status}`);
+        }
+  
         console.log('Order removed from orders');
-
+  
         // Delete the order from 'kitchen'
         const kitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${selectedTable.id}`);
         const kitchenOrders = await kitchenResponse.json();
-
+  
         for (const kitchenOrder of kitchenOrders) {
-          await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
+          const deleteKitchenResponse = await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
             method: 'DELETE',
           });
+  
+          if (!deleteKitchenResponse.ok) {
+            throw new Error(`Failed to delete kitchen order. Status: ${deleteKitchenResponse.status}`);
+          }
         }
-
+  
         console.log('Order removed from kitchen');
-
+  
         // Update table state
         await updateTableState(selectedTable.id, 'to_invoice');
         console.log('Table state updated to to_invoice');
-
+  
         // Close modal and reset current order
         setSelectedTable(null);
         setCurrentOrder(null);
-
+  
         // Refresh tables
         await fetchTables();
-
-        console.log('Invoice process completed');
-
+  
+        console.log('Pre-invoice process completed');
+  
       } catch (error) {
-        console.error('Error handling invoice:', error);
-        alert(`Error handling invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('Error handling pre-invoice:', error);
+        alert(`Error handling pre-invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };
@@ -557,7 +565,7 @@ export default function Tables() {
               rows={4}
             />
             <Button onClick={handleSendToKitchen}>Send to Kitchen</Button>
-            <Button onClick={handleInvoice} $variant="secondary">Invoice</Button>
+            <Button onClick={handlePreInvoice} $variant="secondary">Pre-Invoice</Button>
           </ModalContent>
         </Modal>
       )}
