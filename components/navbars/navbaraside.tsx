@@ -6,6 +6,9 @@ import { ImStatsDots } from "react-icons/im";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { MdOutlineInventory } from "react-icons/md";
 import { FaPeopleRobbery } from "react-icons/fa6";
+import { HiComputerDesktop } from "react-icons/hi2";
+import { FaKitchenSet } from "react-icons/fa6";
+
 import Link from "next/link";
 
 
@@ -31,15 +34,28 @@ export default function NavBarAsideDashboard() {
                 MESAS
                 </div>
             </Link>
-
+            <Link href="/dashboard/pos">            
+                <div className="flex flex-col items-center font-semibold text-xs">
+                <HiComputerDesktop className="text-7xl text-amarillo" />
+                POS
+                </div>
+            </Link>
+            <Link href="/dashboard/kitchen">            
+                <div className="flex flex-col items-center font-semibold text-xs">
+                <FaKitchenSet  className="text-7xl text-amarillo" />
+                COCINA
+                </div>
+            </Link>
             <div className="flex flex-col items-center font-semibold text-xs">
                 <RiStackOverflowFill className="text-7xl text-amarillo" />
                 MOVIMIENTOS
             </div >
+            <Link href="/dashboard/delivery"> 
             <div className="flex flex-col items-center font-semibold text-xs">
                 <MdDeliveryDining className="text-7xl text-amarillo" />
                 DOMICILIOS
             </div>
+            </Link>
             <div className="flex flex-col items-center font-semibold text-xs">
                 <ImStatsDots className="text-5xl text-amarillo m-2" />
                 ESTADISTICAS
@@ -50,14 +66,12 @@ export default function NavBarAsideDashboard() {
                 MENU
             </div>
             </Link>
-            <div className="flex flex-col items-center font-semibold text-xs">
-                <MdOutlineInventory className="text-6xl text-amarillo" />
-                INVENTARIO
-            </div>
+            <Link href="/dashboard/createusers">
             <div className="flex flex-col items-center font-semibold text-xs">
                 <FaPeopleRobbery className="text-6xl text-amarillo m-2" />
                 EMPLEADOS
             </div>
+            </Link>
 
         </div>
     )
