@@ -75,23 +75,23 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                         />
                     </div>
                     <div>
-                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
-                        <input
-                            type="number"
-                            id="price"
-                            name="price"
-                            value={editedProduct.price}
-                            onChange={handleChange}
-                            className="w-full border rounded-lg px-3 py-2"
-                        />
-                    </div>
-                    <div>
                         <label htmlFor="cost" className="block font-semibold mb-1">Costo:</label>
                         <input
                             type="number"
                             id="cost"
                             name="cost"
                             value={editedProduct.cost}
+                            onChange={handleChange}
+                            className="w-full border rounded-lg px-3 py-2"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
+                        <input
+                            type="number"
+                            id="price"
+                            name="price"
+                            value={editedProduct.price}
                             onChange={handleChange}
                             className="w-full border rounded-lg px-3 py-2"
                         />
@@ -182,10 +182,12 @@ export default function Menu() {
 
     const toggleDeleteMode = () => {
         setIsDeleteMode(!isDeleteMode);
+        setIsEditMode(false); // Ensure edit mode is disabled
     };
 
     const toggleEditMode = () => {
         setIsEditMode(!isEditMode);
+        setIsDeleteMode(false); // Ensure delete mode is disabled
     };
 
     const handleProductClick = (id: number) => {
@@ -211,12 +213,14 @@ export default function Menu() {
                 <button
                     className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isDeleteMode ? 'bg-red-500' : 'bg-gray-500'} rounded hover:${isDeleteMode ? 'bg-red-700' : 'bg-gray-700'}`}
                     onClick={toggleDeleteMode}
+                    disabled={isEditMode} // Disable if in edit mode
                 >
                     {isDeleteMode ? 'Cancelar Eliminación' : 'Eliminar Productos'}
                 </button>
                 <button
                     className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isEditMode ? 'bg-green-500' : 'bg-gray-500'} rounded hover:${isEditMode ? 'bg-green-700' : 'bg-gray-700'}`}
                     onClick={toggleEditMode}
+                    disabled={isDeleteMode} // Disable if in delete mode
                 >
                     {isEditMode ? 'Cancelar Edición' : 'Editar Productos'}
                 </button>
@@ -238,21 +242,18 @@ export default function Menu() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-4 rounded-lg shadow-lg max-w-md w-full">
-                        <FormWithImageUpload onProductAdded={handleProductAdded} setIsModalOpen={function (isOpen: boolean): void {
-                            throw new Error('Function not implemented.');
-                        } } onClose={function (): void {
-                            throw new Error('Function not implemented.');
-                        } } />
+                    <div className="relative bg-white p-4 rounded-lg shadow-lg max-w-md w-full">
                         <button
-                            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                            className="absolute top-1 right-5 mt-2 px-2 py-2 bg-red-500 text-white rounded"
                             onClick={() => setIsModalOpen(false)}
                         >
-                            Cerrar
+                            X
                         </button>
+                        <FormWithImageUpload onProductAdded={handleProductAdded} setIsModalOpen={setIsModalOpen} onClose={() => setIsModalOpen(false)} />
                     </div>
                 </div>
             )}
+
 
             {editingProduct && (
                 <EditProductModal
