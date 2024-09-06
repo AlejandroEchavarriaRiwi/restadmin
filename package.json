@@ -11,6 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^3.4.4",
     "@reduxjs/toolkit": "^2.2.7",
     "concurrently": "^8.2.2",
     "lucide-react": "^0.436.0",

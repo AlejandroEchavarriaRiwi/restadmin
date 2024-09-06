@@ -6,6 +6,7 @@ import { ImStatsDots } from "react-icons/im";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { MdOutlineInventory } from "react-icons/md";
 import { FaPeopleRobbery } from "react-icons/fa6";
+import { HiComputerDesktop } from "react-icons/hi2";
 import Link from "next/link";
 
 
@@ -31,7 +32,12 @@ export default function NavBarAsideDashboard() {
                 MESAS
                 </div>
             </Link>
-
+            <Link href="/dashboard/pos">            
+                <div className="flex flex-col items-center font-semibold text-xs">
+                <HiComputerDesktop className="text-7xl text-amarillo" />
+                POS
+                </div>
+            </Link>
             <div className="flex flex-col items-center font-semibold text-xs">
                 <RiStackOverflowFill className="text-7xl text-amarillo" />
                 MOVIMIENTOS
