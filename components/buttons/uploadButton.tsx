@@ -1,4 +1,5 @@
-'use client'
+// FormWithImageUpload.tsx
+'use client';
 
 import React, { useState } from 'react';
 import { CldUploadWidget } from 'next-cloudinary';
@@ -6,6 +7,7 @@ import useFormStore from '../../app/dashboard/store';
 import SubmitAlert from '../alerts/submitAlert';
 
 interface Product {
+    id: number;
     name: string;
     price: number;
     cost: number;
@@ -13,11 +15,12 @@ interface Product {
 }
 
 interface FormWithImageUploadProps {
-    setIsModalOpen: (isOpen: boolean) => void; // Función para cerrar el modal
-    onProductAdded: (product: Product) => void; // Función para añadir el nuevo producto a la lista
+    setIsModalOpen: (isOpen: boolean) => void;
+    onProductAdded: (product: Product) => void;
+    onClose: () => void; // Nueva propiedad
 }
 
-const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpen, onProductAdded }) => {
+const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
     const { name, price, cost, setName, setPrice, setCost, setImageUrl } = useFormStore();
     const [localImageUrl, setLocalImageUrl] = useState('');
 
@@ -50,6 +53,7 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
             console.log('Form submitted:', data);
 
             const newProduct: Product = {
+                id: data.id, // Asegúrate de que el backend devuelva el ID del nuevo producto
                 name,
                 price,
                 cost,
@@ -62,9 +66,15 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
             // Mostrar la alerta de éxito y cerrar el modal cuando el usuario pulse "OK"
             SubmitAlert("El producto fue añadido exitosamente", "success", () => {
                 setIsModalOpen(false);
+                onClose(); // Cierra el modal
             });
 
-            useFormStore
+            // Limpiar el formulario
+            setName('');
+            setPrice(0);
+            setCost(0);
+            setImageUrl('');
+            setLocalImageUrl('');
 
         } catch (error) {
             console.error('Error submitting form:', error);
