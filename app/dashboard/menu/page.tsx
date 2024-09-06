@@ -110,7 +110,7 @@ export default function Menu() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
-    const [isEditMode, setIsEditMode] = useState(false);  // Nuevo estado para el modo de edición
+    const [isEditMode, setIsEditMode] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
     useEffect(() => {
@@ -137,7 +137,7 @@ export default function Menu() {
     const handleDeleteProduct = async (id: number) => {
         try {
             const result = await AlertConfirm('¿Estás seguro de querer eliminar este producto?');
-            
+
             if (result.isConfirmed) {
                 const response = await fetch(`http://localhost:8001/menu/${id}`, {
                     method: 'DELETE',
@@ -185,13 +185,13 @@ export default function Menu() {
     };
 
     const toggleEditMode = () => {
-        setIsEditMode(!isEditMode);  // Alternar el modo de edición
+        setIsEditMode(!isEditMode);
     };
 
     const handleProductClick = (id: number) => {
         if (isDeleteMode) {
             handleDeleteProduct(id);
-        } else if (isEditMode) {  // Si está en modo de edición, abre el modal
+        } else if (isEditMode) {
             const productToEdit = products.find(p => p.id === id);
             if (productToEdit) {
                 setEditingProduct(productToEdit);
@@ -221,19 +221,46 @@ export default function Menu() {
                     {isEditMode ? 'Cancelar Edición' : 'Editar Productos'}
                 </button>
             </div>
+
             <Container>
-                {products.map(product => (
-                    <ProductCard
-                        key={product.id}
-                        product={product}
-                        onClick={handleProductClick}
-                    />
-                ))}
+                {products.length > 0 ? (
+                    products.map((product) => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            onClick={handleProductClick}
+                        />
+                    ))
+                ) : (
+                    <p>No hay productos disponibles</p>
+                )}
             </Container>
-            {isModalOpen && <FormWithImageUpload onProductAdded={handleProductAdded} onClose={() => setIsModalOpen(false)} setIsModalOpen={function (isOpen: boolean): void {
-                throw new Error('Function not implemented.');
-            } } />}
-            {editingProduct && <EditProductModal product={editingProduct} onSave={handleEditProduct} onClose={() => setEditingProduct(null)} />}
+
+            {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-4 rounded-lg shadow-lg max-w-md w-full">
+                        <FormWithImageUpload onProductAdded={handleProductAdded} setIsModalOpen={function (isOpen: boolean): void {
+                            throw new Error('Function not implemented.');
+                        } } onClose={function (): void {
+                            throw new Error('Function not implemented.');
+                        } } />
+                        <button
+                            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {editingProduct && (
+                <EditProductModal
+                    product={editingProduct}
+                    onSave={handleEditProduct}
+                    onClose={() => setEditingProduct(null)}
+                />
+            )}
         </div>
     );
 }
