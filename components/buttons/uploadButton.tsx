@@ -1,7 +1,6 @@
-// FormWithImageUpload.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CldUploadWidget } from 'next-cloudinary';
 import useFormStore from '../../app/dashboard/store';
 import SubmitAlert from '../alerts/submitAlert';
@@ -12,17 +11,43 @@ interface Product {
     price: number;
     cost: number;
     imageUrl: string;
+    category: string;
 }
 
 interface FormWithImageUploadProps {
     setIsModalOpen: (isOpen: boolean) => void;
     onProductAdded: (product: Product) => void;
-    onClose: () => void; // Nueva propiedad
+    onClose: () => void;
 }
 
 const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
     const { name, price, cost, setName, setPrice, setCost, setImageUrl } = useFormStore();
     const [localImageUrl, setLocalImageUrl] = useState('');
+    const [category, setCategory] = useState('');
+    const [newCategory, setNewCategory] = useState('');
+    const [categories, setCategories] = useState<string[]>([]);
+    const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('http://localhost:8001/categories');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+    
+                // Mapear los objetos para obtener solo los nombres de las categorías
+                const categoryNames = data.map((category: { name: string }) => category.name);
+    
+                setCategories(categoryNames);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+    
+        fetchCategories();
+    }, []);
 
     const handleUploadSuccess = (result: any) => {
         if (result && result.info && result.info.secure_url) {
@@ -46,38 +71,73 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                     price,
                     cost,
                     imageUrl: localImageUrl,
+                    category,
                 }),
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const data = await response.json();
             console.log('Form submitted:', data);
 
             const newProduct: Product = {
-                id: data.id, // Asegúrate de que el backend devuelva el ID del nuevo producto
+                id: data.id,
                 name,
                 price,
                 cost,
                 imageUrl: localImageUrl,
+                category,
             };
 
-            // Añadir el nuevo producto a la lista sin recargar la página
             onProductAdded(newProduct);
 
-            // Mostrar la alerta de éxito y cerrar el modal cuando el usuario pulse "OK"
             SubmitAlert("El producto fue añadido exitosamente", "success", () => {
                 setIsModalOpen(false);
-                onClose(); // Cierra el modal
+                onClose();
             });
 
-            // Limpiar el formulario
             setName('');
             setPrice(0);
             setCost(0);
             setImageUrl('');
             setLocalImageUrl('');
+            setCategory('');
+            setNewCategory('');
+            setIsAddingCategory(false);
 
         } catch (error) {
             console.error('Error submitting form:', error);
+        }
+    };
+
+    const handleAddCategory = async () => {
+        if (newCategory.trim() === '') return;
+
+        try {
+            const response = await fetch('http://localhost:8001/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name: newCategory }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (typeof data.name === 'string') {
+                setCategories((prevCategories) => [...prevCategories, data.name]);
+                setNewCategory('');
+                setIsAddingCategory(false);
+            } else {
+                console.error('Response data is not a string:', data);
+            }
+        } catch (error) {
+            console.error('Error adding category:', error);
         }
     };
 
@@ -120,6 +180,46 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                         />
                     </div>
                 </div>
+                <div className="relative">
+                    <label htmlFor="category" className="block font-semibold mb-1">Categoría:</label>
+                    <select
+                        id="category"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 bg-white shadow-md transition-opacity duration-300 ease-in-out"
+                    >
+                        <option value="">Selecciona una categoría</option>
+                        {categories.map((cat, index) => (
+                            <option key={index} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => setIsAddingCategory(true)}
+                        className="mt-2 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                        Añadir Nueva Categoría
+                    </button>
+                    {isAddingCategory && (
+                        <div className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2">
+                            <input
+                                type="text"
+                                value={newCategory}
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                className="w-full border-b border-gray-300 px-3 py-2 rounded-t-lg"
+                                placeholder="Nombre de nueva categoría"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="w-full py-2 bg-green-500 text-white rounded-b-lg hover:bg-green-600"
+                            >
+                                Añadir Categoría
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <div>
                     <label htmlFor="image" className="block font-semibold mb-1">Imagen del producto:</label>
                     <CldUploadWidget
@@ -147,7 +247,7 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                 </div>
                 <button
                     type="submit"
-                    className="w-full py-2 bg-amarillo text-white rounded-lg "
+                    className="w-full py-2 bg-amarillo text-white rounded-lg"
                 >
                     Guardar Producto
                 </button>
