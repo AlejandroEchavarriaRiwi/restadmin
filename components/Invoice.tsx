@@ -7,7 +7,7 @@ import Button from '../components/buttons/Button';
 interface Table {
   id: string;
   name: string;
-  state: 'available' | 'in_use' | 'order_pending' | 'to_invoice';
+  state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por facturar';
 }
 
 interface OrderItem {
@@ -30,7 +30,6 @@ const ModuleContainer = styled.div`
   margin-left: 220px;
   padding: 20px;
   max-width: 1200px;
-  margin: 0 auto;
 `;
 
 const TableGrid = styled.div`
@@ -81,7 +80,7 @@ export default function Invoice() {
         const response = await fetch('http://localhost:8001/tables');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data: Table[] = await response.json();
-        setTables(data.filter(table => table.state === 'to_invoice'));
+        setTables(data.filter(table => table.state === 'Por facturar'));
       } catch (error) {
         console.error("Could not fetch tables:", error);
       }
@@ -149,7 +148,7 @@ export default function Invoice() {
         const tableResponse = await fetch(`http://localhost:8001/tables/${selectedTable.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ state: 'available' }),
+          body: JSON.stringify({ state: 'Disponible' }),
         });
   
         if (!tableResponse.ok) {

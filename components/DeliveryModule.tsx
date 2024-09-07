@@ -30,9 +30,9 @@ interface Order {
 }
 
 const ModuleContainer = styled.div`
+  margin-left: 220px;
   padding: 20px;
   max-width: 1200px;
-  margin: 0 auto;
 `;
 
 const FormContainer = styled.div`
@@ -274,11 +274,11 @@ export default function DeliveryModule() {
       </OrderSection>
 
       <PrintableTicket ref={printRef}>
-        <h2>Delivery Order</h2>
-        <p>Client: {client.name}</p>
-        <p>Phone: {client.phone}</p>
-        <p>Address: {client.address}</p>
-        <h3>Items:</h3>
+        <h2>Domicilios</h2>
+        <p>Cliente: {client.name}</p>
+        <p>Celular: {client.phone}</p>
+        <p>Dirección: {client.address}</p>
+        <h3>Productos:</h3>
         {order.items.map((item, index) => (
           <p key={index}>
             {item.name} - ${item.price} x {item.quantity}

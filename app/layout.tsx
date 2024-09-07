@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Ubuntu } from "next/font/google";
+import { Onest } from "next/font/google";
 import "./globals.css";
 
-const ubuntu = Ubuntu({weight: "400", subsets: ["latin"]})
+const ubuntu = Onest({weight: "400", subsets: ["latin"]})
 
 
 export const metadata: Metadata = {
