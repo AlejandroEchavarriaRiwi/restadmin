@@ -9,10 +9,16 @@ interface KitchenTicket {
   id: string;
   tableId: string;
   items: {
+    id: string;
     name: string;
+    price: number;
+    cost: number;
+    imageUrl: string;
+    category: string;
     quantity: number;
-    observations: string;
+    observations?: string;
   }[];
+  observations: string;
 }
 
 const DashboardContainer = styled.div`
@@ -34,23 +40,45 @@ const TicketCard = styled.div`
   background-color: #f9f9f9;
 `;
 
+const ObservationText = styled.p`
+  font-style: italic;
+  color: #555;
+  margin-top: 5px;
+  margin-bottom: 5px;
+`;
+
 const TicketHeader = styled.h3`
-  margin-top: 0;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 10;
   border-bottom: 2px solid #007bff;
   padding-bottom: 5px;
 `;
 
 const ItemList = styled.ul`
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
   list-style-type: none;
   padding: 0;
 `;
 
 const ItemListItem = styled.li`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   margin-bottom: 10px;
 `;
 
 const PrintableTicket = styled.div`
   padding: 10mm;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 10px;
+  h2{
+    font-size: large;
+    font-weight: bold;
+  }
   @media print {
     width: 80mm;
     padding: 0;
@@ -105,39 +133,56 @@ export default function KitchenDashboard() {
       }
     };
   
+    const renderObservations = (ticket: KitchenTicket) => {
+      return (
+        <>
+          {ticket.observations && (
+            <ObservationText>Observaciones generales: {ticket.observations}</ObservationText>
+          )}
+          {ticket.items.map((item, index) => (
+            item.observations && (
+              <ObservationText key={index}>
+                Observaciones para {item.name}: {item.observations}
+              </ObservationText>
+            )
+          ))}
+        </>
+      );
+    };
+  
     return (
       <DashboardContainer>
-        <h1>Kitchen Dashboard</h1>
+        <h1>Dashboard de Cocina</h1>
         <TicketGrid>
-          {tickets.map((ticket) => (
-            <TicketCard key={ticket.id}>
-              <TicketHeader>Table {ticket.tableId}</TicketHeader>
-              <ItemList>
-                {ticket.items.map((item, index) => (
-                  <ItemListItem key={index}>
-                    {item.quantity}x {item.name}
-                    {item.observations && <div>Note: {item.observations}</div>}
-                  </ItemListItem>
-                ))}
-              </ItemList>
-              <Button onClick={handlePrint}>Print Ticket</Button>
-              <Button onClick={() => completeTicket(ticket.id, ticket.tableId)}>Mark as Complete</Button>
-            </TicketCard>
-          ))}
-        </TicketGrid>
+        {tickets.map((ticket) => (
+          <TicketCard key={ticket.id}>
+            <TicketHeader>Mesa {ticket.tableId}</TicketHeader>
+            <ItemList>
+              {ticket.items.map((item, index) => (
+                <ItemListItem key={index}>
+                  {item.quantity}x {item.name}
+                </ItemListItem>
+              ))}
+            </ItemList>
+            {renderObservations(ticket)}
+            <Button onClick={handlePrint}>Imprimir Ticket</Button>
+            <Button onClick={() => completeTicket(ticket.id, ticket.tableId)}>Marcar como Completado</Button>
+          </TicketCard>
+        ))}
+      </TicketGrid>
         <div style={{ display: 'none' }}>
           <PrintableTicket ref={printRef}>
             {tickets.map((ticket) => (
               <div key={ticket.id}>
-                <h2>Table {ticket.tableId}</h2>
-                <ul>
+                <h2>Mesa {ticket.tableId}</h2>
+                <ItemList>
                   {ticket.items.map((item, index) => (
                     <li key={index}>
                       {item.quantity}x {item.name}
-                      {item.observations && <div>Note: {item.observations}</div>}
                     </li>
                   ))}
-                </ul>
+                </ItemList>
+                {renderObservations(ticket)}
               </div>
             ))}
           </PrintableTicket>
