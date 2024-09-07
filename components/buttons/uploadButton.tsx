@@ -8,8 +8,8 @@ import SubmitAlert from '../alerts/submitAlert';
 interface Product {
     id: number;
     name: string;
-    price: number;
     cost: number;
+    price: number;
     imageUrl: string;
     category: string;
 }
@@ -68,8 +68,8 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                 },
                 body: JSON.stringify({
                     name,
-                    price,
                     cost,
+                    price,
                     imageUrl: localImageUrl,
                     category,
                 }),
@@ -85,8 +85,8 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
             const newProduct: Product = {
                 id: data.id,
                 name,
-                price,
                 cost,
+                price,
                 imageUrl: localImageUrl,
                 category,
             };
@@ -99,8 +99,8 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
             });
 
             setName('');
-            setPrice(0);
             setCost(0);
+            setPrice(0);
             setImageUrl('');
             setLocalImageUrl('');
             setCategory('');
@@ -158,17 +158,6 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
-                        <input
-                            type="number"
-                            id="price"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.valueAsNumber)}
-                            className="w-full border rounded-lg px-3 py-2"
-                            placeholder="Ingresa el precio"
-                        />
-                    </div>
-                    <div>
                         <label htmlFor="cost" className="block font-semibold mb-1">Costo:</label>
                         <input
                             type="number"
@@ -177,6 +166,17 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                             onChange={(e) => setCost(e.target.valueAsNumber)}
                             className="w-full border rounded-lg px-3 py-2"
                             placeholder="Ingresa el costo"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
+                        <input
+                            type="number"
+                            id="price"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.valueAsNumber)}
+                            className="w-full border rounded-lg px-3 py-2"
+                            placeholder="Ingresa el precio"
                         />
                     </div>
                 </div>

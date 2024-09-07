@@ -205,25 +205,26 @@ export default function Menu() {
         <div className="ml-[230px]">
             <div className="navbarSide">
                 <button
-                    className="px-4 py-2 mt-4 font-bold text-white bg-blue-500 rounded hover:bg-blue-700"
+                    className="px-4 py-2 mt-4 font-bold text-white bg-azuloscuro rounded hover:bg-azulmedio"
                     onClick={() => setIsModalOpen(true)}
                 >
                     Agregar Producto
                 </button>
                 <button
-                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isDeleteMode ? 'bg-red-500' : 'bg-gray-500'} rounded hover:${isDeleteMode ? 'bg-red-700' : 'bg-gray-700'}`}
-                    onClick={toggleDeleteMode}
-                    disabled={isEditMode} // Disable if in edit mode
-                >
-                    {isDeleteMode ? 'Cancelar Eliminación' : 'Eliminar Productos'}
-                </button>
-                <button
-                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isEditMode ? 'bg-green-500' : 'bg-gray-500'} rounded hover:${isEditMode ? 'bg-green-700' : 'bg-gray-700'}`}
+                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isEditMode ? 'bg-green-500' : 'bg-azulmedio'} rounded hover:${isEditMode ? 'bg-green-700' : 'bg-gray-700'}`}
                     onClick={toggleEditMode}
                     disabled={isDeleteMode} // Disable if in delete mode
                 >
                     {isEditMode ? 'Cancelar Edición' : 'Editar Productos'}
                 </button>
+                <button
+                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isDeleteMode ? 'bg-red-500' : 'bg-azulmedio'} rounded hover:${isDeleteMode ? 'bg-red-700' : 'bg-gray-700'}`}
+                    onClick={toggleDeleteMode}
+                    disabled={isEditMode} // Disable if in edit mode
+                >
+                    {isDeleteMode ? 'Cancelar Eliminación' : 'Eliminar Productos'}
+                </button>
+                
             </div>
 
             <Container>
