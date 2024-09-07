@@ -7,10 +7,12 @@ import Button from '../../../components/buttons/Button';
 interface Table {
   id: string;
   name: string;
-  state: 'available' | 'in_use' | 'order_pending' | 'to_invoice';
+  state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por facturar';
 }
 
 interface MenuItem {
+  imageUrl: string;
+  category: string;
   id: string;
   name: string;
   price: number;
@@ -45,32 +47,47 @@ const NavBar = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  h1{
+    font-weight: bold;
+    font-size: x-large;
+  }
 `;
 
 const TableCard = styled.div<{ state: Table['state'] }>`
   width: 200px;
+  height: 200px;
   padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: ${props => {
     switch (props.state) {
-      case 'available': return '#d4edda';
-      case 'in_use': return '#cce5ff';
-      case 'order_pending': return '#fff3cd';
-      case 'to_invoice': return '#f8d7da';
+      case 'Disponible': return '#d4edda';
+      case 'Ocupada': return '#cce5ff';
+      case 'Cocinando': return '#fff3cd';
+      case 'Por facturar': return '#f8d7da';
       default: return '#ffffff';
     }
   }};
   border: 2px solid ${props => {
     switch (props.state) {
-      case 'available': return '#28a745';
-      case 'in_use': return '#007bff';
-      case 'order_pending': return '#ffc107';
-      case 'to_invoice': return '#dc3545';
+      case 'Disponible': return '#28a745';
+      case 'Ocupada': return '#007bff';
+      case 'Cocinando': return '#ffc107';
+      case 'Por facturar': return '#dc3545';
       default: return '#6c757d';
     }
   }};
   cursor: pointer;
+
+  h2{
+    font-weight: bold;
+    font-size: xx-large;
+    color: #363636;
+  }
 `;
 
 const Modal = styled.div`
@@ -89,10 +106,51 @@ const ModalContent = styled.div`
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
+  margin-left: 220px;
+  width: 80%;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  h2{
+    font-size: x-large;
+    font-weight: bold;
+  }
+`;
+
+const ModalBody = styled.div`
+  display: flex;
+  height: calc(100% - 60px);
+`;
+
+const MenuSection = styled.div`
+  width: 60%;
   overflow-y: auto;
+  padding-right: 20px;
+`;
+
+const OrderSection = styled.div`
+  width: 40%;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+
+  h3{
+    font-size: large;
+    font-weight: bold;
+  }
+`;
+
+const CategoryTabs = styled.div`
+  display: flex;
+  overflow-x: auto;
+  margin-bottom: 20px;
 `;
 
 const MenuItemList = styled.ul`
@@ -116,16 +174,78 @@ const TextArea = styled.textarea`
   border-radius: 4px;
 `;
 
+const CategoryTab = styled.button<{ active: boolean }>`
+  padding: 10px 20px;
+  background-color: ${props => props.active ? '#007bff' : '#f8f9fa'};
+  color: ${props => props.active ? 'white' : 'black'};
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  &:hover {
+    background-color: ${props => props.active ? '#0056b3' : '#e9ecef'};
+  }
+`;
+
+const MenuItemGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+`;
+
+const MenuItem = styled.div`
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  &:hover {
+    background-color: #f8f9fa;
+  }
+`;
+
+const OrderList = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+`;
+
+const DivOrder = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  h4{
+    font-weight: bold;
+    font-size: large;
+  }
+  span{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
 export default function Tables() {
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   useEffect(() => {
     fetchTables();
     fetchMenuItems();
   }, []);
+
+  useEffect(() => {
+    if (menuItems.length > 0) {
+      const uniqueCategories = Array.from(new Set(menuItems.map(item => item.category)));
+      setCategories(['Todos', ...uniqueCategories]);
+      setSelectedCategory('Todos');
+    }
+  }, [menuItems]);
 
   const fetchTables = async () => {
     try {
@@ -299,7 +419,7 @@ export default function Tables() {
         console.log('Order sent to kitchen successfully');
 
         // Update table state
-        await updateTableState(selectedTable.id, 'order_pending');
+        await updateTableState(selectedTable.id, 'Cocinando');
         console.log('Table state updated successfully');
 
         // Refresh tables
@@ -318,21 +438,21 @@ export default function Tables() {
     }
   };
 
-  const handleInvoice = async () => {
+  const handlePreInvoice = async () => {
     if (selectedTable) {
       try {
         // Fetch the order for the selected table
         const orderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
         const orders = await orderResponse.json();
-
+  
         if (orders.length === 0) {
           throw new Error('No order found for this table');
         }
-
+  
         const order = orders[0]; // Assume there's only one order per table
-
-        // Create a new invoice in 'factura'
-        const invoiceResponse = await fetch('http://localhost:8001/factura', {
+  
+        // Create a new pre-invoice in 'preinvoices'
+        const preInvoiceResponse = await fetch('http://localhost:8001/preinvoices', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -345,48 +465,56 @@ export default function Tables() {
             date: new Date().toISOString()
           }),
         });
-
-        if (!invoiceResponse.ok) {
-          throw new Error(`Failed to create invoice. Status: ${invoiceResponse.status}`);
+  
+        if (!preInvoiceResponse.ok) {
+          throw new Error(`Failed to create pre-invoice. Status: ${preInvoiceResponse.status}`);
         }
-
-        console.log('Invoice created successfully');
-
+  
+        console.log('Pre-invoice created successfully');
+  
         // Delete the order from 'orders'
-        await fetch(`http://localhost:8001/orders/${order.id}`, {
+        const deleteOrderResponse = await fetch(`http://localhost:8001/orders/${order.id}`, {
           method: 'DELETE',
         });
-
+  
+        if (!deleteOrderResponse.ok) {
+          throw new Error(`Failed to delete order. Status: ${deleteOrderResponse.status}`);
+        }
+  
         console.log('Order removed from orders');
-
+  
         // Delete the order from 'kitchen'
         const kitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${selectedTable.id}`);
         const kitchenOrders = await kitchenResponse.json();
-
+  
         for (const kitchenOrder of kitchenOrders) {
-          await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
+          const deleteKitchenResponse = await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
             method: 'DELETE',
           });
+  
+          if (!deleteKitchenResponse.ok) {
+            throw new Error(`Failed to delete kitchen order. Status: ${deleteKitchenResponse.status}`);
+          }
         }
-
+  
         console.log('Order removed from kitchen');
-
+  
         // Update table state
-        await updateTableState(selectedTable.id, 'to_invoice');
-        console.log('Table state updated to to_invoice');
-
+        await updateTableState(selectedTable.id, 'Por facturar');
+        console.log('Table state updated to Por facturar');
+  
         // Close modal and reset current order
         setSelectedTable(null);
         setCurrentOrder(null);
-
+  
         // Refresh tables
         await fetchTables();
-
-        console.log('Invoice process completed');
-
+  
+        console.log('Pre-invoice process completed');
+  
       } catch (error) {
-        console.error('Error handling invoice:', error);
-        alert(`Error handling invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('Error handling pre-invoice:', error);
+        alert(`Error handling pre-invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };
@@ -432,8 +560,8 @@ export default function Tables() {
   const addTable = async () => {
     const newTable: Table = { 
       id: `${tables.length + 1}`, 
-      name: `Table ${tables.length + 1}`,
-      state: 'available'
+      name: `Mesa ${tables.length + 1}`,
+      state: 'Disponible'
     };
 
     try {
@@ -502,65 +630,91 @@ export default function Tables() {
     }
   };
 
-  return (
-    <>
-      <NavBar>
-        <h1>Restaurant Tables</h1>
-        <div>
-          <Button onClick={addTable}>Add Table</Button>
-          <Button onClick={removeTable} $disabled={tables.length === 0} $variant="danger">
-            Remove Table
-          </Button>
-        </div>
-      </NavBar>
-      <Container>
-        {tables.length > 0 ? (
-          tables.map((table) => (
-            <TableCard key={table.id} state={table.state} onClick={() => handleTableClick(table)}>
-              <h2>{table.name}</h2>
-              <p>State: {table.state}</p>
-            </TableCard>
-          ))
-        ) : (
-          <h2>No tables available</h2>
-        )}
-      </Container>
-      {selectedTable && currentOrder && (
-        <Modal onClick={() => setSelectedTable(null)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h2>{selectedTable.name} - Order</h2>
-            <h3>Menu Items:</h3>
-            <MenuItemList>
-              {menuItems.map((item) => (
-                <MenuItemListItem key={item.id}>
-                  <span>{item.name} - ${item.price}</span>
-                  <div>
-                    <Button onClick={() => handleAddMenuItem(item)}>+</Button>
-                    <Button onClick={() => handleRemoveMenuItem(item)} $variant="secondary">-</Button>
-                  </div>
-                </MenuItemListItem>
-              ))}
-            </MenuItemList>
-            <h3>Current Order:</h3>
-            <MenuItemList>
-              {currentOrder.items.map((item, index) => (
-                <MenuItemListItem key={index}>
-                  <span>{item.name} - ${item.price} x {item.quantity}</span>
-                </MenuItemListItem>
-              ))}
-            </MenuItemList>
-            <h3>Observations:</h3>
-            <TextArea
-              value={currentOrder.observations}
-              onChange={(e) => setCurrentOrder({...currentOrder, observations: e.target.value})}
-              placeholder="Enter any special instructions or observations here..."
-              rows={4}
-            />
-            <Button onClick={handleSendToKitchen}>Send to Kitchen</Button>
-            <Button onClick={handleInvoice} $variant="secondary">Invoice</Button>
-          </ModalContent>
-        </Modal>
+  const filteredMenuItems = selectedCategory === 'Todos' 
+  ? menuItems 
+  : menuItems.filter(item => item.category === selectedCategory);
+
+return (
+  <>
+    <NavBar>
+      <h1>Mesas</h1>
+      <div>
+        <Button onClick={addTable}>Añadir mesa</Button>
+        <Button onClick={removeTable} $disabled={tables.length === 0} $variant="danger">
+          Eliminar mesa
+        </Button>
+      </div>
+    </NavBar>
+    <Container>
+      {tables.length > 0 ? (
+        tables.map((table) => (
+          <TableCard key={table.id} state={table.state} onClick={() => handleTableClick(table)}>
+            <h2>{table.name}</h2>
+            <p>{table.state}</p>
+          </TableCard>
+        ))
+      ) : (
+        <h2>No hay mesas creadas</h2>
       )}
-    </>
-  );
+    </Container>
+    {selectedTable && currentOrder && (
+      <Modal onClick={() => setSelectedTable(null)}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
+          <ModalHeader>
+            <h2>{selectedTable.name} - Orden</h2>
+            <Button onClick={() => setSelectedTable(null)}>Cerrar</Button>
+          </ModalHeader>
+          <ModalBody>
+            <MenuSection>
+              <CategoryTabs>
+                {categories.map(category => (
+                  <CategoryTab 
+                    key={category}
+                    active={selectedCategory === category}
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </CategoryTab>
+                ))}
+              </CategoryTabs>
+              <MenuItemGrid>
+                {filteredMenuItems.map((item) => (
+                  <MenuItem key={item.id} onClick={() => handleAddMenuItem(item)}>
+                    
+                    <img src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-48 object-cover" />
+
+                    <div>{item.name}</div>
+                    <div>${item.price}</div>
+                  </MenuItem>
+                ))}
+              </MenuItemGrid>
+            </MenuSection>
+            <OrderSection>
+              <h3>Pedido:</h3>
+              <OrderList>
+                {currentOrder.items.map((item, index) => (
+                  <DivOrder key={index}>
+                    <span>{item.name} - ${item.price} <h4>x {item.quantity}</h4></span>
+                    <Button onClick={() => handleRemoveMenuItem(item)}>-</Button>
+                  </DivOrder>
+                ))}
+              </OrderList>
+              <h3>Observaciones:</h3>
+              <TextArea
+                value={currentOrder.observations}
+                onChange={(e) => setCurrentOrder({...currentOrder, observations: e.target.value})}
+                placeholder="Introduzca aquí cualquier instrucción u observación especial..."
+                rows={4}
+              />
+              <Button onClick={handleSendToKitchen}>Enviar a Cocina</Button>
+              <Button onClick={handlePreInvoice} $variant="secondary">Pre-facturar</Button>
+            </OrderSection>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    )}
+  </>
+);
 }
