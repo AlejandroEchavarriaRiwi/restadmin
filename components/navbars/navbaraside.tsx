@@ -1,4 +1,6 @@
-import React from "react";
+'use client'
+
+import React, { useEffect } from "react";
 import "./styles/navbarstyles.sass";
 import { MdTableRestaurant, MdDeliveryDining } from "react-icons/md";
 import { RiStackOverflowFill } from "react-icons/ri";
@@ -7,30 +9,42 @@ import { BiSolidFoodMenu } from "react-icons/bi";
 import { FaPeopleRobbery, FaKitchenSet, FaFileInvoiceDollar } from "react-icons/fa6";
 import { HiComputerDesktop } from "react-icons/hi2";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function NavBarAsideDashboard() {
   const { user, loading, error, logout } = useAuth();
+  const router = useRouter();
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!user) {
-    // Si no hay usuario, redirigir al login
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
     }
-    return null;
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-amarillo"></div>
+      </div>
+    );
   }
 
-  console.log('User roles:', user.roles);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const isAdmin = user.roles.some(r => r.roleId === 1);
   const isCashier = user.roles.some(r => r.roleId === 2);
   const isWaiter = user.roles.some(r => r.roleId === 3);
-
-  console.log('isAdmin:', isAdmin);
-  console.log('isCashier:', isCashier);
-  console.log('isWaiter:', isWaiter);
 
   return (
     <div className="navbarcontainer">
@@ -77,6 +91,12 @@ export default function NavBarAsideDashboard() {
               COCINA
             </div>
           </Link>
+          <Link href="/dashboard/delivery"> 
+            <div className="flex flex-col items-center font-semibold text-xs">
+              <MdDeliveryDining className="text-7xl text-amarillo" />
+              DOMICILIOS
+            </div>
+          </Link>
         </>
       )}
 
@@ -86,12 +106,6 @@ export default function NavBarAsideDashboard() {
             <RiStackOverflowFill className="text-7xl text-amarillo" />
             MOVIMIENTOS
           </div>
-          <Link href="/dashboard/delivery"> 
-            <div className="flex flex-col items-center font-semibold text-xs">
-              <MdDeliveryDining className="text-7xl text-amarillo" />
-              DOMICILIOS
-            </div>
-          </Link>
           <div className="flex flex-col items-center font-semibold text-xs">
             <ImStatsDots className="text-5xl text-amarillo m-2" />
             ESTADISTICAS

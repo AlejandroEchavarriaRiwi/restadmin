@@ -16,9 +16,9 @@ interface KitchenTicket {
 }
 
 const DashboardContainer = styled.div`
+  margin-left: 220px;
   padding: 20px;
   max-width: 1200px;
-  margin: 0 auto;
 `;
 
 const TicketGrid = styled.div`
@@ -95,7 +95,7 @@ export default function KitchenDashboard() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ state: 'in_use' }),
+          body: JSON.stringify({ state: 'Ocupada' }),
         });
   
         // Refresh tickets

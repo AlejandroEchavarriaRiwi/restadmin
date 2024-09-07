@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Button from '../../../components/buttons/Button';
 import { pdf } from '@react-pdf/renderer';
 import PDFDocument from '../../../components/print/PDFprint';
 import InputAlert from '@/components/alerts/successAlert';
@@ -20,6 +19,14 @@ interface OrderItem extends MenuItem {
   observations: string;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  imageUrl: string;
+}
+
 interface Order {
   items: OrderItem[];
   tableId: string;
@@ -28,35 +35,131 @@ interface Order {
 const Container = styled.div`
   margin-left: 220px;
   display: flex;
-  width: 100% - 230px;
-  gap: 20px;
+  width: calc(100% - 220px);
+  height: 100vh;
+  overflow: hidden;
 `;
+
 
 const MenuSection = styled.div`
   width: 70%;
+  height: 100%;
   overflow-y: auto;
   padding: 15px;
-  max-height: calc(100vh - 40px);
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 
   h1 {
-    margin-left: 10px;
+    margin-bottom: 30px;
     font-weight: bold;
-    font-size: 1.5rem; // Ajustado a un tamaño más razonable
+    font-size: 1.5rem;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 3px;
+  }
+`;
+
+const MenuHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  scrollbar-width: none;
+  scrollbar-color: $primary-color $secondary-color;
+
+  &::-webkit-scrollbar{
+    width: 0px;
+  }
+
+  &::-webkit-scrollbar-track{ 
+    background: $primary-color;
+  }
+
+  &::-webkit-scrollbar-thumb{
+    background-color: $secondary-color;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+  }
+
+`;
+
+const SearchBar = styled.input`
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 200px;
+`;
+
+const CategoryButtons = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const Button = styled.button<{ $active?: boolean; $variant?: string }>`
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: ${props => {
+    if (props.$active) return '#007bff';
+    switch (props.$variant) {
+      case 'primary': return '#007bff';
+      case 'alert': return '#ffc107';
+      default: return '#f8f9fa';
+    }
+  }};
+  color: ${props => props.$active || props.$variant ? 'white' : 'black'};
+  &:hover {
+    opacity: 0.8;
   }
 `;
 
 const OrderSection = styled.div`
   width: 30%;
+  height: 100%;
   background-color: #f8f9fa;
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  
   h2 {
     margin-bottom: 30px;
     font-weight: bold;
-    font-size: 1.5rem; // Ajustado a un tamaño más razonable
+    font-size: 1.5rem;
+  }
+`;
+
+const OrderItemsContainer = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 3px;
   }
 `;
 
@@ -67,28 +170,29 @@ const CategoryTitle = styled.h2`
   padding-bottom: 5px;
   border-bottom: 2px solid #007bff;
 `;
-const Cardscontainer = styled.div`
-    width: 100%;
-    height: auto;
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-`
-const MenuItemCard = styled.div`
-    width: 30%;
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    cursor: pointer;
 
-    &:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+const Cardscontainer = styled.div`
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+`;
+
+const MenuItemCard = styled.div`
+  width: 30%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 `;
 
@@ -98,10 +202,6 @@ const MenuItemImage = styled.img`
   object-fit: cover;
   border-radius: 4px;
   margin-right: 15px;
-`;
-
-const MenuItemInfo = styled.div`
-  flex-grow: 1;
 `;
 
 const MenuItemName = styled.h3`
@@ -128,7 +228,7 @@ const QuantityControl = styled.div`
 `;
 
 const QuantityButton = styled(Button)`
-width: 40px;
+  width: 40px;
   padding: 2px 8px;
   margin: 0 5px;
 `;
@@ -147,7 +247,6 @@ const OrderItemQuantity = styled.span`
   text-align: center;
   width: 40px;
   border-radius: 4px;
-
 `;
 
 const TextArea = styled.textarea`
@@ -170,6 +269,9 @@ const TotalSection = styled.div`
 export default function MenuOrder() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [order, setOrder] = useState<Order>({ items: [], tableId: 'pos1' });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
     fetchMenuItems();
@@ -183,6 +285,12 @@ export default function MenuOrder() {
       }
       const data = await response.json();
       setMenuItems(data);
+      
+      // Extraer categorías únicas
+      const categorySet = new Set<string>();
+      data.forEach((item: MenuItem) => categorySet.add(item.category));
+      const uniqueCategories = ['Todas', ...Array.from(categorySet)];
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error("Could not fetch menu items:", error);
     }
@@ -220,8 +328,6 @@ export default function MenuOrder() {
     }));
   };
 
-
-
   const updateObservations = (itemId: string, observations: string) => {
     setOrder(prevOrder => ({
       ...prevOrder,
@@ -231,9 +337,10 @@ export default function MenuOrder() {
     }));
   };
 
-  const sendToKitchen = async () => {
+  const generateInvoiceAndSendToKitchen = async () => {
     try {
-      const response = await fetch('http://localhost:8001/kitchen', {
+      // Primero, enviar a cocina
+      const kitchenResponse = await fetch('http://localhost:8001/kitchen', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -241,20 +348,11 @@ export default function MenuOrder() {
         body: JSON.stringify({ ...order, tableId: `${order.tableId}` }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!kitchenResponse.ok) {
+        throw new Error(`HTTP error! status: ${kitchenResponse.status}`);
       }
 
-      await InputAlert('Enviado a cocina correctamente!', 'success');
-      // You might want to clear the order or update its status here
-    } catch (error) {
-      console.error("Could not send order to kitchen:", error);
-      alert('Failed to send order to kitchen');
-    }
-  };
-
-  const generateInvoice = async () => {
-    try {
+      // Luego, generar la factura
       const invoice = {
         ...order,
         tableId: `${order.tableId}`,
@@ -262,7 +360,7 @@ export default function MenuOrder() {
         date: new Date().toISOString()
       };
 
-      const response = await fetch('http://localhost:8001/factura', {
+      const invoiceResponse = await fetch('http://localhost:8001/invoices', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -270,25 +368,34 @@ export default function MenuOrder() {
         body: JSON.stringify(invoice),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!invoiceResponse.ok) {
+        throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
       }
 
-      // Generar e imprimir el PDF
+      // Generar y mostrar el PDF
       const blob = await pdf(<PDFDocument order={invoice} />).toBlob();
       const url = URL.createObjectURL(blob);
       const printWindow = window.open(url, '_blank');
       printWindow?.print();
 
-      // Limpiar la orden actual
+      // Limpiar la orden
       setOrder({ items: [], tableId: 'pos1' });
+
+      // Mostrar mensaje de éxito
+      await InputAlert('Orden enviada a cocina y facturada correctamente!', 'success');
     } catch (error) {
-      console.error("Could not generate invoice:", error);
-      alert('Failed to generate invoice');
+      console.error("Error al procesar la orden:", error);
+      alert('Error al procesar la orden. Por favor, intente de nuevo.');
     }
   };
 
-  const groupedMenuItems = menuItems.reduce((acc, item) => {
+  const filteredMenuItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === 'Todas' || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const groupedMenuItems = filteredMenuItems.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
@@ -301,7 +408,26 @@ export default function MenuOrder() {
   return (
     <Container>
       <MenuSection>
-        <h1>Menu</h1>
+        <MenuHeader>
+          <h1>Menu</h1>
+          <SearchBar
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </MenuHeader>
+        <CategoryButtons>
+          {categories.map(category => (
+            <Button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              $active={selectedCategory === category}
+            >
+              {category}
+            </Button>
+          ))}
+        </CategoryButtons>
         {Object.entries(groupedMenuItems).map(([category, items]) => (
           <div key={category}>
             <CategoryTitle>{category}</CategoryTitle>
@@ -319,27 +445,36 @@ export default function MenuOrder() {
       </MenuSection>
       <OrderSection>
         <h2>Orden actual</h2>
-        {order.items.map(item => (
-          <OrderItem key={item.id}>
-            <OrderItemName>{item.name}</OrderItemName>
-            <p>${(item.price * item.quantity)}</p>
-            <QuantityControl>
-              <QuantityButton onClick={() => updateItemQuantity(item.id, -1)} $variant="primary">-</QuantityButton>
-              <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-              <QuantityButton onClick={() => updateItemQuantity(item.id, 1)} $variant="primary">+</QuantityButton>
-            </QuantityControl>
-            <TextArea
-              value={item.observations}
-              onChange={(e) => updateObservations(item.id, e.target.value)}
-              placeholder="Observaciones..."
-            />
-          </OrderItem>
-        ))}
+        <OrderItemsContainer>
+          {order.items.map(item => (
+            <OrderItem key={item.id}>
+              <OrderItemName>{item.name}</OrderItemName>
+              <p>${(item.price * item.quantity)}</p>
+              <QuantityControl>
+                <QuantityButton onClick={() => updateItemQuantity(item.id, -1)} $variant="primary">-</QuantityButton>
+                <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
+                <QuantityButton onClick={() => updateItemQuantity(item.id, 1)} $variant="primary">+</QuantityButton>
+              </QuantityControl>
+              <TextArea
+                value={item.observations}
+                onChange={(e) => updateObservations(item.id, e.target.value)}
+                placeholder="Observaciones..."
+              />
+            </OrderItem>
+          ))}
+        </OrderItemsContainer>
         <TotalSection>
           Total: ${totalAmount}
         </TotalSection>
-        <Button onClick={sendToKitchen} disabled={order.items.length === 0} $variant="alert">Enviar a cocina</Button>
-        <Button onClick={generateInvoice} disabled={order.items.length === 0} $variant="primary">Facturar e Imprimir</Button>
+        <div className='flex gap-3 w-full justify-around'>
+           <Button 
+            onClick={generateInvoiceAndSendToKitchen} 
+            disabled={order.items.length === 0} 
+            $variant="primary"
+          >
+            Facturar y Enviar a Cocina
+          </Button>
+        </div>
       </OrderSection>
     </Container>
   );
