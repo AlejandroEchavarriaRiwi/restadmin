@@ -1,29 +1,19 @@
-// ProductCard.tsx
 import React from 'react';
-
-export interface Product {
-    id: number;
-    name: string;
-    price: number | string;
-    cost: number | string;
-    imageUrl: string; 
-}
-
-interface ProductCardProps {
-    product: Product;
-    onClick: (id: number) => void;
-    isDeleteMode: boolean; // Nueva prop para modo de eliminación
-}
+import { Product } from '@/types/Imenu';
 
 const formatPrice = (price: number | string): string => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
     return isNaN(numPrice) ? 'N/A' : `$${numPrice}`;
 };
 
+interface ProductCardProps {
+    product: Product;
+    onClick: (id: number) => void;
+}
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, isDeleteMode }) => (
+const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => (
     <div
-        className={`bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer ${isDeleteMode ? 'shake' : ''}`} // Aplicar clase condicionalmente
+        className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
         onClick={() => onClick(product.id)}
     >
         <img
