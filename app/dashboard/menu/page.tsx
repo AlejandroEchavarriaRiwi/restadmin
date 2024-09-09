@@ -7,6 +7,7 @@ import EditProductModal from '@/components/modals/EditProductModal';
 import FormWithImageUpload from "@/components/buttons/uploadButton";
 import { AlertConfirm } from '@/components/alerts/questionAlert';
 import InputAlert from '@/components/alerts/successAlert';
+import ProductForm from '@/components/forms/NewProductForm';
 
 const Container = styled.div`
     margin: 30px;
@@ -158,7 +159,7 @@ export default function Menu() {
                         >
                             X
                         </button>
-                        <FormWithImageUpload onProductAdded={handleProductAdded} setIsModalOpen={setIsModalOpen} onClose={() => setIsModalOpen(false)} />
+                        <ProductForm onProductAdded={handleProductAdded} setIsModalOpen={setIsModalOpen} onClose={() => setIsModalOpen(false)} />
                     </div>
                 </div>
             )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '@/types/Imenu';
 import { CldUploadWidget } from 'next-cloudinary';
-
+import CategorySelection from '../buttons/selectCategoriesButton';
 
 const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSave: (updatedProduct: Product) => void, onClose: () => void }) => {
     const [editedProduct, setEditedProduct] = useState(product);
@@ -12,6 +12,10 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
         setEditedProduct(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleCategoryChange = (category: string) => {
+        setEditedProduct(prev => ({ ...prev, category }));
+    };
+
     const handleUploadSuccess = (result: any) => {
         const imageUrl = result.info.secure_url; // Get the uploaded image URL
         setLocalImageUrl(imageUrl); // Update local image URL
@@ -20,7 +24,7 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(editedProduct); // Save the updated product, including the new image URL
+        onSave(editedProduct); // Save the updated product, including the new image URL and category
     };
 
     return (
@@ -61,6 +65,15 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                             className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
+
+                    {/* Componente de selección de categoría */}
+                    <div>
+                        <CategorySelection
+                            category={editedProduct.category}
+                            setCategory={handleCategoryChange}
+                        />
+                    </div>
+                    
                     <div>
                         <label htmlFor="image" className="block font-semibold mb-1">Imagen del producto:</label>
                         <CldUploadWidget
@@ -86,6 +99,9 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                             />
                         )}
                     </div>
+                    
+                    
+
                     <div className="flex justify-end space-x-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded-lg">Cancelar</button>
                         <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-lg">Guardar</button>
