@@ -31,9 +31,7 @@ interface Order {
 }
 
 const Container = styled.div`
-  margin-left: 220px;
   margin-top: 20px;
-  padding: 20px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
@@ -41,7 +39,6 @@ const Container = styled.div`
 `;
 
 const NavBar = styled.nav`
-  margin-left: 220px;
   background-color: #f8f9fa;
   padding: 10px;
   display: flex;

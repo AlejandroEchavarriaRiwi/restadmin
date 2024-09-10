@@ -33,9 +33,7 @@ interface Order {
 }
 
 const Container = styled.div`
-  margin-left: 220px;
   display: flex;
-  width: calc(100% - 220px);
   height: 100vh;
   overflow: hidden;
 `;

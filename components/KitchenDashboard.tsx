@@ -16,7 +16,6 @@ interface KitchenTicket {
 }
 
 const DashboardContainer = styled.div`
-  margin-left: 220px;
   padding: 20px;
   max-width: 1200px;
 `;

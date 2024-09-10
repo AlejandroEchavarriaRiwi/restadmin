@@ -112,7 +112,7 @@ export default function Menu() {
     };
 
     return (
-        <div className="ml-[230px]">
+        <div className="">
             <div className="navbarSide">
                 <button
                     className="px-4 py-2 mt-4 font-bold text-white bg-azuloscuro rounded hover:bg-azulmedio"
