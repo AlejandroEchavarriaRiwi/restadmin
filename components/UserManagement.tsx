@@ -15,7 +15,6 @@ interface User {
 }
 
 const ModuleContainer = styled.div`
-  margin-left: 220px;
   padding: 20px;
   width: 100% - 220px;
 

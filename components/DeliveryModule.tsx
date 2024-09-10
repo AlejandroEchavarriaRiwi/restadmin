@@ -37,7 +37,6 @@ interface Order {
 }
 
 const ModuleContainer = styled.div`
-  margin-left: 220px;
   padding: 20px;
   display: flex;
   height: calc(100vh - 40px);
