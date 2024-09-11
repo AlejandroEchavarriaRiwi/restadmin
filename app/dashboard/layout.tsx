@@ -8,16 +8,17 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-screen">
             {/* Sidebar */}
-
-            <aside className="flex-shrink-0 sticky transition-all duration-300 ease-in-out">
+            <aside className="flex-none h-full overflow-y-auto">
                 <NavBarAsideDashboard />
             </aside>
 
             {/* Main content */}
-            <main className="flex-1 p-6 transition-all duration-300 ease-in-out">
-                {children}
+            <main className="flex-1 overflow-y-auto">
+                <div className="p-6">
+                    {children}
+                </div>
             </main>
         </div>
     );
