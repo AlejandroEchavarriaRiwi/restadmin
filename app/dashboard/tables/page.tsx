@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import './style.sass';
-import Button from '../../../components/buttons/Button';
+import Button from '../../../components/ui/Button';
+import TableCard from '@/components/ui/StyledTableCard'
+import { PlusCircle, Trash2} from 'lucide-react';
 
 interface Table {
   id: string;
@@ -32,6 +34,7 @@ interface Order {
 
 const Container = styled.div`
   margin-top: 20px;
+  padding: 0px 40px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
@@ -48,44 +51,19 @@ const NavBar = styled.nav`
     font-weight: bold;
     font-size: x-large;
   }
-`;
-
-const TableCard = styled.div<{ state: Table['state'] }>`
-  width: 200px;
-  height: 200px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  background-color: ${props => {
-    switch (props.state) {
-      case 'Disponible': return '#d4edda';
-      case 'Ocupada': return '#cce5ff';
-      case 'Cocinando': return '#fff3cd';
-      case 'Por facturar': return '#f8d7da';
-      default: return '#ffffff';
+  @media screen and (max-width: 600px){
+    flex-direction:column;
+    h1{
+      margin-left: 0;
     }
-  }};
-  border: 2px solid ${props => {
-    switch (props.state) {
-      case 'Disponible': return '#28a745';
-      case 'Ocupada': return '#007bff';
-      case 'Cocinando': return '#ffc107';
-      case 'Por facturar': return '#dc3545';
-      default: return '#6c757d';
+    div{
+      flex-direction: column;
+      margin-top: 10px;
+      margin-right: 0;
     }
-  }};
-  cursor: pointer;
-
-  h2{
-    font-weight: bold;
-    font-size: xx-large;
-    color: #363636;
   }
 `;
+
 
 const Modal = styled.div`
   position: fixed;
@@ -103,18 +81,27 @@ const ModalContent = styled.div`
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  margin-left: 220px;
   width: 80%;
   height: 90%;
   display: flex;
   flex-direction: column;
+  @media screen and (max-width: 600px) {
+    position: absolute;
+    width: 100%;
+    height: 100%
+  }
 `;
 
 const ModalHeader = styled.div`
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
+  button{
+    position: absolute;
+    right: 5px;
+  }
   h2{
     font-size: x-large;
     font-weight: bold;
@@ -123,13 +110,21 @@ const ModalHeader = styled.div`
 
 const ModalBody = styled.div`
   display: flex;
-  height: calc(100% - 60px);
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    height: 90%
+  }
 `;
 
 const MenuSection = styled.div`
   width: 60%;
   overflow-y: auto;
   padding-right: 20px;
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    width: 100%;
+    height: 50%;
+  }
 `;
 
 const OrderSection = styled.div`
@@ -142,6 +137,18 @@ const OrderSection = styled.div`
     font-size: large;
     font-weight: bold;
   }
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    width: 100%;
+    height: 50%;
+    
+    div.buttons{
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+  }
+  
 `;
 
 const CategoryTabs = styled.div`
@@ -150,18 +157,7 @@ const CategoryTabs = styled.div`
   margin-bottom: 20px;
 `;
 
-const MenuItemList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-`;
 
-const MenuItemListItem = styled.li`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-`;
 
 const TextArea = styled.textarea`
   width: 100%;
@@ -173,11 +169,12 @@ const TextArea = styled.textarea`
 
 const CategoryTab = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  background-color: ${props => props.active ? '#007bff' : '#f8f9fa'};
+  background-color: ${props => props.active ? '#4655c4' : '#f8f9fa'};
   color: ${props => props.active ? 'white' : 'black'};
   border: none;
   cursor: pointer;
   margin-right: 10px;
+  border-radius: 5px;
   &:hover {
     background-color: ${props => props.active ? '#0056b3' : '#e9ecef'};
   }
@@ -187,16 +184,43 @@ const MenuItemGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 15px;
+  
+  @media screen and (max-width: 600px) {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;  /* Para Firefox */
+    -ms-overflow-style: none;  /* Para Internet Explorer y Edge */
+    
+    &::-webkit-scrollbar {
+      display: none;  /* Para Chrome, Safari y Opera */
+    }
+  }
 `;
 
 const MenuItem = styled.div`
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
   text-align: center;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
   cursor: pointer;
+  
   &:hover {
-    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  @media screen and (max-width: 600px) {
+    flex: 0 0 auto;
+    width: 150px;  /* O el ancho que prefieras para móviles */
+    margin-right: 15px;
+    scroll-snap-align: start;
   }
 `;
 
@@ -204,6 +228,9 @@ const OrderList = styled.div`
   flex-grow: 1;
   overflow-y: auto;
   margin-bottom: 20px;
+  @media screen and (max-width: 600px) {
+    height: 60%;
+  }
 `;
 
 const DivOrder = styled.div`
@@ -334,21 +361,21 @@ export default function Tables() {
     if (currentOrder && selectedTable) {
       try {
         console.log('Processing order for kitchen:', currentOrder);
-        
+
         // Check if an order already exists
         const existingOrderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
         const existingOrders = await existingOrderResponse.json();
-        
+
         let savedOrder;
         if (existingOrders.length > 0) {
           // Update existing order
           const existingOrder = existingOrders[0];
-          savedOrder = { 
-            ...existingOrder, 
+          savedOrder = {
+            ...existingOrder,
             items: currentOrder.items,
-            observations: currentOrder.observations 
+            observations: currentOrder.observations
           };
-          
+
           const updateResponse = await fetch(`http://localhost:8001/orders/${existingOrder.id}`, {
             method: 'PUT',
             headers: {
@@ -441,13 +468,13 @@ export default function Tables() {
         // Fetch the order for the selected table
         const orderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
         const orders = await orderResponse.json();
-  
+
         if (orders.length === 0) {
           throw new Error('No order found for this table');
         }
-  
+
         const order = orders[0]; // Assume there's only one order per table
-  
+
         // Create a new pre-invoice in 'preinvoices'
         const preInvoiceResponse = await fetch('http://localhost:8001/preinvoices', {
           method: 'POST',
@@ -462,53 +489,53 @@ export default function Tables() {
             date: new Date().toISOString()
           }),
         });
-  
+
         if (!preInvoiceResponse.ok) {
           throw new Error(`Failed to create pre-invoice. Status: ${preInvoiceResponse.status}`);
         }
-  
+
         console.log('Pre-invoice created successfully');
-  
+
         // Delete the order from 'orders'
         const deleteOrderResponse = await fetch(`http://localhost:8001/orders/${order.id}`, {
           method: 'DELETE',
         });
-  
+
         if (!deleteOrderResponse.ok) {
           throw new Error(`Failed to delete order. Status: ${deleteOrderResponse.status}`);
         }
-  
+
         console.log('Order removed from orders');
-  
+
         // Delete the order from 'kitchen'
         const kitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${selectedTable.id}`);
         const kitchenOrders = await kitchenResponse.json();
-  
+
         for (const kitchenOrder of kitchenOrders) {
           const deleteKitchenResponse = await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
             method: 'DELETE',
           });
-  
+
           if (!deleteKitchenResponse.ok) {
             throw new Error(`Failed to delete kitchen order. Status: ${deleteKitchenResponse.status}`);
           }
         }
-  
+
         console.log('Order removed from kitchen');
-  
+
         // Update table state
         await updateTableState(selectedTable.id, 'Por facturar');
         console.log('Table state updated to Por facturar');
-  
+
         // Close modal and reset current order
         setSelectedTable(null);
         setCurrentOrder(null);
-  
+
         // Refresh tables
         await fetchTables();
-  
+
         console.log('Pre-invoice process completed');
-  
+
       } catch (error) {
         console.error('Error handling pre-invoice:', error);
         alert(`Error handling pre-invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -523,7 +550,7 @@ export default function Tables() {
       if (!currentTable) {
         throw new Error('Table not found');
       }
-      
+
       const response = await fetch(`http://localhost:8001/tables/${tableId}`, {
         method: 'PUT',
         headers: {
@@ -539,13 +566,13 @@ export default function Tables() {
 
       const updatedTable = await response.json();
       console.log('Table state updated on server:', updatedTable);
-      
-      setTables(prevTables => 
-        prevTables.map(table => 
+
+      setTables(prevTables =>
+        prevTables.map(table =>
           table.id === tableId ? { ...table, state: newState } : table
         )
       );
-      
+
       return updatedTable;
     } catch (error) {
       console.error('Error updating table state:', error);
@@ -555,8 +582,8 @@ export default function Tables() {
   };
 
   const addTable = async () => {
-    const newTable: Table = { 
-      id: `${tables.length + 1}`, 
+    const newTable: Table = {
+      id: `${tables.length + 1}`,
       name: `Mesa ${tables.length + 1}`,
       state: 'Disponible'
     };
@@ -627,91 +654,102 @@ export default function Tables() {
     }
   };
 
-  const filteredMenuItems = selectedCategory === 'Todos' 
-  ? menuItems 
-  : menuItems.filter(item => item.category === selectedCategory);
+  const filteredMenuItems = selectedCategory === 'Todos'
+    ? menuItems
+    : menuItems.filter(item => item.category === selectedCategory);
 
-return (
-  <>
-    <NavBar>
-      <h1>Mesas</h1>
-      <div>
-        <Button onClick={addTable}>Añadir mesa</Button>
-        <Button onClick={removeTable} $disabled={tables.length === 0} $variant="danger">
-          Eliminar mesa
-        </Button>
-      </div>
-    </NavBar>
-    <Container>
-      {tables.length > 0 ? (
-        tables.map((table) => (
-          <TableCard key={table.id} state={table.state} onClick={() => handleTableClick(table)}>
-            <h2>{table.name}</h2>
-            <p>{table.state}</p>
-          </TableCard>
-        ))
-      ) : (
-        <h2>No hay mesas creadas</h2>
+  return (
+    <>
+      <NavBar>
+        <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        <div className='flex gap-4 mr-4 '>
+          <Button
+            className="flex items-center text-gray-800"
+            onClick={addTable}
+          >
+            <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+            Agregar Mesa
+          </Button>
+          <Button
+            className={`flex items-center`}
+            onClick={removeTable}
+          >
+            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+            Eliminar Mesa
+          </Button>
+        </div>
+      </NavBar>
+      <Container>
+        {tables.length > 0 ? (
+          tables.map((table) => (
+            <TableCard
+              key={table.id}
+              table={table}
+              onClick={() => handleTableClick(table)}
+            />
+          ))
+        ) : (
+          <h2>No hay mesas creadas</h2>
+        )}
+      </Container>
+      {selectedTable && currentOrder && (
+        <Modal onClick={() => setSelectedTable(null)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <h2>{selectedTable.name} - Orden</h2>
+              <Button onClick={() => setSelectedTable(null)}>Cerrar</Button>
+            </ModalHeader>
+            <ModalBody>
+              <MenuSection>
+                <CategoryTabs>
+                  {categories.map(category => (
+                    <CategoryTab
+                      key={category}
+                      active={selectedCategory === category}
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </CategoryTab>
+                  ))}
+                </CategoryTabs>
+                <MenuItemGrid>
+                  {filteredMenuItems.map((item) => (
+                    <MenuItem key={item.id} onClick={() => handleAddMenuItem(item)}>
+                      <img src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-48 object-cover" />
+                      <div>{item.name}</div>
+                      <div>${item.price}</div>
+                    </MenuItem>
+                  ))}
+                </MenuItemGrid>
+              </MenuSection>
+              <OrderSection>
+                <h3>Pedido:</h3>
+                <OrderList>
+                  {currentOrder.items.map((item, index) => (
+                    <DivOrder key={index}>
+                      <span>{item.name} - ${item.price} <h4>x {item.quantity}</h4></span>
+                      <Button onClick={() => handleRemoveMenuItem(item)}>-</Button>
+                    </DivOrder>
+                  ))}
+                </OrderList>
+                <h3>Observaciones:</h3>
+                <TextArea
+                  value={currentOrder.observations}
+                  onChange={(e) => setCurrentOrder({ ...currentOrder, observations: e.target.value })}
+                  placeholder="Introduzca aquí cualquier instrucción u observación especial..."
+                  rows={4}
+                />
+                <div className='buttons'>
+                  <Button onClick={handleSendToKitchen}>Enviar a Cocina</Button>
+                  <Button onClick={handlePreInvoice}>Pre-facturar</Button>
+                </div>
+              </OrderSection>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       )}
-    </Container>
-    {selectedTable && currentOrder && (
-      <Modal onClick={() => setSelectedTable(null)}>
-        <ModalContent onClick={(e) => e.stopPropagation()}>
-          <ModalHeader>
-            <h2>{selectedTable.name} - Orden</h2>
-            <Button onClick={() => setSelectedTable(null)}>Cerrar</Button>
-          </ModalHeader>
-          <ModalBody>
-            <MenuSection>
-              <CategoryTabs>
-                {categories.map(category => (
-                  <CategoryTab 
-                    key={category}
-                    active={selectedCategory === category}
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </CategoryTab>
-                ))}
-              </CategoryTabs>
-              <MenuItemGrid>
-                {filteredMenuItems.map((item) => (
-                  <MenuItem key={item.id} onClick={() => handleAddMenuItem(item)}>
-                    
-                    <img src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-48 object-cover" />
-
-                    <div>{item.name}</div>
-                    <div>${item.price}</div>
-                  </MenuItem>
-                ))}
-              </MenuItemGrid>
-            </MenuSection>
-            <OrderSection>
-              <h3>Pedido:</h3>
-              <OrderList>
-                {currentOrder.items.map((item, index) => (
-                  <DivOrder key={index}>
-                    <span>{item.name} - ${item.price} <h4>x {item.quantity}</h4></span>
-                    <Button onClick={() => handleRemoveMenuItem(item)}>-</Button>
-                  </DivOrder>
-                ))}
-              </OrderList>
-              <h3>Observaciones:</h3>
-              <TextArea
-                value={currentOrder.observations}
-                onChange={(e) => setCurrentOrder({...currentOrder, observations: e.target.value})}
-                placeholder="Introduzca aquí cualquier instrucción u observación especial..."
-                rows={4}
-              />
-              <Button onClick={handleSendToKitchen}>Enviar a Cocina</Button>
-              <Button onClick={handlePreInvoice} $variant="secondary">Pre-facturar</Button>
-            </OrderSection>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-    )}
-  </>
-);
+    </>
+  );
 }

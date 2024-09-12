@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import './styles/navbarstyles.sass';
 import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { MdTableRestaurant, MdDeliveryDining } from 'react-icons/md';
 import { RiStackOverflowFill } from 'react-icons/ri';
@@ -19,6 +20,7 @@ export default function NavBarAsideDashboard() {
     const [isOpen, setIsOpen] = useState(true);
     const { user, loading, error, logout } = useAuth();
     const router = useRouter();
+
 
     useEffect(() => {
         if (!loading && !user) {
@@ -57,24 +59,39 @@ export default function NavBarAsideDashboard() {
         icon: any;
         label: string;
         condition?: boolean;
+        isOpen: boolean;
     }
 
-    const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, condition = true }) => {
+    const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, condition = true, isOpen }) => {
+        const pathname = usePathname();
+        const isActive = pathname === href;
+
         if (!condition) return null;
         return (
             <Link href={href} className="w-full">
-                <div className={`group flex items-center ${isOpen ? 'justify-start' : 'justify-center'} p-2 hover:bg-azulclaro hover:text-azuloscuro rounded-lg transition-all duration-300 ease-in-out`}>
-                    <Icon className={`text-5xl text-amarillo  ${isOpen ? 'mr-2' : ''} group-hover:text-azuloscuro`} />
+                <div
+                    className={`
+                    group flex items-center 
+                    ${isOpen ? 'justify-start' : 'justify-center'} 
+                    p-2 rounded-s-xl transition-all duration-300 ease-in-out
+                    ${isActive ? 'bg-azulclaro text-azuloscuro' : 'hover:bg-azulclaro hover:text-azuloscuro'}
+                  `}
+                >
+                    <Icon
+                        className={`
+                      text-5xl 
+                      ${isOpen ? 'mr-2' : ''} 
+                      ${isActive ? 'text-azuloscuro' : 'text-amarillo group-hover:text-azuloscuro'}
+                    `}
+                    />
                     {isOpen && <span className="text-[0.9rem] font-semibold">{label}</span>}
                 </div>
             </Link>
-
         );
     };
-
     return (
         <div className={`flex flex-col bg-azuloscuro text-white ${isOpen ? 'w-64' : 'w-20'} transition-all duration-200 ease-in-out h-full`}>
-            <div className="flex items-center justify-between p-4">
+            <div className="flex text-center items-center justify-between p-4">
                 {isOpen && (
                     <div className="flex items-center gap-3">
                         <img className="w-10 h-10" src="/images/restadmin.png" alt="RestAdmin Logo" />
@@ -83,7 +100,7 @@ export default function NavBarAsideDashboard() {
                         </h1>
                     </div>
                 )}
-                <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-full hover:bg-indigo-700 text-2xl ml-2">
+                <button onClick={() => setIsOpen(!isOpen)} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0': 'm-auto'}`}>
                     {isOpen ? <GiForkKnifeSpoon /> : <GiKnifeFork />
                     }
                 </button>
@@ -106,18 +123,18 @@ export default function NavBarAsideDashboard() {
             )}
 
             <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
-                <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} />
-                <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} />
-                <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} />
-                <NavItem href="/dashboard/kitchen" icon={FaKitchenSet} label="COCINA" condition={isAdmin || isCashier} />
-                <NavItem href="/dashboard/delivery" icon={MdDeliveryDining} label="DOMICILIOS" condition={isAdmin || isCashier} />
-                <NavItem href="#" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} />
-                <NavItem href="#" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} />
-                <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} />
-                <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} />
+                <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} />
+                <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} />
+                <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} />
+                <NavItem href="/dashboard/kitchen" icon={FaKitchenSet} label="COCINA" condition={isAdmin || isCashier} isOpen={isOpen} />
+                <NavItem href="/dashboard/delivery" icon={MdDeliveryDining} label="DOMICILIOS" condition={isAdmin || isCashier} isOpen={isOpen} />
+                <NavItem href="#" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} isOpen={isOpen} />
+                <NavItem href="#" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} />
+                <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} isOpen={isOpen} />
+                <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} />
             </nav>
 
-            <button onClick={logout} className={`mt-auto mb-4 text-blanco p-2 flex items-center ${isOpen ? 'text-left' : 'text-center justify-center w-full'}`}>
+            <button onClick={logout} className={`my-2 ml-3 m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left' : 'text-center justify-center w-full'}`}>
                 <TbLogout2 className="text-5xl mr-2" />
                 {isOpen && 'Cerrar sesión'}
             </button>
