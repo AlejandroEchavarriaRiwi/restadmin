@@ -4,10 +4,12 @@ import styled from "styled-components";
 import { Product } from '@/types/Imenu';
 import ProductCard from '@/components/cards/ProductCard';
 import EditProductModal from '@/components/modals/EditProductModal';
-import FormWithImageUpload from "@/components/buttons/uploadButton";
 import { AlertConfirm } from '@/components/alerts/questionAlert';
 import InputAlert from '@/components/alerts/successAlert';
 import ProductForm from '@/components/forms/NewProductForm';
+import { PlusCircle, Edit, Trash2 } from "lucide-react"
+import Button from '@/components/ui/Button';
+
 
 const Container = styled.div`
     margin: 30px;
@@ -113,28 +115,41 @@ export default function Menu() {
 
     return (
         <div className="">
-            <div className="navbarSide">
-                <button
-                    className="px-4 py-2 mt-4 font-bold text-white bg-azuloscuro rounded hover:bg-azulmedio"
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    Agregar Producto
-                </button>
-                <button
-                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isEditMode ? 'bg-green-500' : 'bg-azulmedio'} rounded hover:${isEditMode ? 'bg-green-700' : 'bg-gray-700'}`}
-                    onClick={toggleEditMode}
-                    disabled={isDeleteMode}
-                >
-                    {isEditMode ? 'Cancelar Edición' : 'Editar Productos'}
-                </button>
-                <button
-                    className={`px-4 py-2 mt-4 ml-4 font-bold text-white ${isDeleteMode ? 'bg-red-500' : 'bg-azulmedio'} rounded hover:${isDeleteMode ? 'bg-red-700' : 'bg-gray-700'}`}
-                    onClick={toggleDeleteMode}
-                    disabled={isEditMode}
-                >
-                    {isDeleteMode ? 'Cancelar Eliminación' : 'Eliminar Productos'}
-                </button>
-            </div>
+            <nav className="bg-primary text-primary-foreground shadow-md">
+                <div className="container mx-auto px-4 py-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-center">
+                        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Gestión de Productos</h1>
+                        <div className="flex flex-wrap  justify-center gap-6 sm:justify-end sm:gap-10   ">
+                            <Button
+                                variant="secondary"
+                                className="flex items-center"
+                                onClick={() => setIsModalOpen(true)}
+                            >
+                                <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+                                Agregar Producto
+                            </Button>
+                            <Button
+                                className={`flex items-center  ${isEditMode ? 'text-blue-600' : 'text-black'}`}
+                                variant="secondary"
+                                onClick={toggleEditMode}
+                                disabled={isDeleteMode}
+                            >
+                                <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                                {isEditMode ? 'Cancelar Edición' : 'Editar Productos'}
+                            </Button>
+                            <Button
+                                className={`flex items-center ${isDeleteMode ? 'text-red-600' : 'text-black'}`}
+                                variant="secondary"
+                                onClick={toggleDeleteMode}
+                                disabled={isEditMode}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                                {isDeleteMode ? 'Cancelar Eliminación' : 'Eliminar Productos'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
 
             <Container>
                 {products.length > 0 ? (

@@ -7,3 +7,13 @@
     padding: 0;
     box-sizing: border-box;
 }
+
+/* Para ocultar completamente la barra de desplazamiento */
+::-webkit-scrollbar {
+    display: none;
+}
+
+html {
+    -ms-overflow-style: none;  /* Para Internet Explorer y Edge */
+    scrollbar-width: none;  /* Para Firefox */
+}
