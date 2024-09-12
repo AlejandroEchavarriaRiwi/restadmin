@@ -12,7 +12,7 @@ import { BiSolidFoodMenu } from 'react-icons/bi';
 import { FaPeopleRobbery, FaKitchenSet, FaFileInvoiceDollar, FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
 import { HiComputerDesktop } from 'react-icons/hi2';
 import { TbLogout2 } from "react-icons/tb";
-import { GiKnifeFork } from "react-icons/gi";  
+import { GiKnifeFork } from "react-icons/gi";
 import { GiForkKnifeSpoon } from "react-icons/gi"
 
 export default function NavBarAsideDashboard() {
@@ -63,11 +63,12 @@ export default function NavBarAsideDashboard() {
         if (!condition) return null;
         return (
             <Link href={href} className="w-full">
-                <div className={`flex items-center ${isOpen ? 'justify-start' : 'justify-center'} p-2 hover:bg-indigo-700 rounded-lg transition-all duration-300 ease-in-out`}>
-                    <Icon className={`text-5xl text-yellow-400 ${isOpen ? 'mr-2' : ''}`} />
-                    {isOpen && <span className="text-xs font-semibold">{label}</span>}
+                <div className={`group flex items-center ${isOpen ? 'justify-start' : 'justify-center'} p-2 hover:bg-azulclaro hover:text-azuloscuro rounded-lg transition-all duration-300 ease-in-out`}>
+                    <Icon className={`text-5xl text-amarillo  ${isOpen ? 'mr-2' : ''} group-hover:text-azuloscuro`} />
+                    {isOpen && <span className="text-[0.9rem] font-semibold">{label}</span>}
                 </div>
             </Link>
+
         );
     };
 

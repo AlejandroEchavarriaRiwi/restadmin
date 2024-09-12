@@ -209,8 +209,9 @@ const MenuItemName = styled.h3`
 
 const MenuItemPrice = styled.p`
   margin: 0;
-  color: #28a745;
+  color: #a9903f;
   font-weight: bold;
+  font-size: 20px;
 `;
 
 const OrderItem = styled.div`

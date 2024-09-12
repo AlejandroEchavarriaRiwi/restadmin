@@ -11,7 +11,7 @@ const config: Config = {
       colors:
       {
         blanco: '#F9FAF9',
-        amarillo: '#f2cf5b',
+        amarillo: '#f4d87b',
         azulmedio: '#637ad6',
         azulclaro: '#aac3eb',
         azuloscuro: '#4655c4',
