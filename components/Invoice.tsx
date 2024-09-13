@@ -5,12 +5,11 @@ import { useReactToPrint } from 'react-to-print';
 import Button from '../components/buttons/Button';
 import Modal from '@/components/modals/ModalMobileView'
 import { PreInvoice, Table } from '@/types/IInvoice';
+import { FaFileInvoiceDollar } from 'react-icons/fa6';
 
-// ... (keep existing interfaces)
 
 const ModuleContainer = styled.div`
-  padding: 20px;
-  max-width: 100%;
+  width: 100%;
 `;
 
 const TableGrid = styled.div`
@@ -18,16 +17,32 @@ const TableGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
+  @media screen and (max-width: 600px) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 2em;
+    font-weight: bold;
+  }
 `;
 
 const TableCard = styled.div<{ selected: boolean }>`
-  border: 1px solid #ddd;
+  border: 2px solid #4655c4;
+  background: #c2d6f8;
+  color: #4655c4;
   border-radius: 8px;
   padding: 15px;
   cursor: pointer;
-  background-color: ${props => props.selected ? '#e6f7ff' : '#fff'};
   &:hover {
     background-color: #f0f0f0;
+  }
+  @media screen and (max-width: 600px){
+    width: 50%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
@@ -40,8 +55,19 @@ const OrderDetails = styled.div`
 
 const PrintableInvoice = styled.div`
   padding: 20px;
-  border: 1px solid #ddd;
   margin-top: 20px;
+  width: 80mm;
+  font-size: 8px;
+  ul{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+
+  }
+  li{
+    display: flex;
+    justify-content: space-between;
+  }
 `;
 
 export default function Invoice() {
@@ -175,10 +201,9 @@ export default function Invoice() {
 
   return (
     <ModuleContainer>
-      <div className="bg-primary text-primary-foreground py-2 px-2 m-3 rounded-xl shadow-md">
-        <div className="flex justify-center">
-          <h1 className="text-2xl font-bold mb-4 sm:mb-0">Pre-Facturas</h1>
-        </div>
+      <div className="bg-[#f8f9fa] p-[20px] flex items-center justify-center lg:justify-start gap-3 ">
+        <FaFileInvoiceDollar className='text-[1.5em] text-gray-800' />
+        <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Pre-Facturas</h1>
       </div>
       <TableGrid>
         {tables.map(table => (
@@ -214,19 +239,22 @@ export default function Invoice() {
       />
       <div style={{ display: 'none' }}>
         <PrintableInvoice ref={printRef}>
-          <PrintableInvoice ref={printRef}>
-            <h2>Invoice #{invoiceNumber.toString().padStart(5, '0')}</h2>
-            <p>Date: {new Date().toLocaleDateString()}</p>
-            <p>Table: {selectedTable?.name}</p>
-            <ul>
-              {preInvoice?.items.map((item, index) => (
-                <li key={index}>
-                  {item.name} - ${item.price} x {item.quantity} = ${item.price * item.quantity}
-                </li>
-              ))}
-            </ul>
-            <p>Total: ${preInvoice?.total}</p>
-          </PrintableInvoice>
+          <h2>Invoice #{invoiceNumber.toString().padStart(5, '0')}</h2>
+          <p>Date: {new Date().toLocaleDateString()}</p>
+          <p>Table: {selectedTable?.name}</p>
+          <ul>
+            {preInvoice?.items.map((item, index) => (
+              <li key={index}>
+                <div>
+                  {item.name} - ${item.price} x {item.quantity} =
+                </div>
+                <div>
+                  ${item.price * item.quantity}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p>Total: ${preInvoice?.total}</p>
         </PrintableInvoice>
       </div>
     </ModuleContainer>

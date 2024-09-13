@@ -5,6 +5,7 @@ import './style.sass';
 import Button from '../../../components/ui/Button';
 import TableCard from '@/components/ui/StyledTableCard'
 import { PlusCircle, Trash2, CreditCard, ChefHat } from 'lucide-react';
+import { MdTableRestaurant } from 'react-icons/md';
 
 interface Table {
   id: string;
@@ -43,13 +44,13 @@ const Container = styled.div`
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
-  padding: 10px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   h1{
     font-weight: bold;
-    font-size: x-large;
+    font-size: 1.5em;
   }
   @media screen and (max-width: 600px){
     flex-direction:column;
@@ -57,8 +58,9 @@ const NavBar = styled.nav`
       margin-left: 0;
     }
     div{
-      flex-direction: column;
-      margin-top: 10px;
+      flex-direction: row;
+      margin-bottom: 10px;
+      gap: 10px;
       margin-right: 0;
     }
   }
@@ -670,7 +672,10 @@ export default function Tables() {
   return (
     <>
       <NavBar>
-        <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        <div className='flex items-center '>
+          <MdTableRestaurant className='text-3xl text-gray-800'/>
+          <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        </div>
         <div className='flex gap-4 mr-4 '>
           <Button
             className="flex items-center text-gray-800"
