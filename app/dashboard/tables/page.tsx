@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import './style.sass';
 import Button from '../../../components/ui/Button';
 import TableCard from '@/components/ui/StyledTableCard'
-import { PlusCircle, Trash2} from 'lucide-react';
+import { PlusCircle, Trash2, CreditCard, ChefHat } from 'lucide-react';
 
 interface Table {
   id: string;
@@ -75,6 +75,9 @@ const Modal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  @media screen and (max-width: 600px){
+    z-index: 600;
+  }
 `;
 
 const ModalContent = styled.div`
@@ -110,14 +113,16 @@ const ModalHeader = styled.div`
 
 const ModalBody = styled.div`
   display: flex;
+  height: 90%;
   @media screen and (max-width: 600px) {
     flex-direction: column;
-    height: 90%
+    height: 95%
   }
 `;
 
 const MenuSection = styled.div`
   width: 60%;
+  height: 100%;
   overflow-y: auto;
   padding-right: 20px;
   @media screen and (max-width: 600px) {
@@ -146,6 +151,7 @@ const OrderSection = styled.div`
       display: flex;
       justify-content: center;
       gap: 20px;
+      margin-top: 10px;
     }
   }
   
@@ -165,6 +171,9 @@ const TextArea = styled.textarea`
   margin-bottom: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
+  @media screen and (max-width: 600px) {
+    margin-bottom: 2px;
+  }
 `;
 
 const CategoryTab = styled.button<{ active: boolean }>`
@@ -176,7 +185,7 @@ const CategoryTab = styled.button<{ active: boolean }>`
   margin-right: 10px;
   border-radius: 5px;
   &:hover {
-    background-color: ${props => props.active ? '#0056b3' : '#e9ecef'};
+    background-color: ${props => props.active ? '#637ad6' : '#e9ecef'};
   }
 `;
 
@@ -742,8 +751,14 @@ export default function Tables() {
                   rows={4}
                 />
                 <div className='buttons'>
-                  <Button onClick={handleSendToKitchen}>Enviar a Cocina</Button>
-                  <Button onClick={handlePreInvoice}>Pre-facturar</Button>
+                  <Button className='flex gap-1' onClick={handleSendToKitchen}>
+                    <ChefHat />
+                    Enviar a Cocina
+                  </Button>
+                  <Button className='flex gap-1' onClick={handlePreInvoice}>
+                    <CreditCard />
+                    Pre-facturar
+                  </Button>
                 </div>
               </OrderSection>
             </ModalBody>

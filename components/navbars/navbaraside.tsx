@@ -134,7 +134,7 @@ export default function NavBarAsideDashboard() {
                 <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} />
             </nav>
 
-            <button onClick={logout} className={`my-2 ml-3 m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left' : 'text-center justify-center w-full'}`}>
+            <button onClick={logout} className={`my-2  m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left ml-3' : 'text-center justify-center w-full ml-0'}`}>
                 <TbLogout2 className="text-5xl mr-2" />
                 {isOpen && 'Cerrar sesión'}
             </button>
