@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import './style.sass';
 import Button from '../../../components/ui/Button';
 import TableCard from '@/components/ui/StyledTableCard'
-import { PlusCircle, Trash2} from 'lucide-react';
+import { PlusCircle, Trash2, CreditCard, ChefHat } from 'lucide-react';
+import { MdTableRestaurant } from 'react-icons/md';
 
 interface Table {
   id: string;
@@ -43,13 +44,13 @@ const Container = styled.div`
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
-  padding: 10px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   h1{
     font-weight: bold;
-    font-size: x-large;
+    font-size: 1.5em;
   }
   @media screen and (max-width: 600px){
     flex-direction:column;
@@ -57,8 +58,9 @@ const NavBar = styled.nav`
       margin-left: 0;
     }
     div{
-      flex-direction: column;
-      margin-top: 10px;
+      flex-direction: row;
+      margin-bottom: 10px;
+      gap: 10px;
       margin-right: 0;
     }
   }
@@ -75,6 +77,9 @@ const Modal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  @media screen and (max-width: 600px){
+    z-index: 600;
+  }
 `;
 
 const ModalContent = styled.div`
@@ -110,14 +115,16 @@ const ModalHeader = styled.div`
 
 const ModalBody = styled.div`
   display: flex;
+  height: 90%;
   @media screen and (max-width: 600px) {
     flex-direction: column;
-    height: 90%
+    height: 95%
   }
 `;
 
 const MenuSection = styled.div`
   width: 60%;
+  height: 100%;
   overflow-y: auto;
   padding-right: 20px;
   @media screen and (max-width: 600px) {
@@ -146,6 +153,7 @@ const OrderSection = styled.div`
       display: flex;
       justify-content: center;
       gap: 20px;
+      margin-top: 10px;
     }
   }
   
@@ -165,6 +173,9 @@ const TextArea = styled.textarea`
   margin-bottom: 10px;
   border: 1px solid #ced4da;
   border-radius: 4px;
+  @media screen and (max-width: 600px) {
+    margin-bottom: 2px;
+  }
 `;
 
 const CategoryTab = styled.button<{ active: boolean }>`
@@ -176,7 +187,7 @@ const CategoryTab = styled.button<{ active: boolean }>`
   margin-right: 10px;
   border-radius: 5px;
   &:hover {
-    background-color: ${props => props.active ? '#0056b3' : '#e9ecef'};
+    background-color: ${props => props.active ? '#637ad6' : '#e9ecef'};
   }
 `;
 
@@ -661,7 +672,10 @@ export default function Tables() {
   return (
     <>
       <NavBar>
-        <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        <div className='flex items-center '>
+          <MdTableRestaurant className='text-3xl text-gray-800'/>
+          <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        </div>
         <div className='flex gap-4 mr-4 '>
           <Button
             className="flex items-center text-gray-800"
@@ -742,8 +756,14 @@ export default function Tables() {
                   rows={4}
                 />
                 <div className='buttons'>
-                  <Button onClick={handleSendToKitchen}>Enviar a Cocina</Button>
-                  <Button onClick={handlePreInvoice}>Pre-facturar</Button>
+                  <Button className='flex gap-1' onClick={handleSendToKitchen}>
+                    <ChefHat />
+                    Enviar a Cocina
+                  </Button>
+                  <Button className='flex gap-1' onClick={handlePreInvoice}>
+                    <CreditCard />
+                    Pre-facturar
+                  </Button>
                 </div>
               </OrderSection>
             </ModalBody>

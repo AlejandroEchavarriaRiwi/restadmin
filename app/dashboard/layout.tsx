@@ -10,12 +10,12 @@ export default function DashboardLayout({
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
-            <aside className="flex-none h-full overflow-y-auto  absolute z-{10000}">
+            <aside className="flex-none h-full overflow-y-auto absolute z-[500] lg:relative lg:z-auto">
                 <NavBarAsideDashboard/>
             </aside>
 
             {/* Main content */}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto ml-20 lg:ml-0">
                 <div>
                     {children}
                 </div>
