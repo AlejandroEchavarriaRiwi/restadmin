@@ -143,11 +143,15 @@ export default function UserManagement() {
         id: isEditing ? editingUser!.id : 0,
         name: userData.name,
         email: userData.email,
-        passwordHash: userData.password,
         phone: userData.phone,
         address: userData.address,
         roleId: Number(userData.roleId)
       };
+  
+      // Solo incluir la contraseña si es un nuevo usuario o si se ha cambiado
+      if (!isEditing || (isEditing && userData.password)) {
+        dataToSend.passwordHash = userData.password;
+      }
   
       console.log('Sending data:', JSON.stringify(dataToSend, null, 2));
   
