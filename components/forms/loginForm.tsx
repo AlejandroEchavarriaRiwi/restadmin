@@ -3,12 +3,15 @@ import React, { useEffect, useState } from "react";
 import { UserController } from "../../controllers/user.controller";
 import InputAlert from "../alerts/successAlert";
 import { showPreloader, hidePreloader } from "../../controllers/user.controller";
+import { ResponseLoginUser } from "@/models/user.models";
+
 
 interface User {
-    id: string;
+    id?: string;
     email: string;
-    roles: { roleId: number; roleName: string }[];
+    role: { roleId: number; roleName: string }[];
     name: string;
+    token: string;
 }
 
 export function LoginForm() {
@@ -22,65 +25,51 @@ export function LoginForm() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const userController = new UserController('http://localhost:8001');
-
+        const userController = new UserController('https://restadmin.azurewebsites.net');
+    
         showPreloader();
-
+    
         try {
-            console.log("Intentando iniciar sesión...");
-            const loginResult = await userController.login({ email, password });
-            console.log("Resultado del login:", loginResult);
-
+            const loginResult: ResponseLoginUser = await userController.login({ email, password });
+    
             hidePreloader();
             await InputAlert('Bienvenido', 'success');
-
-            // Procesar los roles
-            let processedRoles: { roleId: number; roleName: string }[];
-            if (Array.isArray(loginResult.user.roles) && loginResult.user.roles.length === 2) {
-                processedRoles = [{
-                    roleId: loginResult.user.roles[0] as number,
-                    roleName: loginResult.user.roles[1] as string
-                }];
-            } else {
-                console.error("Formato de roles inesperado:", loginResult.user.roles);
-                processedRoles = [{ roleId: 0, roleName: "Unknown" }];
-            }
-
-            console.log("Roles procesados:", processedRoles);
-
+    
             const user: User = {
-                id: loginResult.user.id,
-                email: loginResult.user.email,
-                roles: processedRoles,
-                name: loginResult.user.name
+                email: loginResult.email,
+                name: loginResult.name,
+                role: [{ roleId: loginResult.roleId, roleName: getRoleName(loginResult.roleId) }],
+                token: loginResult.token
             };
-
-            console.log("Usuario a guardar:", user);
             localStorage.setItem("user", JSON.stringify(user));
-
-            console.log("Usuario guardado en localStorage");
-
+    
             // Redirección basada en rol
             let redirectPath = '/dashboard';
-            if (processedRoles[0].roleId === 1) {
+            if (loginResult.roleId === 2) {
                 redirectPath = '/dashboard/createusers';
-            } else if (processedRoles[0].roleId === 2) {
+            } else if (loginResult.roleId === 1) {
                 redirectPath = '/dashboard/pos';
-            } else if (processedRoles[0].roleId === 3) {
+            } else if (loginResult.roleId === 3) {
                 redirectPath = '/dashboard/tables';
             }
-
-            console.log("Redirigiendo a:", redirectPath);
             window.location.href = redirectPath;
-
+    
         } catch (error) {
             hidePreloader();
-            console.error("Error durante el login:", error);
             if (error instanceof Error) {
                 await InputAlert(error.message, 'error');
             } else {
                 await InputAlert('An unexpected error occurred', 'error');
             }
+        }
+    };
+
+    const getRoleName = (roleId: number): string => {
+        switch (roleId) {
+            case 1: return "Admin";
+            case 2: return "Administrator";
+            case 3: return "Waiter";
+            default: return "Unknown";
         }
     };
 

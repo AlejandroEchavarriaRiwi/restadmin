@@ -11,7 +11,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     const router = useRouter();
 
     useEffect(() => {
-        const isAuthenticated = localStorage.getItem('email');
+        const isAuthenticated = localStorage.getItem('user.token');
         if (!isAuthenticated) {
             router.push('/login');
         }

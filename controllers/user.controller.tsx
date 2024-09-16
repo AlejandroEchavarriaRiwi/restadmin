@@ -16,7 +16,7 @@ export class UserController {
             headers: headers,
             body: JSON.stringify(user)
         };
-        const url = this.domain + 'users/register';
+        const url = this.domain + '/api/v1/User';
         const result: Response = await fetch(url, reqOptions);
 
         if (!result.ok) {
@@ -30,31 +30,25 @@ export class UserController {
     }
 
     async login(data: RequestLoginUser): Promise<ResponseLoginUser> {
-        const endPointLogin: string = '/users'
+        const endPointLogin: string = '/api/Auth/login'
         const url = this.urlApi + endPointLogin
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
             if (!response.ok) {
-                throw new Error("Failed to fetch users");
+                throw new Error("Login failed");
             }
-            const users = await response.json();
 
-            const user = users.find((u: any) => u.email === data.email && u.password === data.password);
+            const responseData: ResponseLoginUser = await response.json();
+            return responseData;
 
-            if (user) {
-                return {
-                    message: "Login successful",
-                    user: {
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        roles: user.roles
-                    }
-                };
-            } else {
-                throw new Error("Invalid email or password");
-            }
         } catch (error) {
             console.error("Login error:", error);
             throw new Error("User or password incorrect");

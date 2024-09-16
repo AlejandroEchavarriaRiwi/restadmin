@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 
 interface User {
-    id: string;
+    id?: string;
     email: string;
-    roles: { roleId: number; roleName: string }[];
+    role: { roleId: number; roleName: string }[];
     name: string;
+    token: string;
 }
 
 export function useAuth() {
@@ -13,28 +14,61 @@ export function useAuth() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const validateUserData = (data: any): data is User => {
+            return (
+                typeof data === 'object' &&
+                data !== null &&
+                typeof data.email === 'string' &&
+                typeof data.name === 'string' &&
+                typeof data.token === 'string' &&
+                Array.isArray(data.role) &&
+                data.role.every((r: any) => 
+                    typeof r === 'object' &&
+                    typeof r.roleId === 'number' &&
+                    typeof r.roleName === 'string'
+                )
+            );
+        };
+
         try {
             const userStr = localStorage.getItem('user');
             if (userStr) {
                 const parsedUser = JSON.parse(userStr);
-                if (parsedUser && Array.isArray(parsedUser.roles)) {
+                if (validateUserData(parsedUser)) {
                     setUser(parsedUser);
                 } else {
-                    throw new Error('Invalid user data in localStorage');
+                    throw new Error('Invalid user data structure in localStorage');
                 }
             }
         } catch (err) {
-            console.error('Error parsing user data:', err);
-            setError('Error loading user data');
+            if (err instanceof SyntaxError) {
+                setError('Invalid JSON in user data');
+            } else if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Unknown error loading user data');
+            }
+            localStorage.removeItem('user'); // Limpiamos los datos inválidos
         } finally {
             setLoading(false);
         }
     }, []);
 
+    const login = (userData: User) => {
+        if (!userData.token) {
+            setError('Login failed: No token provided');
+            return;
+        }
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        setError(null);
+    };
+
     const logout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        setError(null);
     };
 
-    return { user, loading, error, logout };
+    return { user, loading, error, login, logout };
 }
