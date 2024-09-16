@@ -21,7 +21,7 @@ interface FormWithImageUploadProps {
 }
 
 const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
-    const { name, price, cost, setName, setPrice, setCost, setImageUrl } = useFormStore();
+    const { name, price, cost, setName, setPrice, setCost, setImageURL } = useFormStore();
     const [localImageUrl, setLocalImageUrl] = useState('');
     const [category, setCategory] = useState('');
     const [newCategory, setNewCategory] = useState('');
@@ -52,7 +52,7 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
     const handleUploadSuccess = (result: any) => {
         if (result && result.info && result.info.secure_url) {
             setLocalImageUrl(result.info.secure_url);
-            setImageUrl(result.info.secure_url);
+            setImageURL(result.info.secure_url);
         } else {
             console.error('Error: No se encontró secure_url en el resultado de la carga.');
         }
@@ -101,7 +101,7 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
             setName('');
             setCost(0);
             setPrice(0);
-            setImageUrl('');
+            setImageURL('');
             setLocalImageUrl('');
             setCategory('');
             setNewCategory('');
