@@ -94,7 +94,7 @@ export default function Menu() {
             const result = await AlertConfirm('¿Estás seguro de querer eliminar este producto?');
 
             if (result.isConfirmed) {
-                const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Product/{id}`, {
+                const response = await fetch(`/api/v1/Product/${id}`, {
                     method: 'DELETE',
                 });
 
@@ -114,7 +114,7 @@ export default function Menu() {
 
     const handleEditProduct = async (updatedProduct: Product) => {
         try {
-            const response = await fetch(`http://localhost:8001/menu/${updatedProduct.id}`, {
+            const response = await fetch(`api/v1/Proudct/${updatedProduct.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
