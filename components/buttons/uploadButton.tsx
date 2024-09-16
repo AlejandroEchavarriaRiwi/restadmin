@@ -70,7 +70,7 @@ const FormWithImageUpload: React.FC<FormWithImageUploadProps> = ({ setIsModalOpe
                     name,
                     cost,
                     price,
-                    imageUrl: localImageUrl,
+                    imageURL: localImageUrl,
                     category,
                 }),
             });
