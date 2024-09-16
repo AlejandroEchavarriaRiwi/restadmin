@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Product } from '@/types/Imenu';
 import { CldUploadWidget } from 'next-cloudinary';
-import CategorySelection from '../buttons/selectCategoriesButton';
+import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 
 const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSave: (updatedProduct: Product) => void, onClose: () => void }) => {
     const [editedProduct, setEditedProduct] = useState(product);
-    const [localImageUrl, setLocalImageUrl] = useState<string>(product.imageUrl); // Store the image URL
+    const [localImageUrl, setLocalImageUrl] = useState<string>(product.imageURL); // Store the image URL
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setEditedProduct(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleCategoryChange = (category: string) => {
+    const handleCategoryChange = (category: Category) => {
         setEditedProduct(prev => ({ ...prev, category }));
     };
 

@@ -64,8 +64,8 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://restadmin.azurewebsites.net';
-      const response = await fetch(`${apiUrl}/api/v1/User`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/v1/User`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -93,8 +93,8 @@ export default function UserManagement() {
   
     if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://restadmin.azurewebsites.net';
-        const response = await fetch(`${apiUrl}/api/v1/User/${userId.toString()}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const response = await fetch(`${apiUrl}/v1/User/${userId.toString()}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -132,25 +132,21 @@ export default function UserManagement() {
   
   const handleSaveUser = async (userData: UserFormData) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://restadmin.azurewebsites.net';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const isEditing = !!editingUser;
       const method = isEditing ? 'PUT' : 'POST';
       const url = isEditing && editingUser?.id 
-        ? `${apiUrl}/api/v1/User/${editingUser.id.toString()}` 
-        : `${apiUrl}/api/v1/User`;
+        ? `${apiUrl}/v1/User/${editingUser.id.toString()}` 
+        : `${apiUrl}/v1/User`;
   
-      const dataToSend: Partial<User> & { passwordHash?: string } = {
+      const dataToSend: Partial<User> = {
         id: isEditing ? editingUser!.id : 0,
         name: userData.name,
         email: userData.email,
+        passwordHash: userData.password,
         phone: userData.phone,
         address: userData.address,
-        roleId: Number(userData.roleId),
-        role: {
-          id: Number(userData.roleId),
-          name: getRoleName(Number(userData.roleId))
-        },
-        passwordHash: userData.password // Nota: En un caso real, el hash debería hacerse en el backend
+        roleId: Number(userData.roleId)
       };
   
       console.log('Sending data:', JSON.stringify(dataToSend, null, 2));
@@ -164,13 +160,8 @@ export default function UserManagement() {
         body: JSON.stringify(dataToSend)
       });
   
-      let responseText = '';
-      try {
-        responseText = await response.text();
-        console.log('Raw response:', responseText);
-      } catch (e) {
-        console.error('Error reading response:', e);
-      }
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
   
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
@@ -186,14 +177,18 @@ export default function UserManagement() {
       }
   
       let responseData;
-      try {
-        responseData = responseText ? JSON.parse(responseText) : {};
-      } catch (e) {
-        console.warn('Error parsing JSON response:', e);
+      if (responseText) {
+        try {
+          responseData = JSON.parse(responseText);
+          console.log('Parsed server response:', responseData);
+        } catch (e) {
+          console.warn('Error parsing JSON response:', e);
+          throw new Error(`Invalid JSON response: ${responseText}`);
+        }
+      } else {
+        console.warn('Empty response from server');
         responseData = {};
       }
-  
-      console.log('Parsed server response:', responseData);
   
       fetchUsers();
       handleCloseModal();
@@ -210,6 +205,7 @@ export default function UserManagement() {
     }
   };
   
+
   const getRoleName = (roleId: number): string => {
     switch (roleId) {
       case 1: return "Mesero";

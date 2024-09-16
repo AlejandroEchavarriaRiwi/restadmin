@@ -17,7 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => (
         onClick={() => onClick(product.id)}
     >
         <img
-            src={product.imageUrl}
+            src={product.imageURL}
             alt={product.name}
             className="w-full h-48 object-cover"
         />

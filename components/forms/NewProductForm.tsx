@@ -1,10 +1,10 @@
-// ProductForm.tsx
 import React, { useState } from 'react';
 import useFormStore from '../../app/dashboard/store';
 import ImageUpload from '../buttons/ButtonImageUpdload';
-import CategorySelection from '../buttons/selectCategoriesButton';
+import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 import SubmitAlert from '../alerts/submitAlert';
 import { Product } from '@/types/Imenu';
+
 
 interface ProductFormProps {
     setIsModalOpen: (isOpen: boolean) => void;
@@ -13,23 +13,34 @@ interface ProductFormProps {
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
-    const { name, price, cost, setName, setPrice, setCost, imageUrl, setImageUrl } = useFormStore();
-    const [category, setCategory] = useState('');
+    const { name, price, cost, setName, setPrice, setCost, imageURL, setImageURL } = useFormStore();
+    const [category, setCategory] = useState<Category | null>(null);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!category) {
+            alert('Por favor selecciona una categoría');
+            return;
+        }
+
         try {
-            const response = await fetch('http://localhost:8001/menu', {
+            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product', {
                 method: 'POST',
                 headers: {
+                    'accept': 'text/plain',
                     'Content-Type': 'application/json',
+                    
                 },
                 body: JSON.stringify({
                     name,
-                    cost,
                     price,
-                    imageUrl,
-                    category,
+                    cost,
+                    imageURL,
+                    categoryId: category.id,
+                    category: {
+                        id: category.id,
+                        name: category.name,
+                    },
                 }),
             });
 
@@ -45,8 +56,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 name,
                 cost,
                 price,
-                imageUrl,
-                category,
+                imageURL,
+                category: data.name,
             };
 
             onProductAdded(newProduct);
@@ -60,8 +71,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
             setName('');
             setCost(0);
             setPrice(0);
-            setImageUrl('');
-            setCategory('');
+            setImageURL('');
+            setCategory(null);
 
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -108,7 +119,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                     </div>
                 </div>
                 <CategorySelection category={category} setCategory={setCategory} />
-                <ImageUpload imageUrl={imageUrl} setImageUrl={setImageUrl} />
+                <ImageUpload imageUrl={imageURL} setImageUrl={setImageURL} />
                 <button
                     type="submit"
                     className="w-full py-2 bg-amarillo text-white rounded-lg"
@@ -120,4 +131,4 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
     );
 };
 
-export default ProductForm
+export default ProductForm;
