@@ -10,11 +10,13 @@ import { MdTableRestaurant, MdDeliveryDining } from 'react-icons/md';
 import { RiStackOverflowFill } from 'react-icons/ri';
 import { ImStatsDots } from 'react-icons/im';
 import { BiSolidFoodMenu } from 'react-icons/bi';
-import { FaPeopleRobbery, FaKitchenSet, FaFileInvoiceDollar, FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+import { FaPeopleRobbery, FaKitchenSet, FaFileInvoiceDollar } from 'react-icons/fa6';
 import { HiComputerDesktop } from 'react-icons/hi2';
 import { TbLogout2 } from "react-icons/tb";
 import { GiKnifeFork } from "react-icons/gi";
 import { GiForkKnifeSpoon } from "react-icons/gi"
+
+import './styles/navbarstyles.sass'
 
 export default function NavBarAsideDashboard() {
     const [isOpen, setIsOpen] = useState(true);
@@ -35,8 +37,6 @@ export default function NavBarAsideDashboard() {
             </div>
         );
     }
-
-
 
     if (error) {
         return (

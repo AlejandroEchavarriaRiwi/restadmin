@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import './style.sass';
 import Button from '../../../components/ui/Button';
 import TableCard from '@/components/ui/StyledTableCard'
-import { PlusCircle, Trash2, CreditCard, ChefHat } from 'lucide-react';
+import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from 'lucide-react';
 import { MdTableRestaurant } from 'react-icons/md';
 
 interface Table {
@@ -48,6 +48,7 @@ const NavBar = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   h1{
     font-weight: bold;
     font-size: 1.5em;
@@ -77,6 +78,7 @@ const Modal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  color:#1f2937;
   @media screen and (max-width: 600px){
     z-index: 600;
   }
@@ -131,6 +133,7 @@ const MenuSection = styled.div`
     flex-direction: column;
     width: 100%;
     height: 50%;
+    padding-right: 0px ;
   }
 `;
 
@@ -143,17 +146,28 @@ const OrderSection = styled.div`
   h3{
     font-size: large;
     font-weight: bold;
+    
   }
   @media screen and (max-width: 600px) {
+    display: flex;
     flex-direction: column;
     width: 100%;
     height: 50%;
     
     div.buttons{
       display: flex;
+      flex-direction: row;
       justify-content: center;
       gap: 20px;
       margin-top: 10px;
+    }
+  }
+  div.buttons{
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    button{
+      
     }
   }
   
@@ -171,8 +185,9 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #ced4da;
+  border: 1px solid #4655c4;
   border-radius: 4px;
+  border: 1px solid blue;
   @media screen and (max-width: 600px) {
     margin-bottom: 2px;
   }
@@ -673,7 +688,7 @@ export default function Tables() {
     <>
       <NavBar>
         <div className='flex items-center '>
-          <MdTableRestaurant className='text-3xl text-gray-800'/>
+          <MdTableRestaurant className='text-3xl text-gray-800' />
           <h1 className='ml-4 text-gray-800'>Mesas</h1>
         </div>
         <div className='flex gap-4 mr-4 '>
@@ -742,9 +757,12 @@ export default function Tables() {
                 <h3>Pedido:</h3>
                 <OrderList>
                   {currentOrder.items.map((item, index) => (
-                    <DivOrder key={index}>
+                    <DivOrder className='gap-3' key={index}>
                       <span>{item.name} - ${item.price} <h4>x {item.quantity}</h4></span>
-                      <Button onClick={() => handleRemoveMenuItem(item)}>-</Button>
+                      <Button className="w-8 h-8 m-2 flex items-center justify-center bg-white text-gray-700 border-2 border-gray-300 rounded-full shadow-sm transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-300"
+                        onClick={() => handleRemoveMenuItem(item)}>
+                        <Minus className="w-5 h-5" />
+                      </Button>
                     </DivOrder>
                   ))}
                 </OrderList>
@@ -756,12 +774,12 @@ export default function Tables() {
                   rows={4}
                 />
                 <div className='buttons'>
-                  <Button className='flex gap-1' onClick={handleSendToKitchen}>
-                    <ChefHat />
+                  <Button className='flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]' onClick={handleSendToKitchen}>
+                    <ChefHat className='text-[#d97706]' />
                     Enviar a Cocina
                   </Button>
-                  <Button className='flex gap-1' onClick={handlePreInvoice}>
-                    <CreditCard />
+                  <Button className='flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]' onClick={handlePreInvoice}>
+                    <CreditCard className='text-[#a71c1c]' />
                     Pre-facturar
                   </Button>
                 </div>

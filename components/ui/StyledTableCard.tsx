@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { Utensils, Users, CreditCard, ChefHat} from 'lucide-react'
+import { Utensils, Users, CreditCard, ChefHat } from 'lucide-react'
 
 const StyledTableCard = styled(motion.div) <{ state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por facturar' }>`
   width: 200px;
@@ -16,19 +16,19 @@ const StyledTableCard = styled(motion.div) <{ state: 'Disponible' | 'Ocupada' | 
   cursor: pointer;
   background-color: ${props => {
         switch (props.state) {
-            case 'Disponible': return '#e6f7ed';
-            case 'Ocupada': return '#e6f3ff';
-            case 'Cocinando': return '#fff9e6';
-            case 'Por facturar': return '#ffeaea';
+            case 'Disponible': return '#f2fff7';
+            case 'Ocupada': return '#f0f8ff';
+            case 'Cocinando': return '#fdfaef';
+            case 'Por facturar': return '#fff4f4';
             default: return '#ffffff';
         }
     }};
   border: 2px solid ${props => {
         switch (props.state) {
-            case 'Disponible': return '#34d399';
-            case 'Ocupada': return '#60a5fa';
-            case 'Cocinando': return '#fbbf24';
-            case 'Por facturar': return '#f87171';
+            case 'Disponible': return '#05724f';
+            case 'Ocupada': return '#1b48aa';
+            case 'Cocinando': return '#d97706';
+            case 'Por facturar': return '#a71c1c';
             default: return '#9ca3af';
         }
     }};
@@ -58,10 +58,10 @@ const TableName = styled.h2<{ state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'P
   text-align: center;
   color: ${props => {
         switch (props.state) {
-            case 'Disponible': return '#059669';
-            case 'Ocupada': return '#2563eb';
+            case 'Disponible': return '#05724f';
+            case 'Ocupada': return '#1b48aa';
             case 'Cocinando': return '#d97706';
-            case 'Por facturar': return '#dc2626';
+            case 'Por facturar': return '#a71c1c';
             default: return '#4b5563';
         }
     }};
@@ -72,10 +72,10 @@ const TableState = styled.p<{ state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'P
   font-weight: 500;
   color: ${props => {
         switch (props.state) {
-            case 'Disponible': return '#059669';
-            case 'Ocupada': return '#2563eb';
-            case 'Cocinando': return '#d97706';
-            case 'Por facturar': return '#dc2626';
+            case 'Disponible': return '#4b5563';
+            case 'Ocupada': return '#4b5563';
+            case 'Cocinando': return '#4b5563';
+            case 'Por facturar': return '#4b5563';
             default: return '#4b5563';
         }
     }};
