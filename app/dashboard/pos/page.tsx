@@ -33,9 +33,7 @@ interface Order {
 }
 
 const Container = styled.div`
-  margin-left: 220px;
   display: flex;
-  width: calc(100% - 220px);
   height: 100vh;
   overflow: hidden;
 `;
@@ -211,8 +209,9 @@ const MenuItemName = styled.h3`
 
 const MenuItemPrice = styled.p`
   margin: 0;
-  color: #28a745;
+  color: #a9903f;
   font-weight: bold;
+  font-size: 20px;
 `;
 
 const OrderItem = styled.div`
