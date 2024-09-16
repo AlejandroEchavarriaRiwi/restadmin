@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Product } from '@/types/Imenu';
 import ProductCard from '@/components/cards/ProductCard';
 import EditProductModal from '@/components/modals/EditProductModal';
@@ -10,7 +10,6 @@ import ProductForm from '@/components/forms/NewProductForm';
 import { PlusCircle, Edit, Trash2 } from "lucide-react"
 import Button from '@/components/ui/Button';
 
-
 const Container = styled.div`
     margin: 30px;
     display: grid;
@@ -18,18 +17,60 @@ const Container = styled.div`
     gap: 20px;
 `;
 
+// Skeleton styles
+const shimmer = keyframes`
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+`;
+
+const SkeletonPulse = styled.div`
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  background-color: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 200px;
+  animation: ${shimmer} 1.5s infinite linear;
+`;
+
+const ProductCardSkeleton = styled(SkeletonPulse)`
+  height: 300px;
+  border-radius: 8px;
+`;
+
+const ProductGridSkeleton = () => (
+  <Container>
+    {[...Array(8)].map((_, index) => (
+      <ProductCardSkeleton key={index} />
+    ))}
+  </Container>
+);
+
 export default function Menu() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchProducts();
     }, []);
 
     const fetchProducts = () => {
+        setIsLoading(true);
         fetch('/api/v1/Product')
             .then((response) => response.json())
             .then((data) => {
@@ -39,8 +80,10 @@ export default function Menu() {
                     console.error("Formato de datos incorrecto");
                 }
             })
-            .catch((error) => console.error("Error fetching data:", error));
+            .catch((error) => console.error("Error fetching data:", error))
+            .finally(() => setIsLoading(false));
     };
+
 
     const handleProductAdded = (newProduct: Product) => {
         setProducts([...products, newProduct]);
@@ -151,19 +194,23 @@ export default function Menu() {
                 </div>
             </nav>
 
-            <Container>
-                {products.length > 0 ? (
-                    products.map((product) => (
-                        <ProductCard
-                            key={product.id}
-                            product={product}
-                            onClick={handleProductClick}
-                        />
-                    ))
-                ) : (
-                    <p>No hay productos disponibles</p>
-                )}
-            </Container>
+            {isLoading ? (
+                <ProductGridSkeleton />
+            ) : (
+                <Container>
+                    {products.length > 0 ? (
+                        products.map((product) => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                onClick={handleProductClick}
+                            />
+                        ))
+                    ) : (
+                        <p>No hay productos disponibles</p>
+                    )}
+                </Container>
+            )}
 
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
