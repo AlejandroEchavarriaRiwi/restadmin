@@ -50,9 +50,9 @@ export default function NavBarAsideDashboard() {
         return null;
     }
 
-    const isAdmin = user.roles.some(r => r.roleId === 1);
-    const isCashier = user.roles.some(r => r.roleId === 2);
-    const isWaiter = user.roles.some(r => r.roleId === 3);
+    const isAdmin = user.role.some(r => r.roleId === 2);
+    const isCashier = user.role.some(r => r.roleId === 1);
+    const isWaiter = user.role.some(r => r.roleId === 3);
 
     interface NavItemProps {
         href: string;

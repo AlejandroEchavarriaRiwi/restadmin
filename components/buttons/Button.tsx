@@ -17,7 +17,6 @@ const Button = styled.button<{ $disabled?: boolean; $variant?: 'primary' | 'seco
   border-radius: 5px;
   cursor: ${props => (props.$disabled ? "not-allowed" : "pointer")};
   transition: background-color 0.3s;
-  margin: 0 5px;
 
   &:hover {
     background-color: ${props => {
