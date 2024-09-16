@@ -5,7 +5,6 @@ import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 import SubmitAlert from '../alerts/submitAlert';
 import { Product } from '@/types/Imenu';
 
-
 interface ProductFormProps {
     setIsModalOpen: (isOpen: boolean) => void;
     onProductAdded: (product: Product) => void;
@@ -24,24 +23,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
         }
 
         try {
-            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product', {
+            const productData = {
+                name,
+                price,
+                cost,
+                imageURL,
+                categoryId: category.id,
+            };
+
+            const response = await fetch('/api/v1/Product', {
                 method: 'POST',
                 headers: {
                     'accept': 'text/plain',
                     'Content-Type': 'application/json',
-                    
                 },
-                body: JSON.stringify({
-                    name,
-                    price,
-                    cost,
-                    imageURL,
-                    categoryId: category.id,
-                    category: {
-                        id: category.id,
-                        name: category.name,
-                    },
-                }),
+                body: JSON.stringify(productData),
             });
 
             if (!response.ok) {
@@ -53,10 +49,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
 
             const newProduct: Product = {
                 id: data.id,
-                name,
-                cost,
-                price,
-                imageURL,
+                name: data.name,
+                cost: data.cost,
+                price: data.price,
+                imageURL: data.imageURL,
                 category: data.name,
             };
 
