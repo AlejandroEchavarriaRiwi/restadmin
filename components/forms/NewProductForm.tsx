@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import useFormStore from '../../app/dashboard/store';
 import ImageUpload from '../buttons/ButtonImageUpdload';
-import CategorySelection from '../buttons/selectCategoriesButton';
+import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 import SubmitAlert from '../alerts/submitAlert';
 import { Product } from '@/types/Imenu';
 
-interface Category {
-    id: number;
-    name: string;
-}
 
 interface ProductFormProps {
     setIsModalOpen: (isOpen: boolean) => void;
@@ -61,7 +57,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 cost,
                 price,
                 imageURL,
-                category: category.name,
+                category: data.name,
             };
 
             onProductAdded(newProduct);
