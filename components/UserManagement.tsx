@@ -1,10 +1,10 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import Button from '../components/buttons/Button';
 import { useAuth } from '../hooks/useAuth';
 import { User, UserFormData } from '../models/user.models';
-import Modal from '../components/modals/UsersModal'; // Asegúrate de tener este componente
+import Modal from '../components/modals/UsersModal';
 
 const ModuleContainer = styled.div`
   padding: 20px;
@@ -48,11 +48,66 @@ const ActionButton = styled(Button)`
   margin-right: 5px;
 `;
 
+// Skeleton styles
+const shimmer = keyframes`
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+`;
+
+const SkeletonPulse = styled.div`
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  background-color: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 104px;
+  animation: ${shimmer} 1.5s infinite linear;
+`;
+
+const SkeletonCell = styled(SkeletonPulse)`
+  height: 20px;
+  width: 100%;
+`;
+
+const SkeletonRow = styled.tr`
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+`;
+
+const TableSkeleton = () => (
+  <tbody>
+    {[...Array(5)].map((_, index) => (
+      <SkeletonRow key={index}>
+        <Td><SkeletonCell /></Td>
+        <Td><SkeletonCell /></Td>
+        <Td><SkeletonCell /></Td>
+        <Td><SkeletonCell /></Td>
+        <Td><SkeletonCell /></Td>
+        <Td><SkeletonCell /></Td>
+      </SkeletonRow>
+    ))}
+  </tbody>
+);
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -63,6 +118,7 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
+      setIsLoading(true);
       setError(null);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const response = await fetch(`${apiUrl}/v1/User`, {
@@ -82,6 +138,8 @@ export default function UserManagement() {
     } catch (error) {
       console.error("No se pudieron obtener los usuarios:", error);
       setError(error instanceof Error ? error.message : 'Ocurrió un error desconocido');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -239,21 +297,25 @@ export default function UserManagement() {
             <Th>Acciones</Th>
           </tr>
         </thead>
-        <tbody>
-          {users.map(user => (
-            <tr key={user.id ?? user.email}>
-              <Td>{user.name}</Td>
-              <Td>{user.email}</Td>
-              <Td>{user.phone}</Td>
-              <Td>{user.address}</Td>
-              <Td>{getRoleName(user.roleId)}</Td>
-              <Td>
-                <ActionButton onClick={() => handleEditUser(user)}>Editar</ActionButton>
-                <ActionButton onClick={() => handleDeleteUser(user.id)}>Borrar</ActionButton>
-              </Td>
-            </tr>
-          ))}
-        </tbody>
+        {isLoading ? (
+          <TableSkeleton />
+        ) : (
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id ?? user.email}>
+                <Td>{user.name}</Td>
+                <Td>{user.email}</Td>
+                <Td>{user.phone}</Td>
+                <Td>{user.address}</Td>
+                <Td>{getRoleName(user.roleId)}</Td>
+                <Td>
+                  <ActionButton onClick={() => handleEditUser(user)}>Editar</ActionButton>
+                  <ActionButton onClick={() => handleDeleteUser(user.id)}>Borrar</ActionButton>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        )}
       </Table>
 
       {showModal && (

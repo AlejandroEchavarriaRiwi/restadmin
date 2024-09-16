@@ -128,8 +128,8 @@ export default function NavBarAsideDashboard() {
                 <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} />
                 <NavItem href="/dashboard/kitchen" icon={FaKitchenSet} label="COCINA" condition={isAdmin || isCashier} isOpen={isOpen} />
                 <NavItem href="/dashboard/delivery" icon={MdDeliveryDining} label="DOMICILIOS" condition={isAdmin || isCashier} isOpen={isOpen} />
-                <NavItem href="#" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} isOpen={isOpen} />
-                <NavItem href="#" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} />
+                <NavItem href="/dashboard/sales" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} isOpen={isOpen} />
+                <NavItem href="/dashboard/stadistics" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} />
                 <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} isOpen={isOpen} />
                 <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} />
             </nav>
