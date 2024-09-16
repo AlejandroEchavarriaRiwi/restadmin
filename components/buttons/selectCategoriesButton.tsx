@@ -1,26 +1,29 @@
-// CategorySelection.tsx
 import React, { useState, useEffect } from 'react';
 
+interface Category {
+    id: number;
+    name: string;
+}
+
 interface CategorySelectionProps {
-    category: string;
-    setCategory: (category: string) => void;
+    category: Category | null;
+    setCategory: (category: Category) => void;
 }
 
 const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCategory }) => {
-    const [categories, setCategories] = useState<string[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [newCategory, setNewCategory] = useState('');
     const [isAddingCategory, setIsAddingCategory] = useState(false);
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch('http://localhost:8001/categories');
+                const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Categories');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                const categoryNames = data.map((category: { name: string }) => category.name);
-                setCategories(categoryNames);
+                setCategories(data);
             } catch (error) {
                 console.error('Error fetching categories:', error);
             }
@@ -33,7 +36,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
         if (newCategory.trim() === '') return;
 
         try {
-            const response = await fetch('http://localhost:8001/categories', {
+            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Categories', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -46,13 +49,9 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
             }
 
             const data = await response.json();
-            if (typeof data.name === 'string') {
-                setCategories((prevCategories) => [...prevCategories, data.name]);
-                setNewCategory('');
-                setIsAddingCategory(false);
-            } else {
-                console.error('Response data is not a string:', data);
-            }
+            setCategories((prevCategories) => [...prevCategories, data]);
+            setNewCategory('');
+            setIsAddingCategory(false);
         } catch (error) {
             console.error('Error adding category:', error);
         }
@@ -63,13 +62,18 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
             <label htmlFor="category" className="block font-semibold mb-1">Categoría:</label>
             <select
                 id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={category?.id || ''}
+                onChange={(e) => {
+                    const selectedCategory = categories.find(cat => cat.id === parseInt(e.target.value));
+                    if (selectedCategory) {
+                        setCategory(selectedCategory);
+                    }
+                }}
                 className="w-full border rounded-lg px-3 py-2 bg-white shadow-md transition-opacity duration-300 ease-in-out"
             >
                 <option value="">Selecciona una categoría</option>
-                {categories.map((cat, index) => (
-                    <option key={index} value={cat}>{cat}</option>
+                {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
             </select>
             <button
@@ -101,4 +105,4 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
     );
 };
 
-export default CategorySelection
+export default CategorySelection;

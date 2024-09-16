@@ -3,6 +3,6 @@ export interface Product {
     name: string;
     price: number | string;
     cost: number | string;
-    imageUrl: string;
+    imageURL: string;
     category:string;
 }

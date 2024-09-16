@@ -30,7 +30,7 @@ export default function Menu() {
     }, []);
 
     const fetchProducts = () => {
-        fetch('http://localhost:8001/menu')
+        fetch('https://restadmin.azurewebsites.net/api/v1/Product')
             .then((response) => response.json())
             .then((data) => {
                 if (Array.isArray(data)) {
@@ -51,7 +51,7 @@ export default function Menu() {
             const result = await AlertConfirm('¿Estás seguro de querer eliminar este producto?');
 
             if (result.isConfirmed) {
-                const response = await fetch(`http://localhost:8001/menu/${id}`, {
+                const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Product/{id}`, {
                     method: 'DELETE',
                 });
 
