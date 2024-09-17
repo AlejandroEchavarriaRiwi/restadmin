@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 
 export interface Category {
     id: number;
@@ -7,7 +8,7 @@ export interface Category {
 
 interface CategorySelectionProps {
     category: Category | null;
-    setCategory: (category: Category) => void;
+    setCategory: (category: Category | null) => void;
 }
 
 const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCategory }) => {
@@ -16,21 +17,21 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
     const [isAddingCategory, setIsAddingCategory] = useState(false);
 
     useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Categories');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setCategories(data);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-
         fetchCategories();
     }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Categories');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            setCategories(data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
 
     const handleAddCategory = async () => {
         if (newCategory.trim() === '') return;
@@ -57,25 +58,52 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
         }
     };
 
+    const handleDeleteCategory = async (id: number) => {
+        try {
+            const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Categories/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            setCategories((prevCategories) => prevCategories.filter((cat) => cat.id !== id));
+            if (category && category.id === id) {
+                setCategory(null);
+            }
+        } catch (error) {
+            console.error('Error deleting category:', error);
+        }
+    };
+
+    const CategoryOption = ({ innerProps, label, data }: any) => (
+        <div {...innerProps} className="flex justify-between items-center p-2">
+            <span>{label}</span>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCategory(data.value.id);
+                }}
+                className="text-red-500 hover:text-red-700"
+            >
+                Eliminar
+            </button>
+        </div>
+    );
+
     return (
         <div className="relative">
             <label htmlFor="category" className="block font-semibold mb-1">Categoría:</label>
-            <select
+            <Select
                 id="category"
-                value={category?.id || ''}
-                onChange={(e) => {
-                    const selectedCategory = categories.find(cat => cat.id === parseInt(e.target.value));
-                    if (selectedCategory) {
-                        setCategory(selectedCategory);
-                    }
-                }}
-                className="w-full border rounded-lg px-3 py-2 bg-white shadow-md transition-opacity duration-300 ease-in-out"
-            >
-                <option value="">Selecciona una categoría</option>
-                {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-            </select>
+                value={category ? { value: category, label: category.name } : null}
+                onChange={(selectedOption: any) => setCategory(selectedOption ? selectedOption.value : null)}
+                options={categories.map(cat => ({ value: cat, label: cat.name }))}
+                components={{ Option: CategoryOption }}
+                className="w-full"
+                classNamePrefix="react-select"
+            />
             <button
                 type="button"
                 onClick={() => setIsAddingCategory(true)}
@@ -84,7 +112,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
                 Añadir Nueva Categoría
             </button>
             {isAddingCategory && (
-                <div className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2">
+                <div className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
                     <input
                         type="text"
                         value={newCategory}
