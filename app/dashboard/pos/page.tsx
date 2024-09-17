@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { pdf } from '@react-pdf/renderer';
 import PDFDocument from '../../../components/print/PDFprint';
 import InputAlert from '@/components/alerts/successAlert';
+import { HiComputerDesktop } from 'react-icons/hi2';
 
 interface MenuItem {
   id: string;
@@ -32,16 +33,42 @@ interface Order {
   tableId: string;
 }
 
+const NavBar = styled.nav`
+  background-color: #f8f9fa;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    font-weight: bold;
+    font-size: 1.5em;
+  }
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    h1 {
+      margin-left: 0;
+    }
+    div {
+      flex-direction: row;
+      margin-bottom: 10px;
+      gap: 10px;
+      margin-right: 0;
+    }
+  }
+`;
+
+
 const Container = styled.div`
   display: flex;
-  height: 100vh;
+  height: 100%-76px;
   overflow: hidden;
 `;
 
 
 const MenuSection = styled.div`
   width: 70%;
-  height: 100%;
+  height: 100%-76px;
   overflow-y: auto;
   padding: 15px;
   scrollbar-width: thin;
@@ -94,7 +121,8 @@ const SearchBar = styled.input`
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  width: 200px;
+  margin-bottom: 15px;
+  width: 350px;
 `;
 
 const CategoryButtons = styled.div`
@@ -126,8 +154,8 @@ const Button = styled.button<{ $active?: boolean; $variant?: string }>`
 
 const OrderSection = styled.div`
   width: 30%;
-  height: 100%;
   background-color: #f8f9fa;
+  height: 100%-76px;
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -405,76 +433,78 @@ export default function MenuOrder() {
   const totalAmount = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <Container>
-      <MenuSection>
-        <MenuHeader>
-          <h1>Menu</h1>
-          <SearchBar
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </MenuHeader>
-        <CategoryButtons>
-          {categories.map(category => (
+    <><NavBar>
+      <div className="flex items-center ">
+        <HiComputerDesktop className="text-3xl text-gray-800" />
+        <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+      </div>
+    </NavBar><Container>
+        <MenuSection>
+          <MenuHeader>
+            <SearchBar
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)} />
+          </MenuHeader>
+          <CategoryButtons>
+            {categories.map(category => (
+              <Button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                $active={selectedCategory === category}
+              >
+                {category}
+              </Button>
+            ))}
+          </CategoryButtons>
+          {Object.entries(groupedMenuItems).map(([category, items]) => (
+            <div key={category}>
+              <CategoryTitle>{category}</CategoryTitle>
+              <Cardscontainer>
+                {items.map(item => (
+                  <MenuItemCard key={item.id} onClick={() => addToOrder(item)}>
+                    <MenuItemImage src={item.imageUrl} alt={item.name} />
+                    <MenuItemName>{item.name}</MenuItemName>
+                    <MenuItemPrice>${item.price}</MenuItemPrice>
+                  </MenuItemCard>
+                ))}
+              </Cardscontainer>
+            </div>
+          ))}
+        </MenuSection>
+        <OrderSection>
+          <h2>Orden actual</h2>
+          <OrderItemsContainer>
+            {order.items.map(item => (
+              <OrderItem key={item.id}>
+                <OrderItemName>{item.name}</OrderItemName>
+                <p>${(item.price * item.quantity)}</p>
+                <QuantityControl>
+                  <QuantityButton onClick={() => updateItemQuantity(item.id, -1)} $variant="primary">-</QuantityButton>
+                  <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
+                  <QuantityButton onClick={() => updateItemQuantity(item.id, 1)} $variant="primary">+</QuantityButton>
+                </QuantityControl>
+                <TextArea
+                  value={item.observations}
+                  onChange={(e) => updateObservations(item.id, e.target.value)}
+                  placeholder="Observaciones..." />
+              </OrderItem>
+            ))}
+          </OrderItemsContainer>
+          <TotalSection>
+            Total: ${totalAmount}
+          </TotalSection>
+          <div className='flex gap-3 w-full justify-around'>
             <Button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              $active={selectedCategory === category}
+              onClick={generateInvoiceAndSendToKitchen}
+              disabled={order.items.length === 0}
+              $variant="primary"
             >
-              {category}
+              Facturar y Enviar a Cocina
             </Button>
-          ))}
-        </CategoryButtons>
-        {Object.entries(groupedMenuItems).map(([category, items]) => (
-          <div key={category}>
-            <CategoryTitle>{category}</CategoryTitle>
-            <Cardscontainer>
-              {items.map(item => (
-                <MenuItemCard key={item.id} onClick={() => addToOrder(item)}>
-                  <MenuItemImage src={item.imageUrl} alt={item.name} />
-                  <MenuItemName>{item.name}</MenuItemName>
-                  <MenuItemPrice>${item.price}</MenuItemPrice>
-                </MenuItemCard>
-              ))}
-            </Cardscontainer>
           </div>
-        ))}
-      </MenuSection>
-      <OrderSection>
-        <h2>Orden actual</h2>
-        <OrderItemsContainer>
-          {order.items.map(item => (
-            <OrderItem key={item.id}>
-              <OrderItemName>{item.name}</OrderItemName>
-              <p>${(item.price * item.quantity)}</p>
-              <QuantityControl>
-                <QuantityButton onClick={() => updateItemQuantity(item.id, -1)} $variant="primary">-</QuantityButton>
-                <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                <QuantityButton onClick={() => updateItemQuantity(item.id, 1)} $variant="primary">+</QuantityButton>
-              </QuantityControl>
-              <TextArea
-                value={item.observations}
-                onChange={(e) => updateObservations(item.id, e.target.value)}
-                placeholder="Observaciones..."
-              />
-            </OrderItem>
-          ))}
-        </OrderItemsContainer>
-        <TotalSection>
-          Total: ${totalAmount}
-        </TotalSection>
-        <div className='flex gap-3 w-full justify-around'>
-           <Button 
-            onClick={generateInvoiceAndSendToKitchen} 
-            disabled={order.items.length === 0} 
-            $variant="primary"
-          >
-            Facturar y Enviar a Cocina
-          </Button>
-        </div>
-      </OrderSection>
-    </Container>
+        </OrderSection>
+      </Container></>
   );
 }

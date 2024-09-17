@@ -1,14 +1,40 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import Button from '../components/buttons/Button';
-import { useAuth } from '../hooks/useAuth';
-import { User, UserFormData } from '../models/user.models';
-import Modal from '../components/modals/UsersModal';
+"use client";
+import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
+import Button from "../components/buttons/Button";
+import { useAuth } from "../hooks/useAuth";
+import { User, UserFormData } from "../models/user.models";
+import Modal from "../components/modals/UsersModal";
+import { FaPeopleRobbery } from "react-icons/fa6";
+
+const NavBar = styled.nav`
+  background-color: #f8f9fa;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    font-weight: bold;
+    font-size: 1.5em;
+  }
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    h1 {
+      margin-left: 0;
+    }
+    div {
+      flex-direction: row;
+      margin-bottom: 10px;
+      gap: 10px;
+      margin-right: 0;
+    }
+  }
+`;
 
 const ModuleContainer = styled.div`
   padding: 20px;
-  width: calc(100% - 220px);
+  width: 100%;
 
   h1 {
     font-weight: bold;
@@ -91,12 +117,24 @@ const TableSkeleton = () => (
   <tbody>
     {[...Array(5)].map((_, index) => (
       <SkeletonRow key={index}>
-        <Td><SkeletonCell /></Td>
-        <Td><SkeletonCell /></Td>
-        <Td><SkeletonCell /></Td>
-        <Td><SkeletonCell /></Td>
-        <Td><SkeletonCell /></Td>
-        <Td><SkeletonCell /></Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
+        <Td>
+          <SkeletonCell />
+        </Td>
       </SkeletonRow>
     ))}
   </tbody>
@@ -120,12 +158,12 @@ export default function UserManagement() {
     try {
       setIsLoading(true);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
       const response = await fetch(`${apiUrl}/v1/User`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.token}`,
         },
       });
 
@@ -137,7 +175,9 @@ export default function UserManagement() {
       setUsers(data);
     } catch (error) {
       console.error("No se pudieron obtener los usuarios:", error);
-      setError(error instanceof Error ? error.message : 'Ocurrió un error desconocido');
+      setError(
+        error instanceof Error ? error.message : "Ocurrió un error desconocido"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -145,30 +185,30 @@ export default function UserManagement() {
 
   const handleDeleteUser = async (userId: number | undefined) => {
     if (userId === undefined) {
-      alert('ID de usuario no válido');
+      alert("ID de usuario no válido");
       return;
     }
-  
-    if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+
+    if (window.confirm("¿Está seguro de que desea eliminar este usuario?")) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
         const response = await fetch(`${apiUrl}/v1/User/${userId.toString()}`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user?.token}` // Asegúrate de que 'user' esté definido
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user?.token}`, // Asegúrate de que 'user' esté definido
           },
         });
-  
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-  
+
         fetchUsers(); // Actualiza la lista de usuarios
-        alert('Usuario eliminado con éxito!');
+        alert("Usuario eliminado con éxito!");
       } catch (error) {
         console.error("No se pudo eliminar el usuario:", error);
-        alert('Error al eliminar el usuario. Por favor, intente de nuevo.');
+        alert("Error al eliminar el usuario. Por favor, intente de nuevo.");
       }
     }
   };
@@ -187,145 +227,170 @@ export default function UserManagement() {
     setShowModal(false);
     setEditingUser(null);
   };
-  
+
   const handleSaveUser = async (userData: UserFormData) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
       const isEditing = !!editingUser;
-      const method = isEditing ? 'PUT' : 'POST';
-      const url = isEditing && editingUser?.id 
-        ? `${apiUrl}/v1/User/${editingUser.id.toString()}` 
-        : `${apiUrl}/v1/User`;
-  
+      const method = isEditing ? "PUT" : "POST";
+      const url =
+        isEditing && editingUser?.id
+          ? `${apiUrl}/v1/User/${editingUser.id.toString()}`
+          : `${apiUrl}/v1/User`;
+
       const dataToSend: Partial<User> = {
         id: isEditing ? editingUser!.id : 0,
         name: userData.name,
         email: userData.email,
         phone: userData.phone,
         address: userData.address,
-        roleId: Number(userData.roleId)
+        roleId: Number(userData.roleId),
       };
-  
+
       // Solo incluir la contraseña si es un nuevo usuario o si se ha cambiado
       if (!isEditing || (isEditing && userData.password)) {
         dataToSend.passwordHash = userData.password;
       }
-  
-      console.log('Sending data:', JSON.stringify(dataToSend, null, 2));
-  
+
+      console.log("Sending data:", JSON.stringify(dataToSend, null, 2));
+
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.token}`,
         },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(dataToSend),
       });
-  
+
       const responseText = await response.text();
-      console.log('Raw response:', responseText);
-  
+      console.log("Raw response:", responseText);
+
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         if (responseText) {
           try {
             const errorData = JSON.parse(responseText);
-            errorMessage += `, message: ${errorData.message || JSON.stringify(errorData)}`;
+            errorMessage += `, message: ${
+              errorData.message || JSON.stringify(errorData)
+            }`;
           } catch (e) {
             errorMessage += `, body: ${responseText}`;
           }
         }
         throw new Error(errorMessage);
       }
-  
+
       let responseData;
       if (responseText) {
         try {
           responseData = JSON.parse(responseText);
-          console.log('Parsed server response:', responseData);
+          console.log("Parsed server response:", responseData);
         } catch (e) {
-          console.warn('Error parsing JSON response:', e);
+          console.warn("Error parsing JSON response:", e);
           throw new Error(`Invalid JSON response: ${responseText}`);
         }
       } else {
-        console.warn('Empty response from server');
+        console.warn("Empty response from server");
         responseData = {};
       }
-  
+
       fetchUsers();
       handleCloseModal();
-      alert(isEditing ? 'Usuario actualizado con éxito!' : 'Usuario creado con éxito!');
+      alert(
+        isEditing
+          ? "Usuario actualizado con éxito!"
+          : "Usuario creado con éxito!"
+      );
     } catch (error) {
       console.error("Error detallado al guardar el usuario:", error);
-      let errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      
-      if (error instanceof TypeError && errorMessage.includes('Failed to fetch')) {
-        errorMessage = 'No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet y que el servidor esté accesible.';
+      let errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
+
+      if (
+        error instanceof TypeError &&
+        errorMessage.includes("Failed to fetch")
+      ) {
+        errorMessage =
+          "No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet y que el servidor esté accesible.";
       }
-      
+
       alert(`Error al guardar el usuario: ${errorMessage}`);
     }
   };
-  
 
   const getRoleName = (roleId: number): string => {
     switch (roleId) {
-      case 1: return "Mesero";
-      case 2: return "Administrador";
-      case 3: return "Cajero";
-      default: return "Desconocido";
+      case 1:
+        return "Mesero";
+      case 2:
+        return "Administrador";
+      case 3:
+        return "Cajero";
+      default:
+        return "Desconocido";
     }
   };
 
   return (
-    <ModuleContainer>
-      <Divcentertitle>
-        <h1>Administración de usuarios</h1>
-        <Button onClick={handleCreateUser}>Crear nuevo usuario</Button>
-      </Divcentertitle>
+    <>
+      <NavBar>
+        <div className="flex items-center ">
+          <FaPeopleRobbery className="text-3xl text-gray-800" />
+          <h1 className="ml-4 text-gray-800">Administración de usuarios</h1>
+        </div>
+        <div className="flex gap-4 mr-4 ">
+          <Button onClick={handleCreateUser}>Crear nuevo usuario</Button>
+        </div>
+      </NavBar>
+      <ModuleContainer>
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+        <Table>
+          <thead>
+            <tr>
+              <Th>Nombre</Th>
+              <Th>Email</Th>
+              <Th>Celular</Th>
+              <Th>Dirección</Th>
+              <Th>Rol</Th>
+              <Th>Acciones</Th>
+            </tr>
+          </thead>
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id ?? user.email}>
+                  <Td>{user.name}</Td>
+                  <Td>{user.email}</Td>
+                  <Td>{user.phone}</Td>
+                  <Td>{user.address}</Td>
+                  <Td>{getRoleName(user.roleId)}</Td>
+                  <Td>
+                    <ActionButton onClick={() => handleEditUser(user)}>
+                      Editar
+                    </ActionButton>
+                    <ActionButton onClick={() => handleDeleteUser(user.id)}>
+                      Borrar
+                    </ActionButton>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </Table>
 
-      <Table>
-        <thead>
-          <tr>
-            <Th>Nombre</Th>
-            <Th>Email</Th>
-            <Th>Celular</Th>
-            <Th>Dirección</Th>
-            <Th>Rol</Th>
-            <Th>Acciones</Th>
-          </tr>
-        </thead>
-        {isLoading ? (
-          <TableSkeleton />
-        ) : (
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id ?? user.email}>
-                <Td>{user.name}</Td>
-                <Td>{user.email}</Td>
-                <Td>{user.phone}</Td>
-                <Td>{user.address}</Td>
-                <Td>{getRoleName(user.roleId)}</Td>
-                <Td>
-                  <ActionButton onClick={() => handleEditUser(user)}>Editar</ActionButton>
-                  <ActionButton onClick={() => handleDeleteUser(user.id)}>Borrar</ActionButton>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
+        {showModal && (
+          <Modal
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            onSave={handleSaveUser}
+            user={editingUser}
+          />
         )}
-      </Table>
-
-      {showModal && (
-        <Modal
-          isOpen={showModal}
-          onClose={handleCloseModal}
-          onSave={handleSaveUser}
-          user={editingUser}
-        />
-      )}
-    </ModuleContainer>
+      </ModuleContainer>
+    </>
   );
 }
