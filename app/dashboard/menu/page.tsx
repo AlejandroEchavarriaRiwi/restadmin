@@ -71,7 +71,7 @@ export default function Menu() {
 
     const handleEditProduct = async (updatedProduct: Product) => {
         try {
-            const response = await fetch(`api/v1/Proudct/${updatedProduct.id}`, {
+            const response = await fetch(`/api/v1/Product/${updatedProduct.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
