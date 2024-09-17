@@ -3,28 +3,45 @@ import { Product } from '@/types/Imenu';
 import { CldUploadWidget } from 'next-cloudinary';
 import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 
+// Definimos una interfaz para extender Product con category opcional
+interface EditableProduct extends Omit<Product, 'category'> {
+    category: Category | null;
+}
+
 const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSave: (updatedProduct: Product) => void, onClose: () => void }) => {
-    const [editedProduct, setEditedProduct] = useState(product);
-    const [localImageUrl, setLocalImageUrl] = useState<string>(product.imageURL); // Store the image URL
+    const [editedProduct, setEditedProduct] = useState<EditableProduct>({
+        ...product,
+        category: product.category || null
+    });
+    const [localImageURL, setLocalImageURL] = useState<string>(product.imageURL);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setEditedProduct(prev => ({ ...prev, [name]: value }));
+        setEditedProduct(prev => ({ ...prev, [name]: name === 'price' || name === 'cost' ? parseFloat(value) : value }));
     };
 
-    const handleCategoryChange = (category: Category) => {
-        setEditedProduct(prev => ({ ...prev, category }));
+    const handleCategoryChange = (category: Category | null) => {
+        setEditedProduct(prev => ({
+            ...prev,
+            category: category,
+            categoryId: category ? category.id : null
+        }));
     };
 
     const handleUploadSuccess = (result: any) => {
-        const imageUrl = result.info.secure_url; // Get the uploaded image URL
-        setLocalImageUrl(imageUrl); // Update local image URL
-        setEditedProduct(prev => ({ ...prev, imageUrl })); // Update the product's image URL
+        const imageURL = result.info.secure_url;
+        setLocalImageURL(imageURL);
+        setEditedProduct(prev => ({ ...prev, imageURL: imageURL }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(editedProduct); // Save the updated product, including the new image URL and category
+        // Asegúrate de que el producto cumple con la interfaz Product antes de pasarlo a onSave
+        const productToSave: Product = {
+            ...editedProduct,
+            category: editedProduct.category as Category // Asumimos que category no será null al guardar
+        };
+        onSave(productToSave);
     };
 
     return (
@@ -66,14 +83,13 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                         />
                     </div>
 
-                    {/* Componente de selección de categoría */}
                     <div>
                         <CategorySelection
                             category={editedProduct.category}
                             setCategory={handleCategoryChange}
                         />
                     </div>
-                    
+
                     <div>
                         <label htmlFor="image" className="block font-semibold mb-1">Imagen del producto:</label>
                         <CldUploadWidget
@@ -90,17 +106,15 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                                 </button>
                             )}
                         </CldUploadWidget>
-                        {localImageUrl && (
+                        {localImageURL && (
                             <img
-                                src={localImageUrl}
+                                src={localImageURL}
                                 alt="Producto"
                                 className="mt-4 rounded-md"
                                 style={{ width: '200px', height: '200px', objectFit: 'cover' }}
                             />
                         )}
                     </div>
-                    
-                    
 
                     <div className="flex justify-end space-x-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded-lg">Cancelar</button>
