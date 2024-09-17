@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { useReactToPrint } from "react-to-print";
 import Button from "../components/buttons/Button";
-
+import { MdDeliveryDining } from "react-icons/md";
 
 interface Client {
   id?: number;
@@ -50,6 +50,30 @@ interface Order {
   orderProducts: OrderItem[];
 }
 
+const NavBar = styled.nav`
+  background-color: #f8f9fa;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    font-weight: bold;
+    font-size: 1.5em;
+  }
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    h1 {
+      margin-left: 0;
+    }
+    div {
+      flex-direction: row;
+      margin-bottom: 10px;
+      gap: 10px;
+      margin-right: 0;
+    }
+  }
+`;
 const ModuleContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -69,7 +93,6 @@ const ModuleContainer = styled.div`
 
 const DeliveryContainer = styled.div`
   display: flex;
-  margin-top: 80px;
   height: 100%;
 `;
 
@@ -360,8 +383,11 @@ export default function DeliveryModule() {
   const fetchMenuItems = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Product");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Product"
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data: MenuItem[] = await response.json();
       setMenuItems(data);
     } catch (error) {
@@ -373,8 +399,11 @@ export default function DeliveryModule() {
 
   const fetchCompanyInfo = async () => {
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Company");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Company"
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data: Company = await response.json();
       setCompany(data);
     } catch (error) {
@@ -385,8 +414,11 @@ export default function DeliveryModule() {
   const fetchCategories = async () => {
     setIsCategoriesLoading(true);
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Categories");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Categories"
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data: Category[] = await response.json();
       setCategories([{ id: 0, name: "Todos" }, ...data]);
       setSelectedCategory(0);
@@ -399,8 +431,11 @@ export default function DeliveryModule() {
 
   const fetchAllClients = async () => {
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Clients");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Clients"
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data: Client[] = await response.json();
       setAllClients(data);
     } catch (error) {
@@ -422,12 +457,16 @@ export default function DeliveryModule() {
     }
 
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...client, id: 0 }),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Clients",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...client, id: 0 }),
+        }
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data: Client = await response.json();
       setClient(data);
       setShowNewClientModal(false);
@@ -440,7 +479,9 @@ export default function DeliveryModule() {
 
   const addToOrder = (item: MenuItem) => {
     setOrder((prev) => {
-      const existingItem = prev.orderProducts.find((i) => i.productId === item.id);
+      const existingItem = prev.orderProducts.find(
+        (i) => i.productId === item.id
+      );
       if (existingItem) {
         return {
           ...prev,
@@ -451,7 +492,10 @@ export default function DeliveryModule() {
       } else {
         return {
           ...prev,
-          orderProducts: [...prev.orderProducts, { productId: item.id, orderId: 0, quantity: 1 }],
+          orderProducts: [
+            ...prev.orderProducts,
+            { productId: item.id, orderId: 0, quantity: 1 },
+          ],
         };
       }
     });
@@ -494,33 +538,38 @@ export default function DeliveryModule() {
   };
 
   const calculateTotal = () => {
-    const itemsTotal = order.orderProducts.reduce(
-      (sum, item) => {
-        const menuItem = menuItems.find(m => m.id === item.productId);
-        return sum + (menuItem ? menuItem.price * item.quantity : 0);
-      },
-      0
-    );
+    const itemsTotal = order.orderProducts.reduce((sum, item) => {
+      const menuItem = menuItems.find((m) => m.id === item.productId);
+      return sum + (menuItem ? menuItem.price * item.quantity : 0);
+    }, 0);
     return itemsTotal + deliveryFee;
   };
 
   const sendToKitchenAndInvoice = async () => {
     try {
       // Crear la orden
-      const orderResponse = await fetch("https://restadmin.azurewebsites.net/api/v1/Order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(order),
-      });
-      if (!orderResponse.ok) throw new Error(`HTTP error! status: ${orderResponse.status}`);
+      const orderResponse = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Order",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order),
+        }
+      );
+      if (!orderResponse.ok)
+        throw new Error(`HTTP error! status: ${orderResponse.status}`);
       const createdOrder = await orderResponse.json();
 
       // Crear la factura basada en la orden
-      const invoiceResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Invoice/create-from-order/${createdOrder.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!invoiceResponse.ok) throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
+      const invoiceResponse = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Invoice/create-from-order/${createdOrder.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      if (!invoiceResponse.ok)
+        throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
       const createdInvoice = await invoiceResponse.json();
 
       // Imprimir ticket
@@ -540,222 +589,228 @@ export default function DeliveryModule() {
   };
 
   return (
-    <ModuleContainer>
-      <h1 className="text-gray-800">Módulo de Domicilios</h1>
-      <DeliveryContainer>
-        <LeftColumn>
-          <SearchContainer>
-            <div>
+    <>
+      <NavBar>
+        <div className="flex items-center ">
+          <MdDeliveryDining className="text-3xl text-gray-800" />
+          <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+        </div>
+      </NavBar>
+      <ModuleContainer>
+        <DeliveryContainer>
+          <LeftColumn>
+            <SearchContainer>
+              <div>
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar cliente por nombre o celular"
+                />
+              </div>
+
+              {searchResults.length > 0 && (
+                <SearchResultsContainer>
+                  {searchResults.map((result) => (
+                    <SearchResultItem
+                      key={result.id}
+                      onClick={() => selectClient(result)}
+                    >
+                      {result.name} - {result.phone}
+                    </SearchResultItem>
+                  ))}
+                </SearchResultsContainer>
+              )}
+
+              {searchTerm.length >= 3 && searchResults.length === 0 && (
+                <NoResultsMessage>
+                  No se encontraron clientes. ¿Desea registrar un nuevo cliente?
+                  <Button onClick={() => setShowNewClientModal(true)}>
+                    Registrar
+                  </Button>
+                </NoResultsMessage>
+              )}
+            </SearchContainer>
+
+            <MenuSection>
+              <h2>Menú</h2>
               <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar cliente por nombre o celular"
+                value={menuSearchTerm}
+                onChange={(e) => setMenuSearchTerm(e.target.value)}
+                placeholder="Buscar en el menú"
               />
-            </div>
+              {isCategoriesLoading ? (
+                <CategoryTabsSkeleton />
+              ) : (
+                <CategoryTabs>
+                  {categories.map((category) => (
+                    <CategoryTab
+                      key={category.id}
+                      active={selectedCategory === category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                    >
+                      {category.name}
+                    </CategoryTab>
+                  ))}
+                </CategoryTabs>
+              )}
+              {isLoading ? (
+                <MenuItemGridSkeleton />
+              ) : (
+                <MenuItemGrid>
+                  {searchFilteredMenuItems.map((item) => (
+                    <MenuItemCard
+                      key={item.id}
+                      onClick={() => addToOrder(item)}
+                    >
+                      <img
+                        src={item.imageURL}
+                        alt={item.name}
+                        className="w-full h-48 object-cover"
+                      />
+                      <h3>{item.name}</h3>
+                      <p>${item.price}</p>
+                    </MenuItemCard>
+                  ))}
+                </MenuItemGrid>
+              )}
+            </MenuSection>
+          </LeftColumn>
 
-            {searchResults.length > 0 && (
-              <SearchResultsContainer>
-                {searchResults.map((result) => (
-                  <SearchResultItem
-                    key={result.id}
-                    onClick={() => selectClient(result)}
-                  >
-                    {result.name} - {result.phone}
-                  </SearchResultItem>
-                ))}
-              </SearchResultsContainer>
+          <RightColumn>
+            {client.id && (
+              <div>
+                <h2>Cliente seleccionado</h2>
+                <p>Nombre: {client.name}</p>
+                <p>Teléfono: {client.phone}</p>
+                <p>Dirección: {client.address}</p>
+              </div>
             )}
 
-            {searchTerm.length >= 3 && searchResults.length === 0 && (
-              <NoResultsMessage>
-                No se encontraron clientes. ¿Desea registrar un nuevo cliente?
-                <Button onClick={() => setShowNewClientModal(true)}>
-                  Registrar
-                </Button>
-              </NoResultsMessage>
-            )}
-          </SearchContainer>
+            <OrderSection>
+              <h2>Pedido actual</h2>
+              {order.orderProducts.map((item) => {
+                const menuItem = menuItems.find((m) => m.id === item.productId);
+                return menuItem ? (
+                  <div key={item.productId}>
+                    {menuItem.name} - ${menuItem.price} x {item.quantity}
+                    <QuantityControl>
+                      <QuantityButton
+                        onClick={() => updateItemQuantity(item.productId, -1)}
+                      >
+                        -
+                      </QuantityButton>
+                      <span>{item.quantity}</span>
+                      <QuantityButton
+                        onClick={() => updateItemQuantity(item.productId, 1)}
+                      >
+                        +
+                      </QuantityButton>
+                    </QuantityControl>
+                  </div>
+                ) : null;
+              })}
+              <h3>Valor de domicilio:</h3>
+              <DeliveryFeeInput
+                type="number"
+                value={deliveryFee}
+                onChange={handleDeliveryFeeChange}
+                placeholder="Costo de domicilio"
+              />
+              <p>
+                Subtotal: $
+                {order.orderProducts.reduce((sum, item) => {
+                  const menuItem = menuItems.find(
+                    (m) => m.id === item.productId
+                  );
+                  return sum + (menuItem ? menuItem.price * item.quantity : 0);
+                }, 0)}
+              </p>
+              <p>Valor domicilio: ${deliveryFee}</p>
+              <p>Total: ${calculateTotal()}</p>
+              <Button onClick={sendToKitchenAndInvoice}>
+                Enviar a cocina y Facturar
+              </Button>
+            </OrderSection>
+          </RightColumn>
 
-          <MenuSection>
-            <h2>Menú</h2>
-            <Input
-              value={menuSearchTerm}
-              onChange={(e) => setMenuSearchTerm(e.target.value)}
-              placeholder="Buscar en el menú"
-            />
-            {isCategoriesLoading ? (
-              <CategoryTabsSkeleton />
-            ) : (
-              <CategoryTabs>
-                {categories.map((category) => (
-                  <CategoryTab
-                    key={category.id}
-                    active={selectedCategory === category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                  >
-                    {category.name}
-                  </CategoryTab>
-                ))}
-              </CategoryTabs>
-            )}
-            {isLoading ? (
-              <MenuItemGridSkeleton />
-            ) : (
-              <MenuItemGrid>
-                {searchFilteredMenuItems.map((item) => (
-                  <MenuItemCard key={item.id} onClick={() => addToOrder(item)}>
-                    <img
-                      src={item.imageURL}
-                      alt={item.name}
-                      className="w-full h-48 object-cover"
-                    />
-                    <h3>{item.name}</h3>
-                    <p>${item.price}</p>
-                  </MenuItemCard>
-                ))}
-              </MenuItemGrid>
-            )}
-          </MenuSection>
-        </LeftColumn>
-
-        <RightColumn>
-          {client.id && (
-            <div>
-              <h2>Cliente seleccionado</h2>
-              <p>Nombre: {client.name}</p>
-              <p>Teléfono: {client.phone}</p>
-              <p>Dirección: {client.address}</p>
-            </div>
+          {showNewClientModal && (
+            <Modal onClick={() => setShowNewClientModal(false)}>
+              <ModalContent onClick={(e) => e.stopPropagation()}>
+                <h2>Registrar Nuevo Cliente</h2>
+                <form onSubmit={handleNewClientSubmit}>
+                  <Input
+                    name="name"
+                    value={client.name}
+                    onChange={(e) =>
+                      setClient({ ...client, name: e.target.value })
+                    }
+                    placeholder="Nombre"
+                    required
+                  />
+                  <Input
+                    name="phone"
+                    value={client.phone}
+                    onChange={(e) =>
+                      setClient({ ...client, phone: e.target.value })
+                    }
+                    placeholder="Teléfono"
+                    required
+                  />
+                  <Input
+                    name="address"
+                    value={client.address}
+                    onChange={(e) =>
+                      setClient({ ...client, address: e.target.value })
+                    }
+                    placeholder="Dirección"
+                    required
+                  />
+                  <Button type="submit">Registrar Cliente</Button>
+                </form>
+              </ModalContent>
+            </Modal>
           )}
 
-          <OrderSection>
-            <h2>Pedido actual</h2>
-            {order.orderProducts.map((item) => {
-              const menuItem = menuItems.find(m => m.id === item.productId);
+          <PrintableTicket ref={printRef}>
+            {company && (
+              <>
+                <CompanyLogo src={company.logoURL} alt={company.name} />
+                <h2>{company.name}</h2>
+                <p>NIT: {company.nit}</p>
+                <p>Dirección: {company.address}</p>
+                <p>Teléfono: {company.phone}</p>
+                <p>Email: {company.email}</p>
+              </>
+            )}
+            <h3>Domicilios</h3>
+            <p>Cliente: {client.name}</p>
+            <p>Celular: {client.phone}</p>
+            <p>Dirección: {client.address}</p>
+            <h4>Productos:</h4>
+            {order.orderProducts.map((item, index) => {
+              const menuItem = menuItems.find((m) => m.id === item.productId);
               return menuItem ? (
-                <div key={item.productId}>
-                  {menuItem.name} - ${menuItem.price} x {item.quantity}
-                  <QuantityControl>
-                    <QuantityButton
-                      onClick={() => updateItemQuantity(item.productId, -1)}
-                    >
-                      -
-                    </QuantityButton>
-                    <span>{item.quantity}</span>
-                    <QuantityButton
-                      onClick={() => updateItemQuantity(item.productId, 1)}
-                    >
-                      +
-                    </QuantityButton>
-                  </QuantityControl>
-                </div>
+                <p key={index}>
+                  {menuItem.name} - ${menuItem.price} x {item.quantity} = $
+                  {menuItem.price * item.quantity}
+                </p>
               ) : null;
             })}
-            <h3>Valor de domicilio:</h3>
-            <DeliveryFeeInput
-              type="number"
-              value={deliveryFee}
-              onChange={handleDeliveryFeeChange}
-              placeholder="Costo de domicilio"
-            />
             <p>
               Subtotal: $
-              {order.orderProducts.reduce(
-                (sum, item) => {
-                  const menuItem = menuItems.find(m => m.id === item.productId);
-                  return sum + (menuItem ? menuItem.price * item.quantity : 0);
-                },
-                0
-              )}
+              {order.orderProducts.reduce((sum, item) => {
+                const menuItem = menuItems.find((m) => m.id === item.productId);
+                return sum + (menuItem ? menuItem.price * item.quantity : 0);
+              }, 0)}
             </p>
             <p>Valor domicilio: ${deliveryFee}</p>
-            <p>Total: ${calculateTotal()}</p>
-            <Button onClick={sendToKitchenAndInvoice}>
-              Enviar a cocina y Facturar
-            </Button>
-          </OrderSection>
-        </RightColumn>
-
-        {showNewClientModal && (
-          <Modal onClick={() => setShowNewClientModal(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <h2>Registrar Nuevo Cliente</h2>
-              <form onSubmit={handleNewClientSubmit}>
-                <Input
-                  name="name"
-                  value={client.name}
-                  onChange={(e) =>
-                    setClient({ ...client, name: e.target.value })
-                  }
-                  placeholder="Nombre"
-                  required
-                />
-                <Input
-                  name="phone"
-                  value={client.phone}
-                  onChange={(e) =>
-                    setClient({ ...client, phone: e.target.value })
-                  }
-                  placeholder="Teléfono"
-                  required
-                />
-                <Input
-                  name="address"
-                  value={client.address}
-                  onChange={(e) =>
-                    setClient({ ...client, address: e.target.value })
-                  }
-                  placeholder="Dirección"
-                  required
-                />
-                <Button type="submit">Registrar Cliente</Button>
-              </form>
-            </ModalContent>
-          </Modal>
-        )}
-
-        <PrintableTicket ref={printRef}>
-          {company && (
-            <>
-              <CompanyLogo src={company.logoURL} alt={company.name} />
-              <h2>{company.name}</h2>
-              <p>NIT: {company.nit}</p>
-              <p>Dirección: {company.address}</p>
-              <p>Teléfono: {company.phone}</p>
-              <p>Email: {company.email}</p>
-            </>
-          )}
-          <h3>Domicilios</h3>
-          <p>Cliente: {client.name}</p>
-          <p>Celular: {client.phone}</p>
-          <p>Dirección: {client.address}</p>
-          <h4>Productos:</h4>
-          {order.orderProducts.map((item, index) => {
-            const menuItem = menuItems.find(m => m.id === item.productId);
-            return menuItem ? (
-              <p key={index}>
-                {menuItem.name} - ${menuItem.price} x {item.quantity} = $
-                {menuItem.price * item.quantity}
-              </p>
-            ) : null;
-          })}
-          <p>
-            Subtotal: $
-            {order.orderProducts.reduce(
-              (sum, item) => {
-                const menuItem = menuItems.find(m => m.id === item.productId);
-                return sum + (menuItem ? menuItem.price * item.quantity : 0);
-              },
-              0
-            )}
-          </p>
-          <p>Valor domicilio: ${deliveryFee}</p>
-          <p>
-            <strong>Total: ${calculateTotal()}</strong>
-          </p>
-          <p>Fecha: {currentDate}</p>
-        </PrintableTicket>
-      </DeliveryContainer>
-    </ModuleContainer>
+            <p>
+              <strong>Total: ${calculateTotal()}</strong>
+            </p>
+            <p>Fecha: {currentDate}</p>
+          </PrintableTicket>
+        </DeliveryContainer>
+      </ModuleContainer>
+    </>
   );
 }
