@@ -1,0 +1,31 @@
+.marcas {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin: 60px;
+  justify-content: center;
+}
+.marcas .img {
+  justify-self: center;
+  align-self: center;
+  width: 35%;
+  cursor: pointer;
+}
+.marcas .img:hover {
+  transition: all 0.5s ease-in-out;
+  transform: scale(1.1, 1.1);
+}
+
+@media screen and (max-width: 768px) {
+  .marcas {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    justify-content: center;
+    margin: 0px;
+    gap: 10px;
+  }
+  .marcas > :last-child {
+    grid-column: span 2;
+    justify-self: center;
+  }
+}/*# sourceMappingURL=marcaStyles.css.map */
