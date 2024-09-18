@@ -3,45 +3,55 @@ import { Product } from '@/types/Imenu';
 import { CldUploadWidget } from 'next-cloudinary';
 import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 
-// Definimos una interfaz para extender Product con category opcional
-interface EditableProduct extends Omit<Product, 'category'> {
-    category: Category | null;
+// Interfaz para el estado editable del producto
+interface EditableProduct extends Omit<Product, 'Category' | 'CategoryId'> {
+    Category: Category | null;
+    CategoryId: number | null;
 }
 
 const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSave: (updatedProduct: Product) => void, onClose: () => void }) => {
     const [editedProduct, setEditedProduct] = useState<EditableProduct>({
         ...product,
-        category: product.category || null
+        Category: product.Category,
+        CategoryId: product.CategoryId
     });
-    const [localImageURL, setLocalImageURL] = useState<string>(product.imageURL);
+    const [localImageURL, setLocalImageURL] = useState<string>(product.ImageURL);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setEditedProduct(prev => ({ ...prev, [name]: name === 'price' || name === 'cost' ? parseFloat(value) : value }));
+        setEditedProduct(prev => ({ 
+            ...prev, 
+            [name]: name === 'Price' || name === 'Cost' ? parseFloat(value) : value 
+        }));
     };
 
     const handleCategoryChange = (category: Category | null) => {
         setEditedProduct(prev => ({
             ...prev,
-            category: category,
-            categoryId: category ? category.id : null
+            Category: category,
+            CategoryId: category ? category.Id : null
         }));
     };
 
     const handleUploadSuccess = (result: any) => {
         const imageURL = result.info.secure_url;
         setLocalImageURL(imageURL);
-        setEditedProduct(prev => ({ ...prev, imageURL: imageURL }));
+        setEditedProduct(prev => ({ ...prev, ImageURL: imageURL }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Asegúrate de que el producto cumple con la interfaz Product antes de pasarlo a onSave
-        const productToSave: Product = {
-            ...editedProduct,
-            category: editedProduct.category as Category // Asumimos que category no será null al guardar
-        };
-        onSave(productToSave);
+        if (editedProduct.Category && editedProduct.CategoryId !== null) {
+            const productToSave: Product = {
+                ...editedProduct,
+                Category: editedProduct.Category,
+                CategoryId: editedProduct.CategoryId
+            };
+            onSave(productToSave);
+        } else {
+            console.error('No se ha seleccionado una categoría válida');
+            // Aquí puedes mostrar un mensaje de error al usuario
+        }
     };
 
     return (
@@ -50,34 +60,34 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                 <h2 className="text-xl font-bold mb-4">Editar Producto</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="name" className="block font-semibold mb-1">Nombre:</label>
+                        <label htmlFor="Name" className="block font-semibold mb-1">Nombre:</label>
                         <input
                             type="text"
-                            id="name"
-                            name="name"
-                            value={editedProduct.name}
+                            id="Name"
+                            name="Name"
+                            value={editedProduct.Name}
                             onChange={handleChange}
                             className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
                     <div>
-                        <label htmlFor="cost" className="block font-semibold mb-1">Costo:</label>
+                        <label htmlFor="Cost" className="block font-semibold mb-1">Costo:</label>
                         <input
                             type="number"
-                            id="cost"
-                            name="cost"
-                            value={editedProduct.cost}
+                            id="Cost"
+                            name="Cost"
+                            value={editedProduct.Cost}
                             onChange={handleChange}
                             className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
                     <div>
-                        <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
+                        <label htmlFor="Price" className="block font-semibold mb-1">Precio:</label>
                         <input
                             type="number"
-                            id="price"
-                            name="price"
-                            value={editedProduct.price}
+                            id="Price"
+                            name="Price"
+                            value={editedProduct.Price}
                             onChange={handleChange}
                             className="w-full border rounded-lg px-3 py-2"
                         />
@@ -85,7 +95,7 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
 
                     <div>
                         <CategorySelection
-                            category={editedProduct.category}
+                            category={editedProduct.Category}
                             setCategory={handleCategoryChange}
                         />
                     </div>
