@@ -42,9 +42,9 @@ const PDFDocument: React.FC<PDFDocumentProps> = ({ order }) => (
       <Text style={styles.field}>Mesa: {order.tableId}</Text>
       {order.items.map((item: OrderItem, index: number) => (
         <View key={index} style={styles.field}>
-          <Text style={styles.label}>{item.name}</Text>
+          <Text style={styles.label}>{item.Name}</Text>
           <Text style={styles.value}>
-            {item.quantity} x ${item.price} = ${item.quantity * item.price}
+            {item.quantity} x ${item.Price} = ${item.quantity * item.Price}
           </Text>
           {item.observations && (
             <Text style={styles.value}>Obs: {item.observations}</Text>
@@ -52,7 +52,7 @@ const PDFDocument: React.FC<PDFDocumentProps> = ({ order }) => (
         </View>
       ))}
       <Text style={styles.total}>
-        Total: ${order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+        Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
       </Text>
     </Page>
   </Document>

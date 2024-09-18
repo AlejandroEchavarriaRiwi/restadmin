@@ -7,25 +7,23 @@ import PDFDocument from '../../../components/print/PDFprint';
 import InputAlert from '@/components/alerts/successAlert';
 import { HiComputerDesktop } from 'react-icons/hi2';
 
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  imageUrl: string;
+
+export interface MenuItem {
+  Id: number;
+  Name: string;
+  Price: number;
+  Cost: number;
+  ImageURL: string;
+  CategoryId: number;
+  Category: {
+    Id: number;
+    Name: string;
+  };
 }
 
 interface OrderItem extends MenuItem {
   quantity: number;
   observations: string;
-}
-
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  imageUrl: string;
 }
 
 interface Order {
@@ -306,16 +304,16 @@ export default function MenuOrder() {
 
   const fetchMenuItems = async () => {
     try {
-      const response = await fetch('http://localhost:8001/menu');
+      const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
+      const data = await response.json(); 
       setMenuItems(data);
-      
+
       // Extraer categorías únicas
       const categorySet = new Set<string>();
-      data.forEach((item: MenuItem) => categorySet.add(item.category));
+      data.forEach((item: MenuItem) => categorySet.add(item.Category.Name));
       const uniqueCategories = ['Todas', ...Array.from(categorySet)];
       setCategories(uniqueCategories);
     } catch (error) {
@@ -325,12 +323,12 @@ export default function MenuOrder() {
 
   const addToOrder = (item: MenuItem) => {
     setOrder(prevOrder => {
-      const existingItem = prevOrder.items.find(orderItem => orderItem.id === item.id);
+      const existingItem = prevOrder.items.find(orderItem => orderItem.Id === item.Id);
       if (existingItem) {
         return {
           ...prevOrder,
-          items: prevOrder.items.map(orderItem => 
-            orderItem.id === item.id 
+          items: prevOrder.items.map(orderItem =>
+            orderItem.Id === item.Id
               ? { ...orderItem, quantity: orderItem.quantity + 1 }
               : orderItem
           )
@@ -344,22 +342,22 @@ export default function MenuOrder() {
     });
   };
 
-  const updateItemQuantity = (itemId: string, change: number) => {
+  const updateItemQuantity = (itemId: number, change: number) => {
     setOrder(prevOrder => ({
       ...prevOrder,
-      items: prevOrder.items.map(item => 
-        item.id === itemId
+      items: prevOrder.items.map(item =>
+        item.Id === itemId
           ? { ...item, quantity: Math.max(0, item.quantity + change) }
           : item
       ).filter(item => item.quantity > 0)
     }));
   };
 
-  const updateObservations = (itemId: string, observations: string) => {
+  const updateObservations = (itemId: number, observations: string) => {
     setOrder(prevOrder => ({
       ...prevOrder,
-      items: prevOrder.items.map(item => 
-        item.id === itemId ? { ...item, observations } : item
+      items: prevOrder.items.map(item =>
+        item.Id === itemId ? { ...item, observations } : item
       )
     }));
   };
@@ -383,7 +381,7 @@ export default function MenuOrder() {
       const invoice = {
         ...order,
         tableId: `${order.tableId}`,
-        total: order.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        total: order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0),
         date: new Date().toISOString()
       };
 
@@ -417,20 +415,20 @@ export default function MenuOrder() {
   };
 
   const filteredMenuItems = menuItems.filter(item => {
-    const matchesCategory = selectedCategory === 'Todas' || item.category === selectedCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'Todas' || item.Category.Name === selectedCategory;
+    const matchesSearch = item.Name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   const groupedMenuItems = filteredMenuItems.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
+    if (!acc[item.Category.Name]) {
+      acc[item.Category.Name] = [];
     }
-    acc[item.category].push(item);
+    acc[item.Category.Name].push(item);
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
-  const totalAmount = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalAmount = order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0);
 
   return (
     <><NavBar>
@@ -463,10 +461,10 @@ export default function MenuOrder() {
               <CategoryTitle>{category}</CategoryTitle>
               <Cardscontainer>
                 {items.map(item => (
-                  <MenuItemCard key={item.id} onClick={() => addToOrder(item)}>
-                    <MenuItemImage src={item.imageUrl} alt={item.name} />
-                    <MenuItemName>{item.name}</MenuItemName>
-                    <MenuItemPrice>${item.price}</MenuItemPrice>
+                  <MenuItemCard key={item.Id} onClick={() => addToOrder(item)}>
+                    <MenuItemImage src={item.ImageURL} alt={item.Name} />
+                    <MenuItemName>{item.Name}</MenuItemName>
+                    <MenuItemPrice>${item.Price}</MenuItemPrice>
                   </MenuItemCard>
                 ))}
               </Cardscontainer>
@@ -477,17 +475,17 @@ export default function MenuOrder() {
           <h2>Orden actual</h2>
           <OrderItemsContainer>
             {order.items.map(item => (
-              <OrderItem key={item.id}>
-                <OrderItemName>{item.name}</OrderItemName>
-                <p>${(item.price * item.quantity)}</p>
+              <OrderItem key={item.Id}>
+                <OrderItemName>{item.Name}</OrderItemName>
+                <p>${(item.Price * item.quantity)}</p>
                 <QuantityControl>
-                  <QuantityButton onClick={() => updateItemQuantity(item.id, -1)} $variant="primary">-</QuantityButton>
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} $variant="primary">-</QuantityButton>
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                  <QuantityButton onClick={() => updateItemQuantity(item.id, 1)} $variant="primary">+</QuantityButton>
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">+</QuantityButton>
                 </QuantityControl>
                 <TextArea
                   value={item.observations}
-                  onChange={(e) => updateObservations(item.id, e.target.value)}
+                  onChange={(e) => updateObservations(item.Id, e.target.value)}
                   placeholder="Observaciones..." />
               </OrderItem>
             ))}

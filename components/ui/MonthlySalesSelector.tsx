@@ -178,7 +178,7 @@ export default function MonthlySalesSelector() {
   };
 
   const formatCurrency = (value: number) => {
-    return `$${value.toLocaleString()}`;
+    return value ? `${value.toLocaleString()}` : 'no hay ventas';
   };
 
   const formatDate = (dateString: string) => {

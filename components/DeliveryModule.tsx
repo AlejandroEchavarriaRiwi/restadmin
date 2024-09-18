@@ -520,10 +520,11 @@ export default function DeliveryModule() {
       ? products
       : products.filter((product) => product.CategoryId === selectedCategory);
 
+
   const searchFilteredProducts = filteredProducts.filter((product) =>
     product.Name.toLowerCase().includes(productSearchTerm.toLowerCase())
-  );
 
+  );
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {
