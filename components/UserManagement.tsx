@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
-import Button from "../components/buttons/Button";
+import Button from "../components/ui/Button";
 import { useAuth } from "../hooks/useAuth";
 import { User, UserFormData } from "../models/user.models";
 import Modal from "../components/modals/UsersModal";
 import { FaPeopleRobbery } from "react-icons/fa6";
+import { Edit, PlusCircle, Trash2 } from "lucide-react";
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
@@ -60,14 +61,30 @@ const Table = styled.table`
 `;
 
 const Th = styled.th`
-  background-color: #f2f2f2;
-  padding: 10px;
-  text-align: left;
+  padding-left: 20px; /* px-5 */
+  padding-right: 20px; /* px-5 */
+  padding-top: 12px; /* py-3 */
+  padding-bottom: 12px; /* py-3 */
+  border-bottom-width: 2px; /* border-b-2 */
+  border-bottom-color: #e5e7eb; /* border-gray-200 */
+  background-color: #f3f4f6; /* bg-gray-100 */
+  text-align: left; /* text-left */
+  font-size: 12px; /* text-xs */
+  font-weight: 600; /* font-semibold */
+  color: #4b5563; /* text-gray-600 */
+  text-transform: uppercase; /* uppercase */
+  letter-spacing: 0.05em; /* tracking-wider */
 `;
 
 const Td = styled.td`
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-bottom-width: 1px;
+  border-bottom-color: #e5e7eb; /* border-gray-200 */
+  font-size: 14px;
+  line-height: 20px;
 `;
 
 const ActionButton = styled(Button)`
@@ -147,6 +164,7 @@ export default function UserManagement() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -271,9 +289,8 @@ export default function UserManagement() {
         if (responseText) {
           try {
             const errorData = JSON.parse(responseText);
-            errorMessage += `, message: ${
-              errorData.message || JSON.stringify(errorData)
-            }`;
+            errorMessage += `, message: ${errorData.message || JSON.stringify(errorData)
+              }`;
           } catch (e) {
             errorMessage += `, body: ${responseText}`;
           }
@@ -340,48 +357,75 @@ export default function UserManagement() {
           <h1 className="ml-4 text-gray-800">Administración de usuarios</h1>
         </div>
         <div className="flex gap-4 mr-4 ">
-          <Button onClick={handleCreateUser}>Crear nuevo usuario</Button>
+          <Button onClick={handleCreateUser}
+            className="flex items-center">
+            <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+            Crear nuevo usuario
+          </Button>
         </div>
       </NavBar>
       <ModuleContainer>
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <Table>
-          <thead>
-            <tr>
-              <Th>Nombre</Th>
-              <Th>Email</Th>
-              <Th>Celular</Th>
-              <Th>Dirección</Th>
-              <Th>Rol</Th>
-              <Th>Acciones</Th>
-            </tr>
-          </thead>
-          {isLoading ? (
-            <TableSkeleton />
-          ) : (
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id ?? user.email}>
-                  <Td>{user.name}</Td>
-                  <Td>{user.email}</Td>
-                  <Td>{user.phone}</Td>
-                  <Td>{user.address}</Td>
-                  <Td>{getRoleName(user.roleId)}</Td>
-                  <Td>
-                    <ActionButton onClick={() => handleEditUser(user)}>
-                      Editar
-                    </ActionButton>
-                    <ActionButton onClick={() => handleDeleteUser(user.id)}>
-                      Borrar
-                    </ActionButton>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          )}
-        </Table>
-
+        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+          <table className="min-w-full leading-normal">
+            <thead>
+              <tr>
+                <Th>Nombre</Th>
+                <Th>Email</Th>
+                <Th>Celular</Th>
+                <Th>Dirección</Th>
+                <Th>Rol</Th>
+                <Th>Acciones</Th>
+              </tr>
+            </thead>
+            {isLoading ? (
+              <TableSkeleton />
+            ) : (
+              <tbody>
+                {users.map((user) => (
+                  <tr
+                    key={user.id ?? user.email}
+                    className="hover:bg-gray-50 transition-colors duration-200 ease-in-out"
+                    onMouseEnter={() => setHoveredRow(user.id ?? null)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{user.name}</p>
+                    </Td>
+                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{user.email}</p>
+                    </Td>
+                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{user.phone}</p>
+                    </Td>
+                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{user.address}</p>
+                    </Td>
+                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <span className="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
+                        <span aria-hidden className="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
+                        <span className="relative">{getRoleName(user.roleId)}</span>
+                      </span>
+                    </Td>
+                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
+                      <div className={`flex space-x-2 ${hoveredRow === user.id ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200 ease-in-out`}>
+                        <ActionButton onClick={() => handleEditUser(user)} className="flex items-center text-blue-600 hover:text-blue-900">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </ActionButton>
+                        <ActionButton onClick={() => handleDeleteUser(user.id)} className="flex items-center text-red-600 hover:text-red-900">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Borrar
+                        </ActionButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            )}
+          </table>
+        </div>
         {showModal && (
           <Modal
             isOpen={showModal}
