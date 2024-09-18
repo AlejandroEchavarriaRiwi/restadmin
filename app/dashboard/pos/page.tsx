@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { X, Plus, Minus } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
 import PDFDocument from '../../../components/print/PDFprint';
 import InputAlert from '@/components/alerts/successAlert';
 import { HiComputerDesktop } from 'react-icons/hi2';
-
+import { TbClipboardList } from 'react-icons/tb';
 
 export interface MenuItem {
   Id: number;
@@ -31,63 +32,64 @@ interface Order {
   generalObservation: string;
 }
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+`;
+
 const NavBar = styled.nav`
   background-color: #f8f9fa;
-  padding: 20px;
+  padding: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   h1 {
     font-weight: bold;
-    font-size: 1.5em;
+    font-size: 1.2em;
+    margin: 0;
   }
-  @media screen and (max-width: 600px) {
-    flex-direction: column;
+
+  @media (min-width: 768px) {
+    padding: 20px;
+
     h1 {
-      margin-left: 0;
-    }
-    div {
-      flex-direction: row;
-      margin-bottom: 10px;
-      gap: 10px;
-      margin-right: 0;
+      font-size: 1.5em;
     }
   }
 `;
 
+const CartButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
 
-const Container = styled.div`
-  display: flex;
-  height: calc(100vh - 76px);
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+const Content = styled.div`
+  flex: 1;
   overflow: hidden;
+  position: relative;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
 `;
 
 const MenuSection = styled.div`
-  width: 70%;
   height: 100%;
   overflow-y: auto;
   padding: 15px;
-  scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
 
-  h1 {
-    margin-bottom: 30px;
-    font-weight: bold;
-    font-size: 1.5rem;
-  }
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 3px;
+  @media (min-width: 768px) {
+    width: 70%;
+    padding: 20px;
   }
 `;
 
@@ -95,46 +97,44 @@ const MenuHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  scrollbar-width: none;
-  scrollbar-color: $primary-color $secondary-color;
-
-  &::-webkit-scrollbar{
-    width: 0px;
-  }
-
-  &::-webkit-scrollbar-track{ 
-    background: $primary-color;
-  }
-
-  &::-webkit-scrollbar-thumb{
-    background-color: $secondary-color;
-    border-radius: 5px;
-    border: 1px solid #e0e0e0;
-  }
-
+  margin-bottom: 15px;
 `;
 
 const SearchBar = styled.input`
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  margin-bottom: 15px;
-  width: 350px;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: 350px;
+  }
 `;
 
 const CategoryButtons = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  overflow-x: auto;
   gap: 10px;
   margin-bottom: 20px;
+  padding-bottom: 10px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 `;
 
 const Button = styled.button<{ $active?: boolean; $variant?: string }>`
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
   font-weight: bold;
+  white-space: nowrap;
   background-color: ${props => {
     if (props.$active) return '#007bff';
     switch (props.$variant) {
@@ -144,25 +144,127 @@ const Button = styled.button<{ $active?: boolean; $variant?: string }>`
     }
   }};
   color: ${props => props.$active || props.$variant ? 'white' : 'black'};
+
   &:hover {
     opacity: 0.8;
   }
 `;
 
-const OrderSection = styled.div`
-  width: 30%;
-  background-color: #f8f9fa;
-  height: 100%-76px;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+const CategoryTitle = styled.h2`
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #007bff;
+`;
+
+const Cardscontainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 15px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const MenuItemCard = styled.div`
   display: flex;
   flex-direction: column;
-  
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const MenuItemImage = styled.img`
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+
+  @media (min-width: 768px) {
+    height: 12rem;
+  }
+`;
+
+const MenuItemName = styled.h3`
+  font-weight: bold;
+  margin: 10px 0 5px;
+  font-size: 0.9em;
+
+  @media (min-width: 768px) {
+    font-size: 1em;
+  }
+`;
+
+const MenuItemPrice = styled.p`
+  margin: 0 0 10px;
+  color: #a9903f;
+  font-weight: bold;
+  font-size: 1em;
+
+  @media (min-width: 768px) {
+    font-size: 1.2em;
+  }
+`;
+
+const OrderSection = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 80%;
+  max-width: 300px;
+  height: 100%;
+  background-color: #f8f9fa;
+  padding: 15px;
+  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: ${props => props.$isOpen ? '-5px 0 15px rgba(0,0,0,0.1)' : 'none'};
+
+  @media (min-width: 768px) {
+    position: static;
+    width: 30%;
+    max-width: none;
+    transform: none;
+    box-shadow: none;
+    border-left: 1px solid #ddd;
+  }
+`;
+
+const OrderHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
   h2 {
-    margin-bottom: 30px;
     font-weight: bold;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  @media (min-width: 768px) {
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+
+  @media (min-width: 768px) {
+    display: none;
   }
 `;
 
@@ -170,112 +272,19 @@ const OrderItemsContainer = styled.div`
   flex-grow: 1;
   overflow-y: auto;
   margin-bottom: 15px;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 3px;
-  }
-`;
-
-const TotalSection = styled.div`
-  font-weight: bold;
-  font-size: 1.2rem;
-  margin-bottom: 15px;
-`;
-
-const ActionButton = styled.button`
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-`;
-
-const CategoryTitle = styled.h2`
-  font-weight: bold;
-  margin-left: 10px;
-  margin-bottom: 15px;
-  padding-bottom: 5px;
-  border-bottom: 2px solid #007bff;
-`;
-
-const Cardscontainer = styled.div`
-  width: 100%;
-  height: auto;
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-`;
-
-const MenuItemCard = styled.div`
-  width: 30%;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  border: 1px solid #ddd;
-  margin-bottom: 10px;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-`;
-
-const MenuItemImage = styled.img`
-  width: 100%;
-  height: 12rem;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-right: 15px;
-`;
-
-const MenuItemName = styled.h3`
-  font-weight: bold;
-  margin: 0 0 5px 0;
-`;
-
-const MenuItemPrice = styled.p`
-  margin: 0;
-  color: #a9903f;
-  font-weight: bold;
-  font-size: 20px;
 `;
 
 const OrderItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #dee2e6;
 `;
 
-const QuantityControl = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: 5px;
-`;
-
-const QuantityButton = styled(Button)`
-  width: 40px;
-  padding: 2px 8px;
-  margin: 0 5px;
+const OrderItemInfo = styled.div`
+  flex-grow: 1;
 `;
 
 const OrderItemName = styled.p`
@@ -283,26 +292,102 @@ const OrderItemName = styled.p`
   font-weight: bold;
 `;
 
+const OrderItemPrice = styled.p`
+  margin: 5px 0 0;
+  color: #6c757d;
+`;
+
+const QuantityControl = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const QuantityButton = styled(Button)`
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const OrderItemQuantity = styled.span`
   background-color: #4655c4;
   color: white;
-  padding: 2px 0px;
+  padding: 2px 0;
   display: flex;
   justify-content: center;
-  text-align: center;
-  width: 40px;
+  align-items: center;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 5px;
-  margin-top: 5px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  margin: 0 5px;
   font-size: 0.9em;
 `;
 
+const ObservationSection = styled.div`
+  margin-bottom: 15px;
+`;
+
+const ObservationLabel = styled.label`
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+`;
+
+const ObservationTextArea = styled.textarea`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9em;
+  resize: vertical;
+  min-height: 80px;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  &::placeholder {
+    color: #6c757d;
+  }
+`;
+
+const TotalSection = styled.div`
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+
+  @media (min-width: 768px) {
+    font-size: 1.2rem;
+  }
+`;
+
+const ActionButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+`;
 
 export default function MenuOrder() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -310,10 +395,12 @@ export default function MenuOrder() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     fetchMenuItems();
   }, []);
+
   const fetchMenuItems = async () => {
     try {
       const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product');
@@ -323,7 +410,6 @@ export default function MenuOrder() {
       const data = await response.json();
       setMenuItems(data);
 
-      // Extraer categorías únicas
       const categorySet = new Set<string>();
       data.forEach((item: MenuItem) => categorySet.add(item.Category.Name));
       const uniqueCategories = ['Todas', ...Array.from(categorySet)];
@@ -348,7 +434,7 @@ export default function MenuOrder() {
       } else {
         return {
           ...prevOrder,
-          items: [...prevOrder.items, { ...item, quantity: 1, observations: '' }]
+          items: [...prevOrder.items, { ...item, quantity: 1 }]
         };
       }
     });
@@ -423,7 +509,6 @@ export default function MenuOrder() {
     }
   };
 
-
   const filteredMenuItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'Todas' || item.Category.Name === selectedCategory;
     const matchesSearch = item.Name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -439,13 +524,17 @@ export default function MenuOrder() {
   }, {} as Record<string, MenuItem[]>);
 
   return (
-    <><NavBar>
-      <div className="flex items-center ">
-        <HiComputerDesktop className="text-3xl text-gray-800" />
-        <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
-      </div>
-    </NavBar>
-      <Container>
+    <Container>
+      <NavBar>
+        <div className="flex items-center">
+          <HiComputerDesktop className="text-3xl text-gray-800" />
+          <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+        </div>
+        <CartButton onClick={() => setIsCartOpen(!isCartOpen)}>
+          <TbClipboardList className='text-[30px] text-gray-800' />
+        </CartButton>
+      </NavBar>
+      <Content>
         <MenuSection>
           <MenuHeader>
             <SearchBar
@@ -474,36 +563,50 @@ export default function MenuOrder() {
                   <MenuItemCard key={item.Id} onClick={() => addToOrder(item)}>
                     <MenuItemImage src={item.ImageURL} alt={item.Name} />
                     <MenuItemName>{item.Name}</MenuItemName>
-                    <MenuItemPrice>${item.Price}</MenuItemPrice>
+                    <MenuItemPrice>${item.Price.toFixed(2)}</MenuItemPrice>
                   </MenuItemCard>
                 ))}
               </Cardscontainer>
             </div>
           ))}
         </MenuSection>
-        <OrderSection>
-          <h2>Orden actual</h2>
+        <OrderSection $isOpen={isCartOpen}>
+          <OrderHeader>
+            <h2>Orden actual</h2>
+            <CloseButton onClick={() => setIsCartOpen(false)}>
+              <X />
+            </CloseButton>
+          </OrderHeader>
           <OrderItemsContainer>
             {order.items.map(item => (
               <OrderItem key={item.Id}>
-                <OrderItemName>{item.Name}</OrderItemName>
-                <p>${(item.Price * item.quantity)}</p>
+                <OrderItemInfo>
+                  <OrderItemName>{item.Name}</OrderItemName>
+                  <OrderItemPrice>${(item.Price * item.quantity).toFixed(2)}</OrderItemPrice>
+                </OrderItemInfo>
                 <QuantityControl>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} $variant="primary">-</QuantityButton>
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} $variant="primary">
+                    <Minus size={16} />
+                  </QuantityButton>
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">+</QuantityButton>
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">
+                    <Plus size={16} />
+                  </QuantityButton>
                 </QuantityControl>
               </OrderItem>
             ))}
           </OrderItemsContainer>
-          {/* New TextArea for general observation */}
-          <TextArea
-            value={order.generalObservation}
-            onChange={(e) => updateGeneralObservation(e.target.value)}
-            placeholder="Observaciones generales de la orden..."
-          />
+          <ObservationSection>
+            <ObservationLabel htmlFor="observation">Observaciones</ObservationLabel>
+            <ObservationTextArea
+              id="observation"
+              value={order.generalObservation}
+              onChange={(e) => updateGeneralObservation(e.target.value)}
+              placeholder="Añade observaciones generales para tu orden..."
+            />
+          </ObservationSection>
           <TotalSection>
-            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
+            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0).toFixed(2)}
           </TotalSection>
           <ActionButton
             onClick={generateInvoiceAndSendToKitchen}
@@ -512,7 +615,8 @@ export default function MenuOrder() {
             Facturar y Enviar a Cocina
           </ActionButton>
         </OrderSection>
-      </Container>
-    </>
+      </Content>
+    </Container>
   );
+
 }
