@@ -14,13 +14,22 @@ interface ProductFormProps {
 const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
     const { name, price, cost, setName, setPrice, setCost, imageURL, setImageURL } = useFormStore();
     const [category, setCategory] = useState<Category | null>(null);
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const validateForm = () => {
+        const newErrors: { [key: string]: string } = {};
+        if (!name.trim()) newErrors.name = 'El nombre es requerido';
+        if (price <= 0) newErrors.price = 'El precio debe ser mayor que 0';
+        if (cost <= 0) newErrors.cost = 'El costo debe ser mayor que 0';
+        if (!category) newErrors.category = 'La categoría es requerida';
+        if (!imageURL.trim()) newErrors.imageURL = 'La imagen es requerida';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!category) {
-            alert('Por favor selecciona una categoría');
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             const productData = {
@@ -28,13 +37,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 price,
                 cost,
                 imageURL,
-                categoryId: category.id,
+                categoryId: category!.Id,
             };
 
             const response = await fetch('/api/v1/Product', {
                 method: 'POST',
                 headers: {
-                    'accept': 'text/plain',
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(productData),
@@ -48,12 +57,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
             console.log('Form submitted:', data);
 
             const newProduct: Product = {
-                id: data.id,
-                name: data.name,
-                cost: data.cost,
-                price: data.price,
-                imageURL: data.imageURL,
-                category: data.name,
+                Id: data.Id,
+                Name: data.Name,
+                Cost: data.Cost,
+                Price: data.Price,
+                ImageURL: data.ImageURL,
+                Category: { Id: data.CategoryId, Name: category!.Name },
+                CategoryId: data.CategoryId
             };
 
             onProductAdded(newProduct);
@@ -86,9 +96,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2"
+                        className={`w-full border rounded-lg px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
                         placeholder="Ingresa el nombre del producto"
                     />
+                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -98,9 +109,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                             id="cost"
                             value={cost}
                             onChange={(e) => setCost(e.target.valueAsNumber)}
-                            className="w-full border rounded-lg px-3 py-2"
+                            className={`w-full border rounded-lg px-3 py-2 ${errors.cost ? 'border-red-500' : ''}`}
                             placeholder="Ingresa el costo"
                         />
+                        {errors.cost && <p className="text-red-500 text-sm mt-1">{errors.cost}</p>}
                     </div>
                     <div>
                         <label htmlFor="price" className="block font-semibold mb-1">Precio:</label>
@@ -109,16 +121,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                             id="price"
                             value={price}
                             onChange={(e) => setPrice(e.target.valueAsNumber)}
-                            className="w-full border rounded-lg px-3 py-2"
+                            className={`w-full border rounded-lg px-3 py-2 ${errors.price ? 'border-red-500' : ''}`}
                             placeholder="Ingresa el precio"
                         />
+                        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                     </div>
                 </div>
                 <CategorySelection category={category} setCategory={setCategory} />
+                {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
                 <ImageUpload imageUrl={imageURL} setImageUrl={setImageURL} />
+                {errors.imageURL && <p className="text-red-500 text-sm mt-1">{errors.imageURL}</p>}
                 <button
                     type="submit"
-                    className="w-full py-2 bg-amarillo text-white rounded-lg"
+                    className="w-full py-2 bg-amarillo text-white rounded-lg hover:bg-amber-500 transition-colors"
                 >
                     Guardar Producto
                 </button>

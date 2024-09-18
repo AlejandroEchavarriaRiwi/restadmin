@@ -18,11 +18,17 @@ import { GiForkKnifeSpoon } from "react-icons/gi"
 
 import './styles/navbarstyles.sass'
 
+interface User {
+    token: string;
+    email: string;
+    name: string;
+    roleId: number;
+}
+
 export default function NavBarAsideDashboard() {
     const [isOpen, setIsOpen] = useState(true);
     const { user, loading, error, logout } = useAuth();
     const router = useRouter();
-
 
     useEffect(() => {
         if (!loading && !user) {
@@ -50,13 +56,13 @@ export default function NavBarAsideDashboard() {
         return null;
     }
 
-    const isAdmin = user.role.some(r => r.roleId === 2);
-    const isCashier = user.role.some(r => r.roleId === 1);
-    const isWaiter = user.role.some(r => r.roleId === 3);
+    const isAdmin = user.roleId === 2;
+    const isCashier = user.roleId === 1;
+    const isWaiter = user.roleId === 3;
 
     interface NavItemProps {
         href: string;
-        icon: any;
+        icon: React.ElementType;
         label: string;
         condition?: boolean;
         isOpen: boolean;
@@ -89,17 +95,19 @@ export default function NavBarAsideDashboard() {
             </Link>
         );
     };
+
+    const getRoleName = (roleId: number): string => {
+        switch (roleId) {
+            case 1: return "Cajero";
+            case 2: return "Administrador";
+            case 3: return "Mesero";
+            default: return "Usuario";
+        }
+    };
+
     return (
         <div className={`flex flex-col bg-azuloscuro text-white ${isOpen ? 'w-64' : 'w-20'} transition-all duration-200 ease-in-out h-full`}>
             <div className="flex text-center items-center justify-between p-4">
-                {isOpen && (
-                    <div className="flex items-center gap-3">
-                        <img className="w-10 h-10" src="/images/restadmin.png" alt="RestAdmin Logo" />
-                        <h1 className="font-bold text-lg">
-                            <span className="text-yellow-400">Rest</span>Admin
-                        </h1>
-                    </div>
-                )}
                 <button onClick={() => setIsOpen(!isOpen)} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0': 'm-auto'}`}>
                     {isOpen ? <GiForkKnifeSpoon /> : <GiKnifeFork />
                     }
@@ -122,7 +130,7 @@ export default function NavBarAsideDashboard() {
                 </div>
             )}
 
-            <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
+                <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
                 <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} />
                 <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} />
                 <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} />

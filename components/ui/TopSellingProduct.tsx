@@ -1,178 +1,96 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import styled, { keyframes } from "styled-components";
+'use client'
 
-interface TopSellingProduct {
-  productId: number;
-  productName: string;
-  totalSold: number;
-  totalEarnings: number;
+import React, { useEffect, useState } from 'react';
+
+interface SellingProduct {
+  ProductId: number;
+  ProductName: string;
+  TotalSold: number;
+  TotalEarnings: number;
 }
 
-const CardContainer = styled.div`
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 400px;
-`;
-
-const Title = styled.h2`
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 15px;
-  color: #333;
-`;
-
-const ProductName = styled.div`
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #0070f3;
-`;
-
-const ProductInfo = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 15px;
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const InfoLabel = styled.span`
-  font-size: 0.875rem;
-  color: #666;
-`;
-
-const InfoValue = styled.span`
-  font-size: 1.125rem;
-  font-weight: bold;
-  color: #333;
-`;
-
-// Skeleton styles
-const shimmer = keyframes`
-  0% {
-    background-position: -468px 0;
-  }
-  100% {
-    background-position: 468px 0;
-  }
-`;
-
-const SkeletonPulse = styled.div`
-  display: inline-block;
-  height: 100%;
-  width: 100%;
-  background-color: #f6f7f8;
-  background-image: linear-gradient(
-    to right,
-    #f6f7f8 0%,
-    #edeef1 20%,
-    #f6f7f8 40%,
-    #f6f7f8 100%
-  );
-  background-repeat: no-repeat;
-  background-size: 800px 104px;
-  animation: ${shimmer} 1.5s infinite linear;
-`;
-
-const SkeletonTitle = styled(SkeletonPulse)`
-  height: 24px;
-  width: 200px;
-  margin-bottom: 15px;
-`;
-
-const SkeletonProductName = styled(SkeletonPulse)`
-  height: 20px;
-  width: 150px;
-  margin-bottom: 10px;
-`;
-
-const SkeletonInfoItem = styled(SkeletonPulse)`
-  height: 16px;
-  width: 100%;
-  margin-bottom: 5px;
-`;
-
-const SkeletonInfoValue = styled(SkeletonPulse)`
-  height: 20px;
-  width: 80%;
-`;
-
-const ProductSkeleton = () => (
-  <CardContainer>
-    <SkeletonTitle />
-    <SkeletonProductName />
-    <ProductInfo>
-      <InfoItem>
-        <SkeletonInfoItem />
-        <SkeletonInfoValue />
-      </InfoItem>
-      <InfoItem>
-        <SkeletonInfoItem />
-        <SkeletonInfoValue />
-      </InfoItem>
-    </ProductInfo>
-  </CardContainer>
+const ProductCard = ({ product }: { product: SellingProduct }) => (
+  <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+    <h3 className="font-bold text-lg text-blue-600 mb-2">{product.ProductName}</h3>
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <p className="text-sm text-gray-500">Total Vendido</p>
+        <p className="font-semibold">{product.TotalSold}</p>
+      </div>
+      <div>
+        <p className="text-sm text-gray-500">Ingresos Totales</p>
+        <p className="font-semibold">${product.TotalEarnings.toLocaleString()}</p>
+      </div>
+    </div>
+  </div>
 );
 
-export default function TopSellingProduct() {
-  const [topProduct, setTopProduct] = useState<TopSellingProduct | null>(null);
+const SkeletonCard = () => (
+  <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+        <div className="h-5 bg-gray-200 rounded w-1/4"></div>
+      </div>
+      <div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+      </div>
+    </div>
+  </div>
+);
+
+export default function TopSellingProducts() {
+  const [products, setProducts] = useState<SellingProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTopSellingProduct();
+    fetchSellingProducts();
   }, []);
 
-  const fetchTopSellingProduct = async () => {
+  const fetchSellingProducts = async () => {
     try {
-      const response = await fetch('/api/v1/Product/topSellingProduct');
+      const response = await fetch('/api/v1/Product/allSellingProducts');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      const data: TopSellingProduct = await response.json();
-      setTopProduct(data);
+      const data: SellingProduct[] = await response.json();
+      setProducts(data);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching top selling product:", error);
-      setError('Error al cargar el producto más vendido');
+      console.error("Error fetching selling products:", error);
+      setError('Error al cargar los productos más vendidos');
       setIsLoading(false);
     }
   };
 
   if (isLoading) {
-    return <ProductSkeleton />;
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Productos Más Vendidos</h2>
+        {[...Array(3)].map((_, index) => (
+          <SkeletonCard key={index} />
+        ))}
+      </div>
+    );
   }
 
   if (error) {
-    return <CardContainer>{error}</CardContainer>;
+    return <div className="text-red-500">{error}</div>;
   }
 
-  if (!topProduct) {
-    return <CardContainer>No se encontró información del producto más vendido.</CardContainer>;
+  if (products.length === 0) {
+    return <div>No se encontró información de los productos más vendidos.</div>;
   }
 
   return (
-    <CardContainer>
-      <Title>Producto Más Vendido</Title>
-      <ProductName>{topProduct.productName}</ProductName>
-      <ProductInfo>
-        <InfoItem>
-          <InfoLabel>Total Vendido</InfoLabel>
-          <InfoValue>{topProduct.totalSold}</InfoValue>
-        </InfoItem>
-        <InfoItem>
-          <InfoLabel>Ingresos Totales</InfoLabel>
-          <InfoValue>${topProduct.totalEarnings.toLocaleString()}</InfoValue>
-        </InfoItem>
-      </ProductInfo>
-    </CardContainer>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Productos Más Vendidos</h2>
+      {products.map((product) => (
+        <ProductCard key={product.ProductId} product={product} />
+      ))}
+    </div>
   );
 }
