@@ -13,10 +13,10 @@ export interface MenuItem {
 
 export interface OrderItem extends MenuItem {
   quantity: number;
-  observations: string;
 }
 
 export interface Order {
   items: OrderItem[];
   tableId: string;
+  generalObservation: string;
 }
