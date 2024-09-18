@@ -520,9 +520,8 @@ export default function DeliveryModule() {
       : menuItems.filter((item) => item.categoryId === selectedCategory);
 
   const searchFilteredMenuItems = filteredMenuItems.filter((item) =>
-    item.name.toLowerCase().includes(menuSearchTerm.toLowerCase())
+    item.name && item.name.toLowerCase().includes(menuSearchTerm.toLowerCase())
   );
-
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {

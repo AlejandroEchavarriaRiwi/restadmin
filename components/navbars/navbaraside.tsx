@@ -107,8 +107,17 @@ export default function NavBarAsideDashboard() {
 
     return (
         <div className={`flex flex-col bg-azuloscuro text-white ${isOpen ? 'w-64' : 'w-20'} transition-all duration-200 ease-in-out h-full`}>
+
             <div className="flex text-center items-center justify-between p-4">
-                <button onClick={() => setIsOpen(!isOpen)} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0': 'm-auto'}`}>
+                {isOpen && (
+                    <div className="flex items-center gap-3">
+                        <img className="w-10 h-10" src="/images/restadmin.png" alt="RestAdmin Logo" />
+                        <h1 className="font-bold text-lg">
+                            <span className="text-yellow-400">Rest</span>Admin
+                        </h1>
+                    </div>
+                )}
+                <button onClick={() => setIsOpen(!isOpen)} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0' : 'm-auto'}`}>
                     {isOpen ? <GiForkKnifeSpoon /> : <GiKnifeFork />
                     }
                 </button>
@@ -130,7 +139,7 @@ export default function NavBarAsideDashboard() {
                 </div>
             )}
 
-                <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
+            <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
                 <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} />
                 <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} />
                 <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} />
