@@ -7,13 +7,13 @@ const MySwal = withReactContent(Swal);
 
 async function AlertConfirm(message: string) {
     return MySwal.fire({
-        title: "Are you sure?",
+        title: "Estas seguro?",
         text: message,
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
-        confirmButtonText: 'Yes, proceed!',
+        confirmButtonText: 'Si, estoy seguro!',
     });
 }
 

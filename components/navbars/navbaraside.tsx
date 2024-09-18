@@ -57,8 +57,8 @@ export default function NavBarAsideDashboard() {
     }
 
     const isAdmin = user.roleId === 2;
-    const isCashier = user.roleId === 1;
-    const isWaiter = user.roleId === 3;
+    const isCashier = user.roleId === 3;
+    const isWaiter = user.roleId === 1;
 
     interface NavItemProps {
         href: string;
@@ -98,9 +98,9 @@ export default function NavBarAsideDashboard() {
 
     const getRoleName = (roleId: number): string => {
         switch (roleId) {
-            case 1: return "Cajero";
+            case 1: return "Mesero";
             case 2: return "Administrador";
-            case 3: return "Mesero";
+            case 3: return "Cajero";
             default: return "Usuario";
         }
     };

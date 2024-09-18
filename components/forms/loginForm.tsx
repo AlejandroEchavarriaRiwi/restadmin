@@ -85,9 +85,9 @@ export function LoginForm() {
             let redirectPath = '/dashboard';
             if (loginResult.RoleId === 2) {
                 redirectPath = '/dashboard/createusers';
-            } else if (loginResult.RoleId === 1) {
-                redirectPath = '/dashboard/pos';
             } else if (loginResult.RoleId === 3) {
+                redirectPath = '/dashboard/pos';
+            } else if (loginResult.RoleId === 1) {
                 redirectPath = '/dashboard/tables';
             }
             window.location.href = redirectPath;

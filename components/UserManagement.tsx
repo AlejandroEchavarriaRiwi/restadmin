@@ -1,4 +1,4 @@
-"use client";
+'use client'
 import React, { useState, useEffect, useCallback } from "react";
 import styled, { keyframes } from "styled-components";
 import Button from "../components/ui/Button";
@@ -7,6 +7,8 @@ import { User } from "../models/user.models";
 import Modal from "../components/modals/UsersModal";
 import { FaPeopleRobbery } from "react-icons/fa6";
 import { Edit, PlusCircle, Trash2 } from "lucide-react";
+import { AlertConfirm } from "./alerts/questionAlert";
+import InputAlert from "./alerts/successAlert";
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
@@ -44,48 +46,54 @@ const ModuleContainer = styled.div`
   }
 `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  text-align: center;
-  thead th {
-    text-align: center;
+const CardContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+`;
+
+const Card = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
   }
 `;
 
-const Th = styled.th`
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  border-bottom-width: 2px;
-  border-bottom-color: #e5e7eb;
-  background-color: #f3f4f6;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  color: #4b5563;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+const CardField = styled.p`
+  margin-bottom: 10px;
+  font-size: 14px;
+
+  strong {
+    font-weight: 600;
+    margin-right: 5px;
+  }
 `;
 
-const Td = styled.td`
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  border-bottom-width: 1px;
-  border-bottom-color: #e5e7eb;
-  font-size: 14px;
-  line-height: 20px;
+const RoleBadge = styled.span`
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e5f7ed;
+  color: #0f766e;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 const ActionButton = styled(Button)`
   margin-right: 5px;
 `;
 
-// Skeleton styles
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+`;
 const shimmer = keyframes`
   0% {
     background-position: -468px 0;
@@ -124,31 +132,14 @@ const SkeletonRow = styled.tr`
   }
 `;
 
-const TableSkeleton = () => (
-  <tbody>
-    {[...Array(5)].map((_, index) => (
-      <SkeletonRow key={index}>
-        <Td>
-          <SkeletonCell />
-        </Td>
-        <Td>
-          <SkeletonCell />
-        </Td>
-        <Td>
-          <SkeletonCell />
-        </Td>
-        <Td>
-          <SkeletonCell />
-        </Td>
-        <Td>
-          <SkeletonCell />
-        </Td>
-        <Td>
-          <SkeletonCell />
-        </Td>
-      </SkeletonRow>
-    ))}
-  </tbody>
+const CardSkeleton = () => (
+  <Card>
+    <SkeletonCell />
+    <SkeletonCell />
+    <SkeletonCell />
+    <SkeletonCell />
+    <SkeletonCell />
+  </Card>
 );
 
 export default function UserManagement() {
@@ -158,7 +149,7 @@ export default function UserManagement() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -180,7 +171,6 @@ export default function UserManagement() {
       const data: User[] = await response.json();
       setUsers(data);
     } catch (error) {
-      console.error("No se pudieron obtener los usuarios:", error);
       setError(
         error instanceof Error ? error.message : "Ocurrió un error desconocido"
       );
@@ -196,7 +186,9 @@ export default function UserManagement() {
   }, [user, fetchUsers]);
 
   const handleDeleteUser = async (userId: number) => {
-    if (window.confirm("¿Está seguro de que desea eliminar este usuario?")) {
+    try {    
+      const result = await AlertConfirm("¿Está seguro de que desea eliminar este usuario?")
+      if (result.isConfirmed) {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
         const response = await fetch(`${apiUrl}/v1/User/${userId}`, {
@@ -212,11 +204,11 @@ export default function UserManagement() {
         }
 
         fetchUsers();
-        alert("Usuario eliminado con éxito!");
+        await InputAlert("Usuario eliminado con éxito!", "success");
       } catch (error) {
-        console.error("No se pudo eliminar el usuario:", error);
-        alert("Error al eliminar el usuario. Por favor, intente de nuevo.");
+        await InputAlert("Error al eliminar el usuario","error");
       }
+    }}catch (error) { await InputAlert("Error al eliminar el usuario","error")
     }
   };
 
@@ -269,14 +261,13 @@ export default function UserManagement() {
 
       fetchUsers();
       handleCloseModal();
-      alert(
-        isEditing
-          ? "Usuario actualizado con éxito!"
-          : "Usuario creado con éxito!"
-      );
+      
+      isEditing
+          ? InputAlert("Usuario actualizado con éxito!","success")
+          : InputAlert("Usuario creado con éxito!","success")
+  
     } catch (error) {
-      console.error("Error al guardar el usuario:", error);
-      alert("Error al guardar el usuario. Por favor, intente de nuevo.");
+      InputAlert("Error al guardar el usuario. Por favor, intente de nuevo.","error");
     }
   };
 
@@ -297,65 +288,47 @@ export default function UserManagement() {
       <ModuleContainer>
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table className="min-w-full leading-normal">
-            <thead>
-              <tr>
-                <Th>Nombre</Th>
-                <Th>Email</Th>
-                <Th>Celular</Th>
-                <Th>Dirección</Th>
-                <Th>Rol</Th>
-                <Th>Acciones</Th>
-              </tr>
-            </thead>
-            {isLoading ? (
-              <TableSkeleton />
-            ) : (
-              <tbody>
-                {users.map((user) => (
-                  <tr
-                    key={user.Id}
-                    className="hover:bg-gray-50 transition-colors duration-200 ease-in-out"
-                    onMouseEnter={() => setHoveredRow(user.Id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{user.Name}</p>
-                    </Td>
-                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{user.Email}</p>
-                    </Td>
-                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{user.Phone}</p>
-                    </Td>
-                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{user.Address}</p>
-                    </Td>
-                    <Td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <span className="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
-                        <span aria-hidden className="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
-                        <span className="relative">{user.Role.Name}</span>
-                      </span>
-                    </Td>
-                    <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                      <div className={`flex space-x-2 ${hoveredRow === user.Id ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200 ease-in-out`}>
-                        <ActionButton onClick={() => handleEditUser(user)} className="flex items-center text-blue-600 hover:text-blue-900">
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </ActionButton>
-                        <ActionButton onClick={() => handleDeleteUser(user.Id)} className="flex items-center text-red-600 hover:text-red-900">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Borrar
-                        </ActionButton>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            )}
-          </table>
-        </div>
+        <CardContainer>
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <CardSkeleton key={index} />
+              ))
+            : users.map((user) => (
+                <Card key={user.Id}>
+                  <CardField>
+                    <strong>Nombre:</strong> {user.Name}
+                  </CardField>
+                  <CardField>
+                    <strong>Email:</strong> {user.Email}
+                  </CardField>
+                  <CardField>
+                    <strong>Celular:</strong> {user.Phone}
+                  </CardField>
+                  <CardField>
+                    <strong>Dirección:</strong> {user.Address}
+                  </CardField>
+                  <CardField>
+                    <strong>Rol:</strong> <RoleBadge>{user.Role.Name}</RoleBadge>
+                  </CardField>
+                  <CardActions>
+                    <ActionButton
+                      onClick={() => handleEditUser(user)}
+                      className="flex items-center text-blue-600 hover:text-blue-900"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </ActionButton>
+                    <ActionButton
+                      onClick={() => handleDeleteUser(user.Id)}
+                      className="flex items-center text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Borrar
+                    </ActionButton>
+                  </CardActions>
+                </Card>
+              ))}
+        </CardContainer>
         {showModal && (
           <Modal
             isOpen={showModal}
