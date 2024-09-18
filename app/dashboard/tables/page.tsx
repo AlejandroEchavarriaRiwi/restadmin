@@ -1,36 +1,47 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import './style.sass';
-import Button from '../../../components/ui/Button';
-import TableCard from '@/components/ui/StyledTableCard'
-import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from 'lucide-react';
-import { MdTableRestaurant } from 'react-icons/md';
+"use client";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import "./style.sass";
+import Button from "../../../components/ui/Button";
+import TableCard from "@/components/ui/StyledTableCard";
+import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from "lucide-react";
+import { MdTableRestaurant } from "react-icons/md";
 
 interface Table {
-  id: string;
-  name: string;
-  state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por facturar';
+  Id: number;
+  Name: string;
+  State: "Disponible" | "Ocupada" | "Cocinando" | "Por Facturar";
 }
 
-interface MenuItem {
-  imageUrl: string;
-  category: string;
-  id: string;
-  name: string;
-  price: number;
-  cost: number;
+interface Category {
+  Id: number;
+  Name: string;
 }
 
-interface OrderItem extends MenuItem {
-  quantity: number;
+interface Product {
+  Id: number;
+  Name: string;
+  Price: number;
+  Quantity: number;
+  ImageURL: string;
+  Category: Category;
 }
 
 interface Order {
-  id?: string;
-  tableId: string;
-  items: OrderItem[];
-  observations: string;
+  Id: number;
+  Observations: string;
+  TablesId: number;
+  TableName: string;
+  Products: Product[];
+}
+interface OrderForCreation {
+  TablesId: number;
+  Observations: string;
+  OrderProducts: {
+    ProductId: number;
+    OrderId: number;
+    Quantity: number;
+  }[];
 }
 
 const Container = styled.div`
@@ -49,16 +60,16 @@ const NavBar = styled.nav`
   justify-content: space-between;
   align-items: center;
 
-  h1{
+  h1 {
     font-weight: bold;
     font-size: 1.5em;
   }
-  @media screen and (max-width: 600px){
-    flex-direction:column;
-    h1{
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    h1 {
       margin-left: 0;
     }
-    div{
+    div {
       flex-direction: row;
       margin-bottom: 10px;
       gap: 10px;
@@ -66,7 +77,6 @@ const NavBar = styled.nav`
     }
   }
 `;
-
 
 const Modal = styled.div`
   position: fixed;
@@ -78,8 +88,8 @@ const Modal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  color:#1f2937;
-  @media screen and (max-width: 600px){
+  color: #1f2937;
+  @media screen and (max-width: 600px) {
     z-index: 600;
   }
 `;
@@ -95,7 +105,7 @@ const ModalContent = styled.div`
   @media screen and (max-width: 600px) {
     position: absolute;
     width: 100%;
-    height: 100%
+    height: 100%;
   }
 `;
 
@@ -105,11 +115,11 @@ const ModalHeader = styled.div`
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-  button{
+  button {
     position: absolute;
     right: 5px;
   }
-  h2{
+  h2 {
     font-size: x-large;
     font-weight: bold;
   }
@@ -120,7 +130,7 @@ const ModalBody = styled.div`
   height: 90%;
   @media screen and (max-width: 600px) {
     flex-direction: column;
-    height: 95%
+    height: 95%;
   }
 `;
 
@@ -133,7 +143,7 @@ const MenuSection = styled.div`
     flex-direction: column;
     width: 100%;
     height: 50%;
-    padding-right: 0px ;
+    padding-right: 0px;
   }
 `;
 
@@ -143,18 +153,17 @@ const OrderSection = styled.div`
   display: flex;
   flex-direction: column;
 
-  h3{
+  h3 {
     font-size: large;
     font-weight: bold;
-    
   }
   @media screen and (max-width: 600px) {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 50%;
-    
-    div.buttons{
+
+    div.buttons {
       display: flex;
       flex-direction: row;
       justify-content: center;
@@ -162,15 +171,13 @@ const OrderSection = styled.div`
       margin-top: 10px;
     }
   }
-  div.buttons{
+  div.buttons {
     display: flex;
     justify-content: center;
     gap: 40px;
-    button{
-      
+    button {
     }
   }
-  
 `;
 
 const CategoryTabs = styled.div`
@@ -178,8 +185,6 @@ const CategoryTabs = styled.div`
   overflow-x: auto;
   margin-bottom: 20px;
 `;
-
-
 
 const TextArea = styled.textarea`
   width: 100%;
@@ -195,14 +200,14 @@ const TextArea = styled.textarea`
 
 const CategoryTab = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  background-color: ${props => props.active ? '#4655c4' : '#f8f9fa'};
-  color: ${props => props.active ? 'white' : 'black'};
+  background-color: ${(props) => (props.active ? "#4655c4" : "#f8f9fa")};
+  color: ${(props) => (props.active ? "white" : "black")};
   border: none;
   cursor: pointer;
   margin-right: 10px;
   border-radius: 5px;
   &:hover {
-    background-color: ${props => props.active ? '#637ad6' : '#e9ecef'};
+    background-color: ${(props) => (props.active ? "#637ad6" : "#e9ecef")};
   }
 `;
 
@@ -210,17 +215,17 @@ const MenuItemGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 15px;
-  
+
   @media screen and (max-width: 600px) {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;  /* Para Firefox */
-    -ms-overflow-style: none;  /* Para Internet Explorer y Edge */
-    
+    scrollbar-width: none; /* Para Firefox */
+    -ms-overflow-style: none; /* Para Internet Explorer y Edge */
+
     &::-webkit-scrollbar {
-      display: none;  /* Para Chrome, Safari y Opera */
+      display: none; /* Para Chrome, Safari y Opera */
     }
   }
 `;
@@ -237,14 +242,14 @@ const MenuItem = styled.div`
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
-  
+
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  
+
   @media screen and (max-width: 600px) {
     flex: 0 0 auto;
-    width: 150px;  /* O el ancho que prefieras para móviles */
+    width: 150px; /* O el ancho que prefieras para móviles */
     margin-right: 15px;
     scroll-snap-align: start;
   }
@@ -264,11 +269,11 @@ const DivOrder = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  h4{
+  h4 {
     font-weight: bold;
     font-size: large;
   }
-  span{
+  span {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -278,11 +283,11 @@ const DivOrder = styled.div`
 
 export default function Tables() {
   const [tables, setTables] = useState<Table[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<Product[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   useEffect(() => {
     fetchTables();
@@ -291,92 +296,118 @@ export default function Tables() {
 
   useEffect(() => {
     if (menuItems.length > 0) {
-      const uniqueCategories = Array.from(new Set(menuItems.map(item => item.category)));
-      setCategories(['Todos', ...uniqueCategories]);
-      setSelectedCategory('Todos');
+      const uniqueCategories = Array.from(
+        new Set(menuItems.map((item) => item.Category.Name))
+      );
+      setCategories(["Todos", ...uniqueCategories]);
+      setSelectedCategory("Todos");
     }
   }, [menuItems]);
 
+  const handleTableClick = (table: Table) => {
+    setSelectedTable(table);
+    fetchOrder(table.Id);
+  };
+
+  const fetchOrder = async (tableId: number) => {
+    try {
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Order?TablesId=${tableId}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch order. Status: ${response.status}`);
+      }
+      const data: Order[] = await response.json();
+      if (data.length > 0) {
+        setCurrentOrder(data[0]);
+      } else {
+        setCurrentOrder({
+          Id: 0,
+          Observations: "",
+          TablesId: tableId,
+          TableName: tables.find((t) => t.Id === tableId)?.Name || "",
+          Products: [],
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      setCurrentOrder({
+        Id: 0,
+        Observations: "",
+        TablesId: tableId,
+        TableName: tables.find((t) => t.Id === tableId)?.Name || "",
+        Products: [],
+      });
+    }
+  };
+
   const fetchTables = async () => {
     try {
-      const response = await fetch('http://localhost:8001/tables');
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Tables"
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch tables. Status: ${response.status}`);
       }
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setTables(data);
-        console.log('Tables updated:', data);
-      } else {
-        throw new Error("Incorrect data format");
-      }
+      const data: Table[] = await response.json();
+      setTables(data);
+      console.log("Tables updated:", data);
     } catch (error) {
       console.error("Error fetching tables:", error);
-      alert(`Error fetching tables: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Error fetching tables: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
   const fetchMenuItems = async () => {
     try {
-      const response = await fetch('http://localhost:8001/menu');
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Product"
+      );
       if (!response.ok) {
-        throw new Error(`Failed to fetch menu items. Status: ${response.status}`);
+        throw new Error(
+          `Failed to fetch menu items. Status: ${response.status}`
+        );
       }
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setMenuItems(data);
-      } else {
-        throw new Error("Incorrect menu data format");
-      }
+      setMenuItems(data);
     } catch (error) {
       console.error("Error fetching menu data:", error);
-      alert(`Error fetching menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Error fetching menu items: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
-  const handleTableClick = (table: Table) => {
-    setSelectedTable(table);
-    fetchOrder(table.id);
-  };
-
-  const fetchOrder = async (tableId: string) => {
-    try {
-      const response = await fetch(`http://localhost:8001/orders?tableId=${tableId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch order. Status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.length > 0) {
-        setCurrentOrder(data[0]);
-      } else {
-        setCurrentOrder({ tableId, items: [], observations: '' });
-      }
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      setCurrentOrder({ tableId, items: [], observations: '' });
-    }
-  };
-
-  const handleAddMenuItem = (menuItem: MenuItem) => {
+  const handleAddMenuItem = (menuItem: Product) => {
     if (currentOrder) {
-      const existingItem = currentOrder.items.find(item => item.id === menuItem.id);
+      const existingItem = currentOrder.Products.find(
+        (item) => item.Id === menuItem.Id
+      );
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.Quantity += 1;
       } else {
-        currentOrder.items.push({ ...menuItem, quantity: 1 });
+        currentOrder.Products.push({ ...menuItem, Quantity: 1 });
       }
       setCurrentOrder({ ...currentOrder });
     }
   };
 
-  const handleRemoveMenuItem = (menuItem: MenuItem) => {
+  const handleRemoveMenuItem = (menuItem: Product) => {
     if (currentOrder) {
-      const existingItemIndex = currentOrder.items.findIndex(item => item.id === menuItem.id);
+      const existingItemIndex = currentOrder.Products.findIndex(
+        (item) => item.Id === menuItem.Id
+      );
       if (existingItemIndex !== -1) {
-        if (currentOrder.items[existingItemIndex].quantity > 1) {
-          currentOrder.items[existingItemIndex].quantity -= 1;
+        if (currentOrder.Products[existingItemIndex].Quantity > 1) {
+          currentOrder.Products[existingItemIndex].Quantity -= 1;
         } else {
-          currentOrder.items.splice(existingItemIndex, 1);
+          currentOrder.Products.splice(existingItemIndex, 1);
         }
         setCurrentOrder({ ...currentOrder });
       }
@@ -386,242 +417,226 @@ export default function Tables() {
   const handleSendToKitchen = async () => {
     if (currentOrder && selectedTable) {
       try {
-        console.log('Processing order for kitchen:', currentOrder);
+        console.log("Preparing order for kitchen:", currentOrder);
 
-        // Check if an order already exists
-        const existingOrderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
-        const existingOrders = await existingOrderResponse.json();
+        // Prepare the order data in the correct format
+        const orderForCreation: OrderForCreation = {
+          TablesId: selectedTable.Id,
+          Observations: currentOrder.Observations,
+          OrderProducts: currentOrder.Products.map(product => ({
+            ProductId: product.Id,
+            OrderId: currentOrder.Id || 0, // Use 0 if it's a new order
+            Quantity: product.Quantity
+          }))
+        };
 
-        let savedOrder;
-        if (existingOrders.length > 0) {
+        console.log("Formatted order data:", orderForCreation);
+
+        let orderId: number;
+        if (currentOrder.Id !== 0) {
           // Update existing order
-          const existingOrder = existingOrders[0];
-          savedOrder = {
-            ...existingOrder,
-            items: currentOrder.items,
-            observations: currentOrder.observations
-          };
-
-          const updateResponse = await fetch(`http://localhost:8001/orders/${existingOrder.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(savedOrder),
-          });
-
+          console.log("Updating existing order");
+          const updateResponse = await fetch(
+            `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(orderForCreation),
+            }
+          );
           if (!updateResponse.ok) {
-            throw new Error(`Failed to update order. Status: ${updateResponse.status}`);
+            const errorText = await updateResponse.text();
+            throw new Error(
+              `Failed to update order. Status: ${updateResponse.status}, Response: ${errorText}`
+            );
           }
-
-          savedOrder = await updateResponse.json();
+          orderId = currentOrder.Id;
         } else {
           // Create new order
-          const createResponse = await fetch(`http://localhost:8001/orders`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(currentOrder),
-          });
-
+          console.log("Creating new order");
+          const createResponse = await fetch(
+            "https://restadmin.azurewebsites.net/api/v1/Order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(orderForCreation),
+            }
+          );
           if (!createResponse.ok) {
-            throw new Error(`Failed to create order. Status: ${createResponse.status}`);
+            const errorText = await createResponse.text();
+            throw new Error(
+              `Failed to create order. Status: ${createResponse.status}, Response: ${errorText}`
+            );
           }
-
-          savedOrder = await createResponse.json();
+          const createdOrder = await createResponse.json();
+          orderId = createdOrder.Id;
         }
 
-        console.log('Order saved successfully:', savedOrder);
+        console.log("Order created/updated successfully. Order ID:", orderId);
 
-        // Update kitchen
-        const existingKitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${selectedTable.id}`);
-        const existingKitchenOrders = await existingKitchenResponse.json();
-
-        if (existingKitchenOrders.length > 0) {
-          // If exists, update it
-          const kitchenUpdateResponse = await fetch(`http://localhost:8001/kitchen/${existingKitchenOrders[0].id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(savedOrder),
-          });
-
-          if (!kitchenUpdateResponse.ok) {
-            throw new Error(`Failed to update kitchen order. Status: ${kitchenUpdateResponse.status}`);
+        // Send to kitchen
+        console.log("Sending order to kitchen. Order ID:", orderId);
+        const kitchenResponse = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Kitchen/create-from-order/${orderId}`,
+          {
+            method: "POST",
           }
-        } else {
-          // If not, create a new one
-          const kitchenCreateResponse = await fetch(`http://localhost:8001/kitchen`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(savedOrder),
-          });
-
-          if (!kitchenCreateResponse.ok) {
-            throw new Error(`Failed to send to kitchen. Status: ${kitchenCreateResponse.status}`);
-          }
+        );
+        if (!kitchenResponse.ok) {
+          const errorText = await kitchenResponse.text();
+          throw new Error(
+            `Failed to send to kitchen. Status: ${kitchenResponse.status}, Response: ${errorText}`
+          );
         }
 
-        console.log('Order sent to kitchen successfully');
+        console.log("Order sent to kitchen successfully");
 
         // Update table state
-        await updateTableState(selectedTable.id, 'Cocinando');
-        console.log('Table state updated successfully');
+        await updateTableState(selectedTable.Id, "Cocinando");
 
-        // Refresh tables
+        // Refresh tables and close modal
         await fetchTables();
-        console.log('Tables refreshed');
-
-        // Close modal
         setSelectedTable(null);
         setCurrentOrder(null);
-        console.log('Modal closed');
 
+        console.log("Process completed successfully");
       } catch (error) {
-        console.error('Error processing order:', error);
-        alert(`Error processing order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error("Error processing order:", error);
+        let errorMessage = "Unknown error occurred";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === "string") {
+          errorMessage = error;
+        }
+        alert(`Error processing order: ${errorMessage}`);
       }
+    } else {
+      console.error("No current order or selected table");
+      alert("No se puede enviar la orden: no hay orden actual o mesa seleccionada");
     }
   };
+
+
 
   const handlePreInvoice = async () => {
-    if (selectedTable) {
+    if (selectedTable && currentOrder && currentOrder.Id !== 0) {
       try {
-        // Fetch the order for the selected table
-        const orderResponse = await fetch(`http://localhost:8001/orders?tableId=${selectedTable.id}`);
-        const orders = await orderResponse.json();
-
-        if (orders.length === 0) {
-          throw new Error('No order found for this table');
-        }
-
-        const order = orders[0]; // Assume there's only one order per table
-
-        // Create a new pre-invoice in 'preinvoices'
-        const preInvoiceResponse = await fetch('http://localhost:8001/preinvoices', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            tableId: selectedTable.id,
-            items: order.items,
-            observations: order.observations,
-            total: order.items.reduce((sum: number, item: { price: number; quantity: number; }) => sum + item.price * item.quantity, 0),
-            date: new Date().toISOString()
-          }),
-        });
-
-        if (!preInvoiceResponse.ok) {
-          throw new Error(`Failed to create pre-invoice. Status: ${preInvoiceResponse.status}`);
-        }
-
-        console.log('Pre-invoice created successfully');
-
-        // Delete the order from 'orders'
-        const deleteOrderResponse = await fetch(`http://localhost:8001/orders/${order.id}`, {
-          method: 'DELETE',
-        });
-
-        if (!deleteOrderResponse.ok) {
-          throw new Error(`Failed to delete order. Status: ${deleteOrderResponse.status}`);
-        }
-
-        console.log('Order removed from orders');
-
-        // Delete the order from 'kitchen'
-        const kitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${selectedTable.id}`);
-        const kitchenOrders = await kitchenResponse.json();
-
-        for (const kitchenOrder of kitchenOrders) {
-          const deleteKitchenResponse = await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
-            method: 'DELETE',
-          });
-
-          if (!deleteKitchenResponse.ok) {
-            throw new Error(`Failed to delete kitchen order. Status: ${deleteKitchenResponse.status}`);
+        // Crear factura a partir del pedido
+        const invoiceResponse = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Invoice/create-from-order?orderId=${currentOrder.Id}`,
+          {
+            method: "POST",
           }
+        );
+
+        if (!invoiceResponse.ok) {
+          throw new Error(
+            `Failed to create invoice. Status: ${invoiceResponse.status}`
+          );
         }
 
-        console.log('Order removed from kitchen');
+        console.log("Invoice created successfully");
 
-        // Update table state
-        await updateTableState(selectedTable.id, 'Por facturar');
-        console.log('Table state updated to Por facturar');
+        // Actualizar estado de la mesa
+        await updateTableState(selectedTable.Id, "Por Facturar");
 
-        // Close modal and reset current order
+        // Cerrar modal y restablecer el pedido actual
         setSelectedTable(null);
         setCurrentOrder(null);
 
-        // Refresh tables
+        // Refrescar mesas
         await fetchTables();
 
-        console.log('Pre-invoice process completed');
-
+        console.log("Pre-invoice process completed");
       } catch (error) {
-        console.error('Error handling pre-invoice:', error);
-        alert(`Error handling pre-invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error("Error handling pre-invoice:", error);
+        alert(
+          `Error handling pre-invoice: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }
   };
 
-  const updateTableState = async (tableId: string, newState: Table['state']) => {
-    console.log('Updating table state:', tableId, newState);
+  const updateTableState = async (tableId: number, newState: Table['State']) => {
+    console.log("Updating table state:", tableId, newState);
     try {
-      const currentTable = tables.find(table => table.id === tableId);
+      const currentTable = tables.find((table) => table.Id === tableId);
       if (!currentTable) {
-        throw new Error('Table not found');
+        throw new Error("Table not found");
       }
 
-      const response = await fetch(`http://localhost:8001/tables/${tableId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...currentTable, state: newState }),
-      });
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...currentTable, State: newState }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to update table state. Status: ${response.status}, Response: ${errorText}`);
+        throw new Error(
+          `Failed to update table state. Status: ${response.status}, Response: ${errorText}`
+        );
       }
 
-      const updatedTable = await response.json();
-      console.log('Table state updated on server:', updatedTable);
+      let updatedTable: Table;
+      const responseText = await response.text();
+      
+      if (responseText) {
+        try {
+          updatedTable = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Error parsing response:", parseError);
+          throw new Error(`Invalid JSON response: ${responseText}`);
+        }
+      } else {
+        // If the response is empty, assume the update was successful
+        // and use the current table data with the new state
+        updatedTable = { ...currentTable, State: newState };
+      }
 
-      setTables(prevTables =>
-        prevTables.map(table =>
-          table.id === tableId ? { ...table, state: newState } : table
+      console.log("Table state updated on server:", updatedTable);
+
+      setTables((prevTables) =>
+        prevTables.map((table) =>
+          table.Id === tableId ? { ...table, State: newState } : table
         )
       );
 
       return updatedTable;
     } catch (error) {
-      console.error('Error updating table state:', error);
-      alert(`Error updating table state: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error updating table state:", error);
+      alert(
+        `Error updating table state: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       throw error;
     }
   };
-
   const addTable = async () => {
-    const newTable: Table = {
-      id: `${tables.length + 1}`,
-      name: `Mesa ${tables.length + 1}`,
-      state: 'Disponible'
+    const newTable: Omit<Table, "Id"> = {
+      Name: `Mesa ${tables.length + 1}`,
+      State: "Disponible",
     };
 
     try {
-      const response = await fetch('http://localhost:8001/tables', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newTable),
-      });
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Tables",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newTable),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to add table. Status: ${response.status}`);
@@ -630,8 +645,12 @@ export default function Tables() {
       const data = await response.json();
       setTables([...tables, data]);
     } catch (error) {
-      console.error('Error adding table:', error);
-      alert(`Error adding table: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error adding table:", error);
+      alert(
+        `Error adding table: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -640,58 +659,45 @@ export default function Tables() {
       const lastTable = tables[tables.length - 1];
 
       try {
-        // First, remove related orders
-        const ordersResponse = await fetch(`http://localhost:8001/orders?tableId=${lastTable.id}`);
-        const relatedOrders = await ordersResponse.json();
-        for (const order of relatedOrders) {
-          await fetch(`http://localhost:8001/orders/${order.id}`, {
-            method: 'DELETE',
-          });
-        }
-        console.log(`Removed ${relatedOrders.length} related orders`);
-
-        // Next, remove related kitchen orders
-        const kitchenResponse = await fetch(`http://localhost:8001/kitchen?tableId=${lastTable.id}`);
-        const relatedKitchenOrders = await kitchenResponse.json();
-        for (const kitchenOrder of relatedKitchenOrders) {
-          await fetch(`http://localhost:8001/kitchen/${kitchenOrder.id}`, {
-            method: 'DELETE',
-          });
-        }
-        console.log(`Removed ${relatedKitchenOrders.length} related kitchen orders`);
-
-        // Finally, remove the table
-        const tableResponse = await fetch(`http://localhost:8001/tables/${lastTable.id}`, {
-          method: 'DELETE',
-        });
+        const tableResponse = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Tables/${lastTable.Id}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         if (!tableResponse.ok) {
-          throw new Error(`Failed to delete table. Status: ${tableResponse.status}`);
+          throw new Error(
+            `Failed to delete table. Status: ${tableResponse.status}`
+          );
         }
 
         // Update the local state
-        setTables(prevTables => prevTables.slice(0, -1));
-        console.log('Table removed successfully');
-
+        setTables((prevTables) => prevTables.slice(0, -1));
+        console.log("Table removed successfully");
       } catch (error) {
-        console.error('Error removing table:', error);
-        alert(`Error removing table: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error("Error removing table:", error);
+        alert(
+          `Error removing table: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }
   };
-
-  const filteredMenuItems = selectedCategory === 'Todos'
-    ? menuItems
-    : menuItems.filter(item => item.category === selectedCategory);
+  const filteredMenuItems =
+    selectedCategory === "Todos"
+      ? menuItems
+      : menuItems.filter((item) => item.Category.Name === selectedCategory);
 
   return (
     <>
       <NavBar>
-        <div className='flex items-center '>
-          <MdTableRestaurant className='text-3xl text-gray-800' />
-          <h1 className='ml-4 text-gray-800'>Mesas</h1>
+        <div className="flex items-center ">
+          <MdTableRestaurant className="text-3xl text-gray-800" />
+          <h1 className="ml-4 text-gray-800">Mesas</h1>
         </div>
-        <div className='flex gap-4 mr-4 '>
+        <div className="flex gap-4 mr-4 ">
           <Button
             className="flex items-center text-gray-800"
             onClick={addTable}
@@ -699,10 +705,7 @@ export default function Tables() {
             <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
             Agregar Mesa
           </Button>
-          <Button
-            className={`flex items-center`}
-            onClick={removeTable}
-          >
+          <Button className={`flex items-center`} onClick={removeTable}>
             <Trash2 className="mr-2 h-4 w-4 text-red-500" />
             Eliminar Mesa
           </Button>
@@ -712,7 +715,7 @@ export default function Tables() {
         {tables.length > 0 ? (
           tables.map((table) => (
             <TableCard
-              key={table.id}
+              key={table.Id}
               table={table}
               onClick={() => handleTableClick(table)}
             />
@@ -725,13 +728,13 @@ export default function Tables() {
         <Modal onClick={() => setSelectedTable(null)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
-              <h2>{selectedTable.name} - Orden</h2>
+              <h2>{selectedTable.Name} - Orden</h2>
               <Button onClick={() => setSelectedTable(null)}>Cerrar</Button>
             </ModalHeader>
             <ModalBody>
               <MenuSection>
                 <CategoryTabs>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <CategoryTab
                       key={category}
                       active={selectedCategory === category}
@@ -743,12 +746,17 @@ export default function Tables() {
                 </CategoryTabs>
                 <MenuItemGrid>
                   {filteredMenuItems.map((item) => (
-                    <MenuItem key={item.id} onClick={() => handleAddMenuItem(item)}>
-                      <img src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-48 object-cover" />
-                      <div>{item.name}</div>
-                      <div>${item.price}</div>
+                    <MenuItem
+                      key={item.Id}
+                      onClick={() => handleAddMenuItem(item)}
+                    >
+                      <img
+                        src={item.ImageURL}
+                        alt={item.Name}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div>{item.Name}</div>
+                      <div>${item.Price}</div>
                     </MenuItem>
                   ))}
                 </MenuItemGrid>
@@ -756,11 +764,15 @@ export default function Tables() {
               <OrderSection>
                 <h3>Pedido:</h3>
                 <OrderList>
-                  {currentOrder.items.map((item, index) => (
-                    <DivOrder className='gap-3' key={index}>
-                      <span>{item.name} - ${item.price} <h4>x {item.quantity}</h4></span>
-                      <Button className="w-8 h-8 m-2 flex items-center justify-center bg-white text-gray-700 border-2 border-gray-300 rounded-full shadow-sm transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-300"
-                        onClick={() => handleRemoveMenuItem(item)}>
+                  {currentOrder.Products.map((item, index) => (
+                    <DivOrder className="gap-3" key={index}>
+                      <span>
+                        {item.Name} - ${item.Price} <h4>x {item.Quantity}</h4>
+                      </span>
+                      <Button
+                        className="w-8 h-8 m-2 flex items-center justify-center bg-white text-gray-700 border-2 border-gray-300 rounded-full shadow-sm transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-300"
+                        onClick={() => handleRemoveMenuItem(item)}
+                      >
                         <Minus className="w-5 h-5" />
                       </Button>
                     </DivOrder>
@@ -768,18 +780,29 @@ export default function Tables() {
                 </OrderList>
                 <h3>Observaciones:</h3>
                 <TextArea
-                  value={currentOrder.observations}
-                  onChange={(e) => setCurrentOrder({ ...currentOrder, observations: e.target.value })}
+                  value={currentOrder.Observations}
+                  onChange={(e) =>
+                    setCurrentOrder({
+                      ...currentOrder,
+                      Observations: e.target.value,
+                    })
+                  }
                   placeholder="Introduzca aquí cualquier instrucción u observación especial..."
                   rows={4}
-                />
-                <div className='buttons'>
-                  <Button className='flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]' onClick={handleSendToKitchen}>
-                    <ChefHat className='text-[#d97706]' />
+                />{" "}
+                <div className="buttons">
+                  <Button
+                    className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                    onClick={handleSendToKitchen}
+                  >
+                    <ChefHat className="text-[#d97706]" />
                     Enviar a Cocina
                   </Button>
-                  <Button className='flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]' onClick={handlePreInvoice}>
-                    <CreditCard className='text-[#a71c1c]' />
+                  <Button
+                    className="flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                    onClick={handlePreInvoice}
+                  >
+                    <CreditCard className="text-[#a71c1c]" />
                     Pre-facturar
                   </Button>
                 </div>
