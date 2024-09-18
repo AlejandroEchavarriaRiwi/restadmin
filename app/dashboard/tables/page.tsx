@@ -304,12 +304,13 @@ export default function Tables() {
     }
   }, [menuItems]);
 
-  const handleTableClick = (table: Table) => {
+  const handleTableClick = async (table: Table) => {
     setSelectedTable(table);
-    fetchOrder(table.Id);
+    const order = await fetchOrder(table.Id);
+    setCurrentOrder(order);
   };
 
-  const fetchOrder = async (tableId: number) => {
+  const fetchOrder = async (tableId: number): Promise<Order> => {
     try {
       const response = await fetch(
         `https://restadmin.azurewebsites.net/api/v1/Order?TablesId=${tableId}`
@@ -319,27 +320,27 @@ export default function Tables() {
       }
       const data: Order[] = await response.json();
       if (data.length > 0) {
-        setCurrentOrder(data[0]);
+        return data[0];
       } else {
-        setCurrentOrder({
-          Id: 0,
-          Observations: "",
-          TablesId: tableId,
-          TableName: tables.find((t) => t.Id === tableId)?.Name || "",
-          Products: [],
-        });
+        return createEmptyOrder(tableId);
       }
     } catch (error) {
       console.error("Error fetching order:", error);
-      setCurrentOrder({
-        Id: 0,
-        Observations: "",
-        TablesId: tableId,
-        TableName: tables.find((t) => t.Id === tableId)?.Name || "",
-        Products: [],
-      });
+      return createEmptyOrder(tableId);
     }
   };
+
+  const createEmptyOrder = (tableId: number): Order => {
+    return {
+      Id: 0,
+      Observations: "",
+      TablesId: tableId,
+      TableName: tables.find((t) => t.Id === tableId)?.Name || "",
+      Products: [],
+    };
+  };
+
+
 
   const fetchTables = async () => {
     try {
