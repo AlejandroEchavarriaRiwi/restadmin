@@ -183,20 +183,15 @@ export default function UserManagement() {
     }
   };
 
-  const handleDeleteUser = async (userId: number | undefined) => {
-    if (userId === undefined) {
-      alert("ID de usuario no válido");
-      return;
-    }
-
+  const handleDeleteUser = async (userId: number) => {
     if (window.confirm("¿Está seguro de que desea eliminar este usuario?")) {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
-        const response = await fetch(`${apiUrl}/v1/User/${userId.toString()}`, {
+        const response = await fetch(`${apiUrl}/v1/User/${userId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user?.token}`, // Asegúrate de que 'user' esté definido
+            Authorization: `Bearer ${user?.token}`,
           },
         });
 
@@ -204,7 +199,7 @@ export default function UserManagement() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        fetchUsers(); // Actualiza la lista de usuarios
+        fetchUsers();
         alert("Usuario eliminado con éxito!");
       } catch (error) {
         console.error("No se pudo eliminar el usuario:", error);
@@ -233,26 +228,20 @@ export default function UserManagement() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
       const isEditing = !!editingUser;
       const method = isEditing ? "PUT" : "POST";
-      const url =
-        isEditing && editingUser?.id
-          ? `${apiUrl}/v1/User/${editingUser.id.toString()}`
-          : `${apiUrl}/v1/User`;
+      const url = isEditing ? `${apiUrl}/v1/User/${editingUser.Id}` : `${apiUrl}/v1/User`;
 
       const dataToSend: Partial<User> = {
-        id: isEditing ? editingUser!.id : 0,
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        address: userData.address,
-        roleId: Number(userData.roleId),
+        Id: isEditing ? editingUser.Id : 0,
+        Name: userData.name,
+        Email: userData.email,
+        Phone: userData.phone,
+        Address: userData.address,
+        RoleId: userData.roleId,
       };
 
-      // Solo incluir la contraseña si es un nuevo usuario o si se ha cambiado
       if (!isEditing || (isEditing && userData.password)) {
-        dataToSend.passwordHash = userData.password;
+        dataToSend.PasswordHash = userData.password;
       }
-
-      console.log("Sending data:", JSON.stringify(dataToSend, null, 2));
 
       const response = await fetch(url, {
         method,
@@ -263,36 +252,8 @@ export default function UserManagement() {
         body: JSON.stringify(dataToSend),
       });
 
-      const responseText = await response.text();
-      console.log("Raw response:", responseText);
-
       if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        if (responseText) {
-          try {
-            const errorData = JSON.parse(responseText);
-            errorMessage += `, message: ${
-              errorData.message || JSON.stringify(errorData)
-            }`;
-          } catch (e) {
-            errorMessage += `, body: ${responseText}`;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      let responseData;
-      if (responseText) {
-        try {
-          responseData = JSON.parse(responseText);
-          console.log("Parsed server response:", responseData);
-        } catch (e) {
-          console.warn("Error parsing JSON response:", e);
-          throw new Error(`Invalid JSON response: ${responseText}`);
-        }
-      } else {
-        console.warn("Empty response from server");
-        responseData = {};
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       fetchUsers();
@@ -303,32 +264,8 @@ export default function UserManagement() {
           : "Usuario creado con éxito!"
       );
     } catch (error) {
-      console.error("Error detallado al guardar el usuario:", error);
-      let errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
-
-      if (
-        error instanceof TypeError &&
-        errorMessage.includes("Failed to fetch")
-      ) {
-        errorMessage =
-          "No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet y que el servidor esté accesible.";
-      }
-
-      alert(`Error al guardar el usuario: ${errorMessage}`);
-    }
-  };
-
-  const getRoleName = (roleId: number): string => {
-    switch (roleId) {
-      case 1:
-        return "Mesero";
-      case 2:
-        return "Administrador";
-      case 3:
-        return "Cajero";
-      default:
-        return "Desconocido";
+      console.error("Error al guardar el usuario:", error);
+      alert("Error al guardar el usuario. Por favor, intente de nuevo.");
     }
   };
 
@@ -362,17 +299,17 @@ export default function UserManagement() {
           ) : (
             <tbody>
               {users.map((user) => (
-                <tr key={user.id ?? user.email}>
-                  <Td>{user.name}</Td>
-                  <Td>{user.email}</Td>
-                  <Td>{user.phone}</Td>
-                  <Td>{user.address}</Td>
-                  <Td>{getRoleName(user.roleId)}</Td>
+                <tr key={user.Id}>
+                  <Td>{user.Name}</Td>
+                  <Td>{user.Email}</Td>
+                  <Td>{user.Phone}</Td>
+                  <Td>{user.Address}</Td>
+                  <Td>{user.Role.Name}</Td>
                   <Td>
                     <ActionButton onClick={() => handleEditUser(user)}>
                       Editar
                     </ActionButton>
-                    <ActionButton onClick={() => handleDeleteUser(user.id)}>
+                    <ActionButton onClick={() => handleDeleteUser(user.Id)}>
                       Borrar
                     </ActionButton>
                   </Td>

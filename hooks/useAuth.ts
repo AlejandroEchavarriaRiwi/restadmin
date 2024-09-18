@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 
 interface User {
-    id?: string;
-    email: string;
-    role: { roleId: number; roleName: string }[];
-    name: string;
     token: string;
+    email: string;
+    name: string;
+    roleId: number;
 }
 
 export function useAuth() {
@@ -21,12 +20,7 @@ export function useAuth() {
                 typeof data.email === 'string' &&
                 typeof data.name === 'string' &&
                 typeof data.token === 'string' &&
-                Array.isArray(data.role) &&
-                data.role.every((r: any) => 
-                    typeof r === 'object' &&
-                    typeof r.roleId === 'number' &&
-                    typeof r.roleName === 'string'
-                )
+                typeof data.roleId === 'number'
             );
         };
 
@@ -48,7 +42,7 @@ export function useAuth() {
             } else {
                 setError('Unknown error loading user data');
             }
-            localStorage.removeItem('user'); // Limpiamos los datos inválidos
+            localStorage.removeItem('user'); // Clean invalid data
         } finally {
             setLoading(false);
         }

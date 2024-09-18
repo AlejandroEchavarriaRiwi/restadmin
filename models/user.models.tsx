@@ -1,19 +1,16 @@
 export interface Role {
-    id: number;
-    name: string;
-  }
-  export interface User {
-    id?: number;
-    name: string;
-    email: string;
-    passwordHash?: string;
-    phone: string;
-    address: string;
-    roleId: number;
-    role?: {
-      id: number;
-      name: string;
-    };
+  Id: number;
+  Name: string;
+}
+export interface User {
+    Id: number;
+    Name: string;
+    Email: string;
+    PasswordHash: string;
+    Phone: string;
+    Address: string;
+    RoleId: number;
+    Role: Role;
   }
   export interface BodyRequestCreateUser {
     email: string;
@@ -52,5 +49,10 @@ export interface Role {
   }
 
   export interface UserFormData extends Omit<User, 'id' | 'passwordHash' | 'role'> {
-    password: string;
+    name: string;
+    email: string;
+    password?: string;
+    phone: string;
+    address: string;
+    roleId: number;
   }

@@ -1,17 +1,45 @@
 'use client'
 import React, { useEffect, useState } from "react";
-import { UserController } from "../../controllers/user.controller";
 import InputAlert from "../alerts/successAlert";
-import { showPreloader, hidePreloader } from "../../controllers/user.controller";
-import { ResponseLoginUser } from "@/models/user.models";
-
 
 interface User {
-    id?: string;
-    email: string;
-    role: { roleId: number; roleName: string }[];
-    name: string;
     token: string;
+    email: string;
+    name: string;
+    roleId: number;
+}
+
+interface LoginResponse {
+    Token: string;
+    Email: string;
+    Name: string;
+    RoleId: number;
+}
+
+class UserController {
+    private domain: string;
+
+    constructor(private urlApi: string) {
+        this.domain = urlApi;
+    }
+
+    async login(email: string, password: string): Promise<LoginResponse> {
+        const url = `${this.domain}/api/Auth/login`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ Email: email, Password: password })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Login failed");
+        }
+
+        return await response.json();
+    }
 }
 
 export function LoginForm() {
@@ -23,37 +51,47 @@ export function LoginForm() {
         localStorage.removeItem('user');
     }, []);
 
+    const getRoleName = (roleId: number): string => {
+        switch (roleId) {
+            case 1: return "Admin";
+            case 2: return "Administrator";
+            case 3: return "Waiter";
+            default: return "Unknown";
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const userController = new UserController('https://restadmin.azurewebsites.net');
-    
-        showPreloader();
-    
+
         try {
-            const loginResult: ResponseLoginUser = await userController.login({ email, password });
-    
-            hidePreloader();
-            await InputAlert('Bienvenido', 'success');
-    
+            showPreloader();
+            const loginResult = await userController.login(email, password);
+
             const user: User = {
-                email: loginResult.email,
-                name: loginResult.name,
-                role: [{ roleId: loginResult.roleId, roleName: getRoleName(loginResult.roleId) }],
-                token: loginResult.token
+                token: loginResult.Token,
+                email: loginResult.Email,
+                name: loginResult.Name,
+                roleId: loginResult.RoleId
             };
             localStorage.setItem("user", JSON.stringify(user));
-    
+
+            console.log("Stored user:", JSON.parse(localStorage.getItem("user") || "{}"));
+
+            hidePreloader();
+            await InputAlert('Bienvenido', 'success');
+
             // Redirección basada en rol
             let redirectPath = '/dashboard';
-            if (loginResult.roleId === 2) {
+            if (loginResult.RoleId === 2) {
                 redirectPath = '/dashboard/createusers';
-            } else if (loginResult.roleId === 1) {
+            } else if (loginResult.RoleId === 1) {
                 redirectPath = '/dashboard/pos';
-            } else if (loginResult.roleId === 3) {
+            } else if (loginResult.RoleId === 3) {
                 redirectPath = '/dashboard/tables';
             }
             window.location.href = redirectPath;
-    
+
         } catch (error) {
             hidePreloader();
             if (error instanceof Error) {
@@ -64,14 +102,19 @@ export function LoginForm() {
         }
     };
 
-    const getRoleName = (roleId: number): string => {
-        switch (roleId) {
-            case 1: return "Admin";
-            case 2: return "Administrator";
-            case 3: return "Waiter";
-            default: return "Unknown";
+    function showPreloader() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            preloader.style.display = 'flex';
         }
-    };
+    }
+    
+    function hidePreloader() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            preloader.style.display = 'none';
+        }
+    }
 
     return (
         <div className="relative">
