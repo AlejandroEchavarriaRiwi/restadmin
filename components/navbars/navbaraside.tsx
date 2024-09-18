@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import './styles/navbarstyles.sass';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MdTableRestaurant, MdDeliveryDining } from 'react-icons/md';
 import { RiStackOverflowFill } from 'react-icons/ri';
 import { ImStatsDots } from 'react-icons/im';
@@ -27,6 +27,8 @@ interface User {
 
 export default function NavBarAsideDashboard() {
     const [isOpen, setIsOpen] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const { user, loading, error, logout } = useAuth();
     const router = useRouter();
 
@@ -34,6 +36,15 @@ export default function NavBarAsideDashboard() {
         if (!loading && !user) {
             router.push('/login');
         }
+
+        const checkIfMobile = () => {
+            setIsMobile(window.innerWidth < 768); // Adjust this breakpoint as needed
+        };
+
+        checkIfMobile();
+        window.addEventListener('resize', checkIfMobile);
+
+        return () => window.removeEventListener('resize', checkIfMobile);
     }, [loading, user, router]);
 
     if (loading) {
@@ -96,18 +107,27 @@ export default function NavBarAsideDashboard() {
         );
     };
 
-    const getRoleName = (roleId: number): string => {
-        switch (roleId) {
-            case 1: return "Mesero";
-            case 2: return "Administrador";
-            case 3: return "Cajero";
-            default: return "Usuario";
+    const toggleNavbar = () => {
+        if (isMobile) {
+            if (isOpen) {
+                setIsOpen(false);
+                setTimeout(() => setIsCollapsed(true), 300);
+            } else {
+                setIsCollapsed(false);
+                setTimeout(() => setIsOpen(true), 300);
+            }
+        } else {
+            setIsOpen(!isOpen);
         }
     };
 
-    return (
-        <div className={`flex flex-col bg-azuloscuro text-white ${isOpen ? 'w-64' : 'w-20'} transition-all duration-200 ease-in-out h-full`}>
-
+    const navbarContent = (
+        <motion.div
+            initial={isOpen ? { width: isMobile ? '55%' : 256 } : { width: isMobile ? 0 : 80 }}
+            animate={isOpen ? { width: isMobile ? '55%' : 256 } : { width: isMobile ? 0 : 80 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className={`flex flex-col bg-azuloscuro text-white h-full overflow-hidden ${isMobile ? 'fixed top-0 left-0 z-50' : ''}`}
+        >
             <div className="flex text-center items-center justify-between p-4">
                 {isOpen && (
                     <div className="flex items-center gap-3">
@@ -117,9 +137,8 @@ export default function NavBarAsideDashboard() {
                         </h1>
                     </div>
                 )}
-                <button onClick={() => setIsOpen(!isOpen)} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0' : 'm-auto'}`}>
-                    {isOpen ? <GiForkKnifeSpoon /> : <GiKnifeFork />
-                    }
+                <button onClick={toggleNavbar} className={`p-2 flex text-center m-auto rounded-full hover:bg-azulmedio text-2xl ${isOpen ? 'mr-0' : 'm-auto'}`}>
+                    {isOpen ? <GiForkKnifeSpoon /> : <GiKnifeFork />}
                 </button>
             </div>
 
@@ -151,10 +170,33 @@ export default function NavBarAsideDashboard() {
                 <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} />
             </nav>
 
-            <button onClick={logout} className={`my-2  m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left ml-3' : 'text-center justify-center w-full ml-0'}`}>
+            <button onClick={logout} className={`my-2 m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left ml-3' : 'text-center justify-center w-full ml-0'}`}>
                 <TbLogout2 className="text-5xl mr-2" />
                 {isOpen && 'Cerrar sesión'}
             </button>
-        </div>
+        </motion.div>
+    );
+
+    return (
+        <AnimatePresence>
+            {isMobile ? (
+                isCollapsed ? (
+                    <motion.button
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        onClick={toggleNavbar}
+                        className="fixed top-4 left-4 z-50 bg-azuloscuro text-white p-4 rounded-full shadow-lg hover:bg-azulmedio"
+                    >
+                        <GiKnifeFork className="text-2xl" />
+                    </motion.button>
+                ) : (
+                    navbarContent
+                )
+            ) : (
+                navbarContent
+            )}
+        </AnimatePresence>
     );
 }
