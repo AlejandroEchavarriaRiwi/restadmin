@@ -176,9 +176,6 @@ export function LoginForm() {
                                     Ingresar
                                 </button>
                             </div>
-                            <p className="text-sm !mt-8 text-center text-gray-900">
-                                No tienes una cuenta?<a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/register' }} className="ml-1 font-semibold text-amber-400 hover:underline whitespace-nowrap">Registrate aquí</a>
-                            </p>
                         </form>
                     </div>
                     <div className="lg:h-[400px] md:h-[300px] max-md:mt-8">
