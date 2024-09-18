@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface SellingProduct {
@@ -18,16 +18,12 @@ interface ChartData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-const ProductProfitabilityChart = () => {
+const ProductProfitabilityChart: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSellingProducts();
-  }, []);
-
-  const fetchSellingProducts = async () => {
+  const fetchSellingProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/v1/Product/allSellingProducts');
       if (!response.ok) {
@@ -35,13 +31,17 @@ const ProductProfitabilityChart = () => {
       }
       const data: SellingProduct[] = await response.json();
       processChartData(data);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching selling products:", error);
       setError('Error al cargar los datos de rentabilidad de productos');
+    } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSellingProducts();
+  }, [fetchSellingProducts]);
 
   const processChartData = (products: SellingProduct[]) => {
     const processedData = products.map(product => ({
@@ -65,7 +65,7 @@ const ProductProfitabilityChart = () => {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value);
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip: React.FC<any> = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
