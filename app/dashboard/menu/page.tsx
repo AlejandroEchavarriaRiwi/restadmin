@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Product } from "@/types/Imenu";
 import ProductCard from "@/components/cards/ProductCard";
 import EditProductModal from "@/components/modals/EditProductModal";
 import { AlertConfirm } from "@/components/alerts/questionAlert";
@@ -10,6 +9,7 @@ import ProductForm from "@/components/forms/NewProductForm";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { BiSolidFoodMenu } from "react-icons/bi";
+import { Product } from "@/types/Imenu";
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
@@ -99,9 +99,10 @@ export default function Menu() {
     setIsLoading(true);
     fetch("/api/v1/Product")
       .then((response) => response.json())
-      .then((data) => {
+      .then((data: Product[]) => {
         if (Array.isArray(data)) {
           setProducts(data);
+          console.log("Productos cargados:", data); // Para depuración
         } else {
           console.error("Formato de datos incorrecto");
         }
@@ -126,7 +127,7 @@ export default function Menu() {
         });
 
         if (response.ok) {
-          setProducts(products.filter((product) => product.id !== id));
+          setProducts(products.filter((product) => product.Id !== id));
           setIsDeleteMode(false);
           await InputAlert(
             "El producto ha sido exitosamente eliminado",
@@ -144,7 +145,7 @@ export default function Menu() {
 
   const handleEditProduct = async (updatedProduct: Product) => {
     try {
-      const response = await fetch(`/api/v1/Product/${updatedProduct.id}`, {
+      const response = await fetch(`/api/v1/Product/${updatedProduct.Id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -154,7 +155,7 @@ export default function Menu() {
 
       if (response.ok) {
         setProducts(
-          products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+          products.map((p) => (p.Id === updatedProduct.Id ? updatedProduct : p))
         );
         setEditingProduct(null);
         await InputAlert(
@@ -184,7 +185,7 @@ export default function Menu() {
     if (isDeleteMode) {
       handleDeleteProduct(id);
     } else if (isEditMode) {
-      const productToEdit = products.find((p) => p.id === id);
+      const productToEdit = products.find((p) => p.Id === id);
       if (productToEdit) {
         setEditingProduct(productToEdit);
       }
@@ -235,19 +236,20 @@ export default function Menu() {
       {isLoading ? (
         <ProductGridSkeleton />
       ) : (
-        <Container>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 m-10">
           {products.length > 0 ? (
-            products.map((product) => (
+            products.map((product, index) => (
               <ProductCard
-                key={product.id}
+                key={product.Id}
                 product={product}
                 onClick={handleProductClick}
+                priority={index === 0}
               />
             ))
           ) : (
-            <p>No hay productos disponibles</p>
+            <p className="col-span-full text-center">No hay productos disponibles</p>
           )}
-        </Container>
+        </div>
       )}
 
       {isModalOpen && (
