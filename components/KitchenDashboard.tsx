@@ -7,19 +7,22 @@ import { CheckCircle, ClipboardList, Printer, Utensils } from "lucide-react";
 import { FaKitchenSet } from "react-icons/fa6";
 
 interface KitchenTicket {
-  id: string;
-  tableId: string;
-  items: {
-    id: string;
-    name: string;
-    price: number;
-    cost: number;
-    imageUrl: string;
-    category: string;
-    quantity: number;
-    observations?: string;
-  }[];
-  observations: string;
+  Id: number;
+  OrderId: number;
+  Order: {
+    Observations: string;
+    TablesId: number;
+    Products: {
+      Name: string;
+      Quantity: number;
+    }[];
+  };
+  TableName?: string;
+}
+
+interface Order {
+  Id: number;
+  TableName: string;
 }
 
 const NavBar = styled.nav`
@@ -133,12 +136,25 @@ export default function KitchenDashboard() {
 
   const fetchTickets = async () => {
     try {
-      const response = await fetch("http://localhost:8001/kitchen");
+      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Kitchen");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      setTickets(data);
+      const data: KitchenTicket[] = await response.json();
+      
+      // Fetch order details for each ticket
+      const ticketsWithTableNames = await Promise.all(
+        data.map(async (ticket) => {
+          const orderResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${ticket.OrderId}`);
+          if (orderResponse.ok) {
+            const orderData: Order = await orderResponse.json();
+            return { ...ticket, TableName: orderData.TableName };
+          }
+          return ticket;
+        })
+      );
+
+      setTickets(ticketsWithTableNames);
     } catch (error) {
       console.error("Could not fetch tickets:", error);
     }
@@ -148,20 +164,20 @@ export default function KitchenDashboard() {
     content: () => printRef.current,
   });
 
-  const completeTicket = async (ticketId: string, tableId: string) => {
+  const completeTicket = async (ticketId: number, tableId: number, tableName: string) => {
     try {
       // Remove ticket from kitchen
-      await fetch(`http://localhost:8001/kitchen/${ticketId}`, {
+      await fetch(`https://restadmin.azurewebsites.net/api/v1/Kitchen/${ticketId}`, {
         method: "DELETE",
       });
 
       // Update table state
-      await fetch(`http://localhost:8001/tables/${tableId}`, {
-        method: "PATCH",
+      await fetch(`https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ state: "Ocupada" }),
+        body: JSON.stringify({ Id: tableId, Name: tableName, State: "Ocupada" }),
       });
 
       // Refresh tickets
@@ -174,18 +190,10 @@ export default function KitchenDashboard() {
   const renderObservations = (ticket: KitchenTicket) => {
     return (
       <>
-        {ticket.observations && (
+        {ticket.Order.Observations && (
           <ObservationText>
-            Observaciones generales: {ticket.observations}
+            Observaciones generales: {ticket.Order.Observations}
           </ObservationText>
-        )}
-        {ticket.items.map(
-          (item, index) =>
-            item.observations && (
-              <ObservationText key={index}>
-                Observaciones para {item.name}: {item.observations}
-              </ObservationText>
-            )
         )}
       </>
     );
@@ -207,12 +215,12 @@ export default function KitchenDashboard() {
         </div>
         <TicketGrid>
           {tickets.map((ticket) => (
-            <TicketCard key={ticket.id}>
-              <TicketHeader>Mesa {ticket.tableId}</TicketHeader>
+            <TicketCard key={ticket.Id}>
+              <TicketHeader>{ticket.TableName || `Mesa ${ticket.Order.TablesId}`}</TicketHeader>
               <ItemList>
-                {ticket.items.map((item, index) => (
+                {ticket.Order.Products.map((item, index) => (
                   <ItemListItem key={index}>
-                    {item.quantity}x {item.name}
+                    {item.Quantity}x {item.Name}
                   </ItemListItem>
                 ))}
               </ItemList>
@@ -223,7 +231,7 @@ export default function KitchenDashboard() {
                   Imprimir Ticket
                 </Button>
                 <Button
-                  onClick={() => completeTicket(ticket.id, ticket.tableId)}
+                  onClick={() => completeTicket(ticket.Id, ticket.Order.TablesId, ticket.TableName || `Mesa ${ticket.Order.TablesId}`)}
                 >
                   <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
                   Marcar como Completado
@@ -235,12 +243,12 @@ export default function KitchenDashboard() {
         <div style={{ display: "none" }}>
           <PrintableTicket ref={printRef}>
             {tickets.map((ticket) => (
-              <div key={ticket.id}>
-                <h2>Mesa {ticket.tableId}</h2>
+              <div key={ticket.Id}>
+                <h2>{ticket.TableName || `Mesa ${ticket.Order.TablesId}`}</h2>
                 <ItemList>
-                  {ticket.items.map((item, index) => (
+                  {ticket.Order.Products.map((item, index) => (
                     <li key={index}>
-                      {item.quantity}x {item.name}
+                      {item.Quantity}x {item.Name}
                     </li>
                   ))}
                 </ItemList>
