@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import Button from "../components/buttons/Button";
 import { useAuth } from "../hooks/useAuth";
-import { User, UserFormData } from "../models/user.models";
+import { User } from "../models/user.models";
 import Modal from "../components/modals/UsersModal";
 import { FaPeopleRobbery } from "react-icons/fa6";
 
@@ -223,25 +223,24 @@ export default function UserManagement() {
     setEditingUser(null);
   };
 
-  const handleSaveUser = async (userData: UserFormData) => {
+  const handleSaveUser = async (userData: User) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
       const isEditing = !!editingUser;
       const method = isEditing ? "PUT" : "POST";
-      const url = isEditing ? `${apiUrl}/v1/User/${editingUser.Id}` : `${apiUrl}/v1/User`;
+      const url = isEditing
+        ? `${apiUrl}/v1/User/${userData.Id}`
+        : `${apiUrl}/v1/User`;
 
       const dataToSend: Partial<User> = {
-        Id: isEditing ? editingUser.Id : 0,
-        Name: userData.name,
-        Email: userData.email,
-        Phone: userData.phone,
-        Address: userData.address,
-        RoleId: userData.roleId,
+        Id: userData.Id,
+        Name: userData.Name,
+        Email: userData.Email,
+        Phone: userData.Phone,
+        Address: userData.Address,
+        RoleId: userData.RoleId,
+        PasswordHash: userData.PasswordHash,
       };
-
-      if (!isEditing || (isEditing && userData.password)) {
-        dataToSend.PasswordHash = userData.password;
-      }
 
       const response = await fetch(url, {
         method,
