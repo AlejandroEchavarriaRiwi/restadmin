@@ -190,9 +190,8 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #4655c4;
   border-radius: 4px;
-  border: 1px solid blue;
+  border: 1px solid;
   @media screen and (max-width: 600px) {
     margin-bottom: 2px;
   }
@@ -771,7 +770,7 @@ export default function Tables() {
                         {item.Name} - ${item.Price} <h4>x {item.Quantity}</h4>
                       </span>
                       <Button
-                        className="w-8 h-8 m-2 flex items-center justify-center bg-white text-gray-700 border-2 border-gray-300 rounded-full shadow-sm transition-all duration-200 ease-in-out hover:bg-gray-100 hover:border-gray-400 active:bg-gray-200 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-300"
+                        className="w-8 h-8 m-2 flex items-center justify-center bg-white text-gray-700 border-2 border-[#dc2626] rounded-full shadow-sm transition-all duration-200 ease-in-out hover:bg-[#fff4f4] hover:border-[#e26666] active:bg-gray-200 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#a71c1c]"
                         onClick={() => handleRemoveMenuItem(item)}
                       >
                         <Minus className="w-5 h-5" />

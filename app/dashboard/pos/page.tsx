@@ -23,12 +23,12 @@ export interface MenuItem {
 
 interface OrderItem extends MenuItem {
   quantity: number;
-  observations: string;
 }
 
 interface Order {
   items: OrderItem[];
   tableId: string;
+  generalObservation: string;
 }
 
 const NavBar = styled.nav`
@@ -59,14 +59,13 @@ const NavBar = styled.nav`
 
 const Container = styled.div`
   display: flex;
-  height: 100%-76px;
+  height: calc(100vh - 76px);
   overflow: hidden;
 `;
 
-
 const MenuSection = styled.div`
   width: 70%;
-  height: 100%-76px;
+  height: 100%;
   overflow-y: auto;
   padding: 15px;
   scrollbar-width: thin;
@@ -170,9 +169,8 @@ const OrderSection = styled.div`
 const OrderItemsContainer = styled.div`
   flex-grow: 1;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
-
+  margin-bottom: 15px;
+  
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -184,6 +182,28 @@ const OrderItemsContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background-color: #888;
     border-radius: 3px;
+  }
+`;
+
+const TotalSection = styled.div`
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+`;
+
+const ActionButton = styled.button`
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
   }
 `;
 
@@ -283,17 +303,10 @@ const TextArea = styled.textarea`
   font-size: 0.9em;
 `;
 
-const TotalSection = styled.div`
-  font-size: 1.2em;
-  font-weight: bold;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  text-align: right;
-`;
 
 export default function MenuOrder() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [order, setOrder] = useState<Order>({ items: [], tableId: 'pos1' });
+  const [order, setOrder] = useState<Order>({ items: [], tableId: 'pos1', generalObservation: '' });
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -301,14 +314,13 @@ export default function MenuOrder() {
   useEffect(() => {
     fetchMenuItems();
   }, []);
-
   const fetchMenuItems = async () => {
     try {
       const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json(); 
+      const data = await response.json();
       setMenuItems(data);
 
       // Extraer categorías únicas
@@ -353,34 +365,31 @@ export default function MenuOrder() {
     }));
   };
 
-  const updateObservations = (itemId: number, observations: string) => {
+  const updateGeneralObservation = (observation: string) => {
     setOrder(prevOrder => ({
       ...prevOrder,
-      items: prevOrder.items.map(item =>
-        item.Id === itemId ? { ...item, observations } : item
-      )
+      generalObservation: observation
     }));
   };
 
   const generateInvoiceAndSendToKitchen = async () => {
     try {
-      // Primero, enviar a cocina
+      // Send to kitchen
       const kitchenResponse = await fetch('http://localhost:8001/kitchen', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...order, tableId: `${order.tableId}` }),
+        body: JSON.stringify(order),
       });
 
       if (!kitchenResponse.ok) {
         throw new Error(`HTTP error! status: ${kitchenResponse.status}`);
       }
 
-      // Luego, generar la factura
+      // Generate invoice
       const invoice = {
         ...order,
-        tableId: `${order.tableId}`,
         total: order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0),
         date: new Date().toISOString()
       };
@@ -397,22 +406,23 @@ export default function MenuOrder() {
         throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
       }
 
-      // Generar y mostrar el PDF
+      // Generate and show PDF
       const blob = await pdf(<PDFDocument order={invoice} />).toBlob();
       const url = URL.createObjectURL(blob);
       const printWindow = window.open(url, '_blank');
       printWindow?.print();
 
-      // Limpiar la orden
-      setOrder({ items: [], tableId: 'pos1' });
+      // Clear the order
+      setOrder({ items: [], tableId: 'pos1', generalObservation: '' });
 
-      // Mostrar mensaje de éxito
+      // Show success message
       await InputAlert('Orden enviada a cocina y facturada correctamente!', 'success');
     } catch (error) {
       console.error("Error al procesar la orden:", error);
       alert('Error al procesar la orden. Por favor, intente de nuevo.');
     }
   };
+
 
   const filteredMenuItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'Todas' || item.Category.Name === selectedCategory;
@@ -428,22 +438,22 @@ export default function MenuOrder() {
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
-  const totalAmount = order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0);
-
   return (
     <><NavBar>
       <div className="flex items-center ">
         <HiComputerDesktop className="text-3xl text-gray-800" />
         <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
       </div>
-    </NavBar><Container>
+    </NavBar>
+      <Container>
         <MenuSection>
           <MenuHeader>
             <SearchBar
               type="text"
               placeholder="Buscar..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} />
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </MenuHeader>
           <CategoryButtons>
             {categories.map(category => (
@@ -483,26 +493,26 @@ export default function MenuOrder() {
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
                   <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">+</QuantityButton>
                 </QuantityControl>
-                <TextArea
-                  value={item.observations}
-                  onChange={(e) => updateObservations(item.Id, e.target.value)}
-                  placeholder="Observaciones..." />
               </OrderItem>
             ))}
           </OrderItemsContainer>
+          {/* New TextArea for general observation */}
+          <TextArea
+            value={order.generalObservation}
+            onChange={(e) => updateGeneralObservation(e.target.value)}
+            placeholder="Observaciones generales de la orden..."
+          />
           <TotalSection>
-            Total: ${totalAmount}
+            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
           </TotalSection>
-          <div className='flex gap-3 w-full justify-around'>
-            <Button
-              onClick={generateInvoiceAndSendToKitchen}
-              disabled={order.items.length === 0}
-              $variant="primary"
-            >
-              Facturar y Enviar a Cocina
-            </Button>
-          </div>
+          <ActionButton
+            onClick={generateInvoiceAndSendToKitchen}
+            disabled={order.items.length === 0}
+          >
+            Facturar y Enviar a Cocina
+          </ActionButton>
         </OrderSection>
-      </Container></>
+      </Container>
+    </>
   );
 }

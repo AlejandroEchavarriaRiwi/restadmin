@@ -46,8 +46,8 @@ const PDFDocument: React.FC<PDFDocumentProps> = ({ order }) => (
           <Text style={styles.value}>
             {item.quantity} x ${item.Price} = ${item.quantity * item.Price}
           </Text>
-          {item.observations && (
-            <Text style={styles.value}>Obs: {item.observations}</Text>
+          {order.generalObservation && (
+            <Text style={styles.value}>Obs: {order.generalObservation}</Text>
           )}
         </View>
       ))}
