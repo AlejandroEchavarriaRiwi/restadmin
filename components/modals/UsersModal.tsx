@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { User, UserFormData } from '../../models/user.models';
+import { User, Role } from '../../models/user.models';
 
 const ModalBackground = styled.div`
   position: fixed;
@@ -51,69 +51,73 @@ const ErrorMessage = styled.p`
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (user: UserFormData) => void;
+  onSave: (user: User) => void;
   user?: User | null;
 }
 
+// Definimos UserFormData basado en la estructura de User
+type UserFormData = Omit<User, 'Id' | 'Role'> & { password: string };
+
+const initialFormData: UserFormData = {
+  Name: '',
+  Email: '',
+  PasswordHash: '',
+  password: '', // Campo adicional para la contraseña en el formulario
+  Phone: '',
+  Address: '',
+  RoleId: 1,
+};
+
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave, user }) => {
-  const [formData, setFormData] = useState<UserFormData>({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    address: '',
-    roleId: 1,
-  });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [formData, setFormData] = useState<UserFormData>(initialFormData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name,
-        email: user.email,
-        password: '',
-        phone: user.phone,
-        address: user.address,
-        roleId: user.roleId,
+        ...user,
+        password: '', // Campo adicional para la contraseña en el formulario
+        PasswordHash: user.PasswordHash // Mantenemos el PasswordHash existente
       });
     } else {
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        phone: '',
-        address: '',
-        roleId: 1,
-      });
+      setFormData(initialFormData);
     }
     setErrors({});
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'roleId' ? parseInt(value) : value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'RoleId' ? parseInt(value, 10) : value 
+    }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
+    const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) newErrors.name = 'El nombre es requerido';
-    if (!formData.email.trim()) newErrors.email = 'El email es requerido';
+    if (!formData.Name.trim()) newErrors.Name = 'El nombre es requerido';
+    if (!formData.Email.trim()) newErrors.Email = 'El email es requerido';
     if (!user && !formData.password.trim()) newErrors.password = 'La contraseña es requerida para nuevos usuarios';
-    if (!formData.phone.trim()) newErrors.phone = 'El teléfono es requerido';
-    if (!formData.address.trim()) newErrors.address = 'La dirección es requerida';
+    if (!formData.Phone.trim()) newErrors.Phone = 'El teléfono es requerido';
+    if (!formData.Address.trim()) newErrors.Address = 'La dirección es requerida';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      onSave(formData);
-    } else {
-      console.log('Validation failed', errors);
+      const userToSave: User = {
+        ...formData,
+        Id: user?.Id || 0, // Si es un nuevo usuario, usamos 0 o algún valor por defecto
+        PasswordHash: formData.password ? formData.password : formData.PasswordHash, // Usamos la nueva contraseña si se proporciona
+        Role: { Id: formData.RoleId, Name: '' } // Asumimos que el nombre del rol se manejará en el backend
+      };
+      delete (userToSave as any).password; // Eliminamos el campo password adicional
+      onSave(userToSave);
     }
   };
 
@@ -124,54 +128,24 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave, user }) => {
       <ModalContent>
         <h2>{user ? 'Editar Usuario' : 'Crear Usuario'}</h2>
         <Form onSubmit={handleSubmit}>
-          <Input
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Nombre"
-            required
-          />
-          {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+          {Object.entries(formData).map(([key, value]) => {
+            if (key === 'RoleId' || key === 'PasswordHash') return null;
+            return (
+              <React.Fragment key={key}>
+                <Input
+                  name={key}
+                  type={key === 'password' ? 'password' : 'text'}
+                  value={value}
+                  onChange={handleChange}
+                  placeholder={key}
+                  required={key !== 'password' || !user}
+                />
+                {errors[key] && <ErrorMessage>{errors[key]}</ErrorMessage>}
+              </React.Fragment>
+            );
+          })}
           
-          <Input
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email"
-            required
-          />
-          {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-          
-          <Input
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Contraseña"
-            required={!user}
-          />
-          {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
-          
-          <Input
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Teléfono"
-            required
-          />
-          {errors.phone && <ErrorMessage>{errors.phone}</ErrorMessage>}
-          
-          <Input
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            placeholder="Dirección"
-            required
-          />
-          {errors.address && <ErrorMessage>{errors.address}</ErrorMessage>}
-          
-          <Select name="roleId" value={formData.roleId} onChange={handleChange}>
+          <Select name="RoleId" value={formData.RoleId} onChange={handleChange}>
             <option value={1}>Mesero</option>
             <option value={2}>Administrador</option>
             <option value={3}>Cajero</option>
