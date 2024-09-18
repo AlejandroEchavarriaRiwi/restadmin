@@ -1,164 +1,294 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { User, Role } from '../../models/user.models';
+"use client"
 
-const ModalBackground = styled.div`
+import React, { useState, useEffect } from 'react'
+import styled from 'styled-components'
+import { User, Role } from '../../models/user.models'
+
+const DialogOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-`;
+  z-index: 600;
+`
 
-const ModalContent = styled.div`
+const DialogContent = styled.div`
   background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 400px;
-`;
+  border-radius: 8px;
+  padding: 24px;
+  width: 100%;
+  max-width: 425px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`
+
+const DialogHeader = styled.div`
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+const DialogTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+`
+
+const DialogDescription = styled.p`
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 8px;
+`
 
 const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-`;
+  display: grid;
+  gap: 16px;
+`
+
+const FormGroup = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  align-items: center;
+  gap: 16px;
+`
+
+const Label = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  text-align: right;
+`
 
 const Input = styled.input`
-  margin-bottom: 10px;
-  padding: 5px;
-`;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+`
 
 const Select = styled.select`
-  margin-bottom: 10px;
-  padding: 5px;
-`;
-
-const Button = styled.button`
-  padding: 5px 10px;
-  margin-right: 5px;
-`;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background-color: white;
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+`
 
 const ErrorMessage = styled.p`
-  color: red;
-  font-size: 14px;
-  margin-top: -5px;
-  margin-bottom: 10px;
-`;
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 4px;
+`
+
+const DialogFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+`
+
+const Button = styled.button`
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+`
+
+const SaveButton = styled(Button)`
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  &:hover {
+    background-color: #2563eb;
+  }
+`
+
+const CancelButton = styled(Button)`
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  &:hover {
+    background-color: #e5e7eb;
+  }
+`
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  &:hover {
+    color: #4b5563;
+  }
+`
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (user: User) => void;
-  user?: User | null;
+  isOpen: boolean
+  onClose: () => void
+  onSave: (user: User) => void
+  user?: User | null
 }
 
-// Definimos UserFormData basado en la estructura de User
-type UserFormData = Omit<User, 'Id' | 'Role'> & { password: string };
+type UserFormData = Omit<User, 'Id' | 'Role'> & { password: string, RoleId: number }
 
 const initialFormData: UserFormData = {
   Name: '',
   Email: '',
   PasswordHash: '',
-  password: '', // Campo adicional para la contraseña en el formulario
+  password: '',
   Phone: '',
   Address: '',
-  RoleId: 1,
-};
+  RoleId: 0,
+}
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave, user }) => {
-  const [formData, setFormData] = useState<UserFormData>(initialFormData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+const fieldLabels: Record<string, string> = {
+  Name: 'Nombre',
+  Email: 'Correo electrónico',
+  password: 'Contraseña',
+  Phone: 'Teléfono',
+  Address: 'Dirección',
+  RoleId: 'Rol',
+}
+
+export default function UserModal({ isOpen, onClose, onSave, user }: ModalProps) {
+  const [formData, setFormData] = useState<UserFormData>(initialFormData)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (user) {
       setFormData({
         ...user,
-        password: '', // Campo adicional para la contraseña en el formulario
-        PasswordHash: user.PasswordHash // Mantenemos el PasswordHash existente
-      });
+        password: '',
+        PasswordHash: user.PasswordHash,
+        RoleId: user.Role.Id
+      })
     } else {
-      setFormData(initialFormData);
+      setFormData(initialFormData)
     }
-    setErrors({});
-  }, [user]);
+    setErrors({})
+  }, [user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({ 
       ...prev, 
       [name]: name === 'RoleId' ? parseInt(value, 10) : value 
-    }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
-  };
+    }))
+    setErrors(prev => ({ ...prev, [name]: '' }))
+  }
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {}
     
-    if (!formData.Name.trim()) newErrors.Name = 'El nombre es requerido';
-    if (!formData.Email.trim()) newErrors.Email = 'El email es requerido';
-    if (!user && !formData.password.trim()) newErrors.password = 'La contraseña es requerida para nuevos usuarios';
-    if (!formData.Phone.trim()) newErrors.Phone = 'El teléfono es requerido';
-    if (!formData.Address.trim()) newErrors.Address = 'La dirección es requerida';
+    if (!formData.Name.trim()) newErrors.Name = 'El nombre es requerido'
+    if (!formData.Email.trim()) newErrors.Email = 'El correo electrónico es requerido'
+    if (!user && !formData.password.trim()) newErrors.password = 'La contraseña es requerida para nuevos usuarios'
+    if (!formData.Phone.trim()) newErrors.Phone = 'El teléfono es requerido'
+    if (!formData.Address.trim()) newErrors.Address = 'La dirección es requerida'
+    if (!formData.RoleId) newErrors.RoleId = 'El rol es requerido'
     
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
     if (validateForm()) {
       const userToSave: User = {
         ...formData,
-        Id: user?.Id || 0, // Si es un nuevo usuario, usamos 0 o algún valor por defecto
-        PasswordHash: formData.password ? formData.password : formData.PasswordHash, // Usamos la nueva contraseña si se proporciona
-        Role: { Id: formData.RoleId, Name: '' } // Asumimos que el nombre del rol se manejará en el backend
-      };
-      delete (userToSave as any).password; // Eliminamos el campo password adicional
-      onSave(userToSave);
+        Id: user?.Id || 0,
+        PasswordHash: formData.password ? formData.password : formData.PasswordHash,
+        Role: { Id: formData.RoleId, Name: '' }
+      }
+      delete (userToSave as any).password
+      onSave(userToSave)
     }
-  };
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
-    <ModalBackground>
-      <ModalContent>
-        <h2>{user ? 'Editar Usuario' : 'Crear Usuario'}</h2>
+    <DialogOverlay>
+      <DialogContent>
+        <DialogHeader>
+          <div>
+            <DialogTitle>{user ? 'Editar Usuario' : 'Crear Usuario'}</DialogTitle>
+            <DialogDescription>
+              {user ? 'Modifica los detalles del usuario aquí.' : 'Ingresa los detalles del nuevo usuario aquí.'}
+            </DialogDescription>
+          </div>
+          <CloseButton onClick={onClose} aria-label="Cerrar">
+            &times;
+          </CloseButton>
+        </DialogHeader>
         <Form onSubmit={handleSubmit}>
           {Object.entries(formData).map(([key, value]) => {
-            if (key === 'RoleId' || key === 'PasswordHash') return null;
+            if (key === 'Id' || key === 'PasswordHash') return null
+            if (key === 'Role') return null
             return (
-              <React.Fragment key={key}>
-                <Input
-                  name={key}
-                  type={key === 'password' ? 'password' : 'text'}
-                  value={value}
-                  onChange={handleChange}
-                  placeholder={key}
-                  required={key !== 'password' || !user}
-                />
-                {errors[key] && <ErrorMessage>{errors[key]}</ErrorMessage>}
-              </React.Fragment>
-            );
+              <FormGroup key={key}>
+                <Label htmlFor={key}>
+                  {fieldLabels[key] || key}
+                </Label>
+                <div>
+                  {key === 'RoleId' ? (
+                    <Select 
+                      id={key}
+                      name={key}
+                      value={value.toString()}
+                      onChange={handleChange}
+                    >
+                      <option value="">Seleccione un rol</option>
+                      <option value="1">Mesero</option>
+                      <option value="2">Administrador</option>
+                      <option value="3">Cajero</option>
+                    </Select>
+                  ) : (
+                    <Input
+                      id={key}
+                      name={key}
+                      type={key === 'password' ? 'password' : 'text'}
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={handleChange}
+                      required={key !== 'password' || !user}
+                    />
+                  )}
+                  {errors[key] && <ErrorMessage>{errors[key]}</ErrorMessage>}
+                </div>
+              </FormGroup>
+            )
           })}
-          
-          <Select name="RoleId" value={formData.RoleId} onChange={handleChange}>
-            <option value={1}>Mesero</option>
-            <option value={2}>Administrador</option>
-            <option value={3}>Cajero</option>
-          </Select>
-          
-          <div>
-            <Button type="submit">Guardar</Button>
-            <Button type="button" onClick={onClose}>Cancelar</Button>
-          </div>
+          <DialogFooter>
+            <CancelButton type="button" onClick={onClose}>Cancelar</CancelButton>
+            <SaveButton type="submit">Guardar</SaveButton>
+          </DialogFooter>
         </Form>
-      </ModalContent>
-    </ModalBackground>
-  );
-};
-
-export default Modal;
+      </DialogContent>
+    </DialogOverlay>
+  )
+}
