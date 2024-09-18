@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled, { keyframes } from "styled-components";
 import Button from "../components/buttons/Button";
 import { useAuth } from "../hooks/useAuth";
@@ -154,7 +154,7 @@ export default function UserManagement() {
     }
   }, [user]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -181,7 +181,13 @@ export default function UserManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUsers();
+    }
+  }, [user, fetchUsers]);
 
   const handleDeleteUser = async (userId: number) => {
     if (window.confirm("¿Está seguro de que desea eliminar este usuario?")) {
