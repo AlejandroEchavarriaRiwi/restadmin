@@ -41,23 +41,16 @@ const Container = styled.div`
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
+  position: relative;
   padding: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  h1 {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin: 0;
-  }
 
   @media (min-width: 768px) {
     padding: 20px;
 
-    h1 {
-      font-size: 1.5em;
-    }
   }
 `;
 
@@ -65,7 +58,10 @@ const CartButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  position: absolute;
   padding: 5px;
+  right: 10px;
+  top:10px;
 
   @media (min-width: 768px) {
     display: none;
@@ -136,9 +132,9 @@ const Button = styled.button<{ $active?: boolean; $variant?: string }>`
   font-weight: bold;
   white-space: nowrap;
   background-color: ${props => {
-    if (props.$active) return '#007bff';
+    if (props.$active) return '#67b7f7';
     switch (props.$variant) {
-      case 'primary': return '#007bff';
+      case 'primary': return '#67b7f7';
       case 'alert': return '#ffc107';
       default: return '#f8f9fa';
     }
@@ -154,7 +150,9 @@ const CategoryTitle = styled.h2`
   font-weight: bold;
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid 
+#67b7f7
+;
 `;
 
 const Cardscontainer = styled.div`
@@ -228,6 +226,7 @@ const OrderSection = styled.div<{ $isOpen: boolean }>`
   flex-direction: column;
   box-shadow: ${props => props.$isOpen ? '-5px 0 15px rgba(0,0,0,0.1)' : 'none'};
 
+
   @media (min-width: 768px) {
     position: static;
     width: 30%;
@@ -300,32 +299,34 @@ const OrderItemPrice = styled.p`
 const QuantityControl = styled.div`
   display: flex;
   align-items: center;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
 `;
 
-const QuantityButton = styled(Button)`
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const QuantityButton = styled.button`
+  background-color: transparent;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1.2em;
+  color: #4655c4;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
 `;
 
 const OrderItemQuantity = styled.span`
-  background-color: #4655c4;
-  color: white;
-  padding: 2px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  margin: 0 5px;
-  font-size: 0.9em;
+  padding: 0 10px;
+  font-weight: bold;
 `;
 
 const ObservationSection = styled.div`
+border-top: 2px solid 
+#67b7f7
+;
   margin-bottom: 15px;
 `;
 
@@ -362,6 +363,9 @@ const TotalSection = styled.div`
   font-weight: bold;
   font-size: 1.1rem;
   margin-bottom: 15px;
+  border-top: 2px solid 
+#67b7f7
+;
 
   @media (min-width: 768px) {
     font-size: 1.2rem;
@@ -371,7 +375,9 @@ const TotalSection = styled.div`
 const ActionButton = styled.button`
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: 
+#67b7f7
+;
   color: white;
   border: none;
   border-radius: 5px;
@@ -526,11 +532,11 @@ export default function MenuOrder() {
   return (
     <Container>
       <NavBar>
-        <div className="flex items-center">
-          <HiComputerDesktop className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+        <div className="flex items-center justify-center w-full gap-2 ">
+          <HiComputerDesktop className="text-[2em] text-gray-800 font-bold flex" />
+          <h1 className="ml-4 text-[1.5em] text-gray-800 font-bold flex">Venta Rápida</h1>
         </div>
-        <CartButton onClick={() => setIsCartOpen(!isCartOpen)}>
+        <CartButton  onClick={() => setIsCartOpen(!isCartOpen)}>
           <TbClipboardList className='text-[30px] text-gray-800' />
         </CartButton>
       </NavBar>
@@ -563,7 +569,7 @@ export default function MenuOrder() {
                   <MenuItemCard key={item.Id} onClick={() => addToOrder(item)}>
                     <MenuItemImage src={item.ImageURL} alt={item.Name} />
                     <MenuItemName>{item.Name}</MenuItemName>
-                    <MenuItemPrice>${item.Price.toFixed(2)}</MenuItemPrice>
+                    <MenuItemPrice>${item.Price}</MenuItemPrice>
                   </MenuItemCard>
                 ))}
               </Cardscontainer>
@@ -582,15 +588,15 @@ export default function MenuOrder() {
               <OrderItem key={item.Id}>
                 <OrderItemInfo>
                   <OrderItemName>{item.Name}</OrderItemName>
-                  <OrderItemPrice>${(item.Price * item.quantity).toFixed(2)}</OrderItemPrice>
+                  <OrderItemPrice>${(item.Price * item.quantity)}</OrderItemPrice>
                 </OrderItemInfo>
                 <QuantityControl>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} $variant="primary">
-                    <Minus size={16} />
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} >
+                    -
                   </QuantityButton>
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">
-                    <Plus size={16} />
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)}>
+                  +
                   </QuantityButton>
                 </QuantityControl>
               </OrderItem>
@@ -606,7 +612,7 @@ export default function MenuOrder() {
             />
           </ObservationSection>
           <TotalSection>
-            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0).toFixed(2)}
+            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
           </TotalSection>
           <ActionButton
             onClick={generateInvoiceAndSendToKitchen}

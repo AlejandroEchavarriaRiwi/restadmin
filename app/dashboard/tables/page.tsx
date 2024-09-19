@@ -6,11 +6,9 @@ import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
 import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
-
 interface Table {
   Id: number;
   Name: string;
-  State: "Disponible" | "Ocupada" | "Cocinando" | "Por Facturar";
 }
 
 interface Category {
@@ -25,24 +23,18 @@ interface Product {
   Quantity: number;
   ImageURL: string;
   Category: Category;
+  Status: number;
 }
 
 interface Order {
   Id: number;
   Observations: string;
-  TablesId: number;
-  TableName: string;
+  Status: number;
+  TablesId: number | null;
+  TableName: string | null;
   Products: Product[];
 }
-interface OrderForCreation {
-  TablesId: number;
-  Observations: string;
-  OrderProducts: {
-    ProductId: number;
-    OrderId: number;
-    Quantity: number;
-  }[];
-}
+
 
 const Container = styled.div`
   margin-top: 20px;
@@ -287,10 +279,12 @@ export default function Tables() {
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     fetchTables();
     fetchMenuItems();
+    fetchOrders();
   }, []);
 
   useEffect(() => {
@@ -303,43 +297,42 @@ export default function Tables() {
     }
   }, [menuItems]);
 
-  const handleTableClick = async (table: Table) => {
-    setSelectedTable(table);
-    const order = await fetchOrder(table.Id);
-    setCurrentOrder(order);
-  };
-
-  const fetchOrder = async (tableId: number): Promise<Order> => {
+  const fetchOrders = async () => {
     try {
       const response = await fetch(
-        `https://restadmin.azurewebsites.net/api/v1/Order?TablesId=${tableId}`
+        "https://restadmin.azurewebsites.net/api/v1/Order"
       );
       if (!response.ok) {
-        throw new Error(`Failed to fetch order. Status: ${response.status}`);
+        throw new Error(`Failed to fetch orders. Status: ${response.status}`);
       }
       const data: Order[] = await response.json();
-      if (data.length > 0) {
-        return data[0];
-      } else {
-        return createEmptyOrder(tableId);
-      }
+      setOrders(data);
     } catch (error) {
-      console.error("Error fetching order:", error);
-      return createEmptyOrder(tableId);
+      console.error("Error fetching orders:", error);
+      alert(
+        `Error fetching orders: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
+  };
+
+  const handleTableClick = (table: Table) => {
+    setSelectedTable(table);
+    const tableOrder = orders.find(order => order.TablesId === table.Id && order.Status !== 4 && order.Status !== 5);
+    setCurrentOrder(tableOrder || createEmptyOrder(table.Id));
   };
 
   const createEmptyOrder = (tableId: number): Order => {
     return {
       Id: 0,
       Observations: "",
+      Status: 1, // Occupied
       TablesId: tableId,
       TableName: tables.find((t) => t.Id === tableId)?.Name || "",
       Products: [],
     };
   };
-
-
 
   const fetchTables = async () => {
     try {
@@ -373,7 +366,9 @@ export default function Tables() {
         );
       }
       const data = await response.json();
-      setMenuItems(data);
+      // Filtra los productos para incluir solo los que tienen Status = 0
+      const enabledProducts = data.filter((product: Product) => product.Status === 0);
+      setMenuItems(enabledProducts);
     } catch (error) {
       console.error("Error fetching menu data:", error);
       alert(
@@ -392,7 +387,7 @@ export default function Tables() {
       if (existingItem) {
         existingItem.Quantity += 1;
       } else {
-        currentOrder.Products.push({ ...menuItem, Quantity: 1 });
+        currentOrder.Products.push({ ...menuItem, Quantity: 1, Status: 0 });
       }
       setCurrentOrder({ ...currentOrder });
     }
@@ -417,26 +412,20 @@ export default function Tables() {
   const handleSendToKitchen = async () => {
     if (currentOrder && selectedTable) {
       try {
-        console.log("Preparing order for kitchen:", currentOrder);
-
-        // Prepare the order data in the correct format
-        const orderForCreation: OrderForCreation = {
+        const orderForCreation = {
           TablesId: selectedTable.Id,
           Observations: currentOrder.Observations,
+          Status: 0, // Cooking
           OrderProducts: currentOrder.Products.map(product => ({
             ProductId: product.Id,
-            OrderId: currentOrder.Id || 0, // Use 0 if it's a new order
+            OrderId: currentOrder.Id || 0,
             Quantity: product.Quantity
           }))
         };
 
-        console.log("Formatted order data:", orderForCreation);
-
-        let orderId: number;
+        let response;
         if (currentOrder.Id !== 0) {
-          // Update existing order
-          console.log("Updating existing order");
-          const updateResponse = await fetch(
+          response = await fetch(
             `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
             {
               method: "PUT",
@@ -444,17 +433,8 @@ export default function Tables() {
               body: JSON.stringify(orderForCreation),
             }
           );
-          if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            throw new Error(
-              `Failed to update order. Status: ${updateResponse.status}, Response: ${errorText}`
-            );
-          }
-          orderId = currentOrder.Id;
         } else {
-          // Create new order
-          console.log("Creating new order");
-          const createResponse = await fetch(
+          response = await fetch(
             "https://restadmin.azurewebsites.net/api/v1/Order",
             {
               method: "POST",
@@ -462,92 +442,48 @@ export default function Tables() {
               body: JSON.stringify(orderForCreation),
             }
           );
-          if (!createResponse.ok) {
-            const errorText = await createResponse.text();
-            throw new Error(
-              `Failed to create order. Status: ${createResponse.status}, Response: ${errorText}`
-            );
-          }
-          const createdOrder = await createResponse.json();
-          orderId = createdOrder.Id;
         }
 
-        console.log("Order created/updated successfully. Order ID:", orderId);
-
-        // Send to kitchen
-        console.log("Sending order to kitchen. Order ID:", orderId);
-        const kitchenResponse = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Kitchen/create-from-order/${orderId}`,
-          {
-            method: "POST",
-          }
-        );
-        if (!kitchenResponse.ok) {
-          const errorText = await kitchenResponse.text();
+        if (!response.ok) {
+          const errorText = await response.text();
           throw new Error(
-            `Failed to send to kitchen. Status: ${kitchenResponse.status}, Response: ${errorText}`
+            `Failed to ${currentOrder.Id !== 0 ? 'update' : 'create'} order. Status: ${response.status}, Response: ${errorText}`
           );
         }
 
-        console.log("Order sent to kitchen successfully");
-
-        // Update table state
-        await updateTableState(selectedTable.Id, "Cocinando");
-
-        // Refresh tables and close modal
-        await fetchTables();
+        await fetchOrders();
         setSelectedTable(null);
         setCurrentOrder(null);
 
-        console.log("Process completed successfully");
       } catch (error) {
         console.error("Error processing order:", error);
-        let errorMessage = "Unknown error occurred";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === "string") {
-          errorMessage = error;
-        }
-        alert(`Error processing order: ${errorMessage}`);
+        alert(`Error processing order: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
-    } else {
-      console.error("No current order or selected table");
-      alert("No se puede enviar la orden: no hay orden actual o mesa seleccionada");
     }
   };
 
-
-
   const handlePreInvoice = async () => {
-    if (selectedTable && currentOrder && currentOrder.Id !== 0) {
+    if (currentOrder && currentOrder.Id !== 0) {
       try {
-        // Crear factura a partir del pedido
-        const invoiceResponse = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Invoice/create-from-order?orderId=${currentOrder.Id}`,
+        const response = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
           {
-            method: "POST",
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...currentOrder, Status: 3 }), // Status 3: Por facturar
           }
         );
 
-        if (!invoiceResponse.ok) {
+        if (!response.ok) {
           throw new Error(
-            `Failed to create invoice. Status: ${invoiceResponse.status}`
+            `Failed to update order status. Status: ${response.status}`
           );
         }
 
-        console.log("Invoice created successfully");
-
-        // Actualizar estado de la mesa
-        await updateTableState(selectedTable.Id, "Por Facturar");
-
-        // Cerrar modal y restablecer el pedido actual
+        await fetchOrders();
         setSelectedTable(null);
         setCurrentOrder(null);
 
-        // Refrescar mesas
-        await fetchTables();
-
-        console.log("Pre-invoice process completed");
       } catch (error) {
         console.error("Error handling pre-invoice:", error);
         alert(
@@ -559,71 +495,9 @@ export default function Tables() {
     }
   };
 
-  const updateTableState = async (tableId: number, newState: Table['State']) => {
-    console.log("Updating table state:", tableId, newState);
-    try {
-      const currentTable = tables.find((table) => table.Id === tableId);
-      if (!currentTable) {
-        throw new Error("Table not found");
-      }
-
-      const response = await fetch(
-        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...currentTable, State: newState }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update table state. Status: ${response.status}, Response: ${errorText}`
-        );
-      }
-
-      let updatedTable: Table;
-      const responseText = await response.text();
-      
-      if (responseText) {
-        try {
-          updatedTable = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("Error parsing response:", parseError);
-          throw new Error(`Invalid JSON response: ${responseText}`);
-        }
-      } else {
-        // If the response is empty, assume the update was successful
-        // and use the current table data with the new state
-        updatedTable = { ...currentTable, State: newState };
-      }
-
-      console.log("Table state updated on server:", updatedTable);
-
-      setTables((prevTables) =>
-        prevTables.map((table) =>
-          table.Id === tableId ? { ...table, State: newState } : table
-        )
-      );
-
-      return updatedTable;
-    } catch (error) {
-      console.error("Error updating table state:", error);
-      alert(
-        `Error updating table state: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-      throw error;
-    }
-  };
   const addTable = async () => {
     const newTable: Omit<Table, "Id"> = {
       Name: `Mesa ${tables.length + 1}`,
-      State: "Disponible",
     };
 
     try {
@@ -672,7 +546,6 @@ export default function Tables() {
           );
         }
 
-        // Update the local state
         setTables((prevTables) => prevTables.slice(0, -1));
         console.log("Table removed successfully");
       } catch (error) {
@@ -685,6 +558,18 @@ export default function Tables() {
       }
     }
   };
+
+  const getTableStatus = (tableId: number) => {
+    const tableOrder = orders.find(order => order.TablesId === tableId && order.Status !== 4 && order.Status !== 5);
+    if (!tableOrder) return "Disponible";
+    switch (tableOrder.Status) {
+      case 0: return "Cocinando";
+      case 1: return "Ocupada";
+      case 3: return "Por Facturar";
+      default: return "Disponible";
+    }
+  };
+
   const filteredMenuItems =
     selectedCategory === "Todos"
       ? menuItems
@@ -710,13 +595,13 @@ export default function Tables() {
             Eliminar Mesa
           </Button>
         </div>
-      </NavBar>
+        </NavBar>
       <Container>
         {tables.length > 0 ? (
           tables.map((table) => (
             <TableCard
               key={table.Id}
-              table={table}
+              table={{...table, State: getTableStatus(table.Id)}}
               onClick={() => handleTableClick(table)}
             />
           ))

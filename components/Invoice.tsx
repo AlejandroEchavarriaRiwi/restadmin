@@ -5,9 +5,22 @@ import { useReactToPrint } from 'react-to-print';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/buttons/Button';
 import Modal from '@/components/modals/ModalMobileView'
-import { PreInvoice, Table } from '@/types/IInvoice';
 import { FaFileInvoiceDollar } from 'react-icons/fa6';
 import { MdTableRestaurant } from 'react-icons/md';
+
+interface Order {
+  Id: number;
+  TablesId: number | null;
+  TableName: string | null;
+  Status: number;
+  Products: {
+    Id: number;
+    Name: string;
+    Price: number;
+    Quantity: number;
+  }[];
+  Observations: string;
+}
 
 const ModuleContainer = styled.div`
   width: 100%;
@@ -125,23 +138,21 @@ const AnimatedOrderDetails = motion(OrderDetails);
 const AnimatedListItem = motion.li;
 
 export default function Invoice() {
-    const [tables, setTables] = useState<Table[]>([]);
-    const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-    const [preInvoice, setPreInvoice] = useState<PreInvoice | null>(null);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [invoiceNumber, setInvoiceNumber] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        fetchTables();
+        fetchOrders();
         fetchLastInvoiceNumber();
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
-
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -162,20 +173,20 @@ export default function Invoice() {
         }
     };
 
-    const fetchTables = async () => {
+    const fetchOrders = async () => {
         try {
-            const response = await fetch('http://localhost:8001/tables');
+            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: Table[] = await response.json();
-            setTables(data.filter(table => table.state === 'Por facturar'));
+            const data: Order[] = await response.json();
+            setOrders(data.filter(order => order.Status === 3)); // Status 3 is "Por facturar"
         } catch (error) {
-            console.error("Could not fetch tables:", error);
+            console.error("Could not fetch orders:", error);
         }
     };
 
     const fetchLastInvoiceNumber = async () => {
         try {
-            const response = await fetch('http://localhost:8001/invoices?_sort=number&_order=desc&_limit=1');
+            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice?_sort=number&_order=desc&_limit=1');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             if (data.length > 0) {
@@ -186,24 +197,8 @@ export default function Invoice() {
         }
     };
 
-    const fetchPreInvoice = async (tableId: string) => {
-        try {
-            const response = await fetch(`http://localhost:8001/preinvoices?tableId=${tableId}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data: PreInvoice[] = await response.json();
-            if (data.length > 0) {
-                setPreInvoice(data[0]);
-            } else {
-                setPreInvoice(null);
-            }
-        } catch (error) {
-            console.error("Could not fetch pre-invoice:", error);
-        }
-    };
-
-    const handleTableSelect = (table: Table) => {
-        setSelectedTable(table);
-        fetchPreInvoice(table.id);
+    const handleOrderSelect = (order: Order) => {
+        setSelectedOrder(order);
         if (isMobile) {
             setIsModalOpen(true);
         }
@@ -214,18 +209,16 @@ export default function Invoice() {
     });
 
     const handleInvoice = async () => {
-        if (!selectedTable || !preInvoice) return;
+        if (!selectedOrder) return;
 
         try {
-            // Save invoice
-            const invoiceResponse = await fetch('http://localhost:8001/invoices', {
+            // Create invoice
+            const invoiceResponse = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     number: invoiceNumber,
-                    tableId: selectedTable.id,
-                    items: preInvoice.items,
-                    total: preInvoice.total,
+                    orderId: selectedOrder.Id,
                     date: new Date().toISOString()
                 }),
             });
@@ -234,24 +227,15 @@ export default function Invoice() {
                 throw new Error(`Failed to create invoice. Status: ${invoiceResponse.status}`);
             }
 
-            // Update table state
-            const tableResponse = await fetch(`http://localhost:8001/tables/${selectedTable.id}`, {
-                method: 'PATCH',
+            // Update order status
+            const orderResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${selectedOrder.Id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ state: 'Disponible' }),
+                body: JSON.stringify({ ...selectedOrder, Status: 4 }), // Status 4 is "Facturado"
             });
 
-            if (!tableResponse.ok) {
-                throw new Error(`Failed to update table state. Status: ${tableResponse.status}`);
-            }
-
-            // Delete pre-invoice
-            const deletePreInvoiceResponse = await fetch(`http://localhost:8001/preinvoices/${preInvoice.id}`, {
-                method: 'DELETE',
-            });
-
-            if (!deletePreInvoiceResponse.ok) {
-                throw new Error(`Failed to delete pre-invoice. Status: ${deletePreInvoiceResponse.status}`);
+            if (!orderResponse.ok) {
+                throw new Error(`Failed to update order status. Status: ${orderResponse.status}`);
             }
 
             // Print invoice
@@ -259,11 +243,10 @@ export default function Invoice() {
 
             // Update local state
             setInvoiceNumber(prev => prev + 1);
-            setTables(prev => prev.filter(t => t.id !== selectedTable.id));
-            setSelectedTable(null);
-            setPreInvoice(null);
+            setOrders(prev => prev.filter(o => o.Id !== selectedOrder.Id));
+            setSelectedOrder(null);
 
-            alert('Invoice generated and table freed successfully!');
+            alert('Invoice generated and order status updated successfully!');
         } catch (error) {
             console.error("Error processing invoice:", error);
             alert(`Error processing invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -271,6 +254,10 @@ export default function Invoice() {
         if (isMobile) {
             setIsModalOpen(false);
         }
+    };
+
+    const calculateTotal = (order: Order) => {
+        return order.Products.reduce((total, product) => total + product.Price * product.Quantity, 0);
     };
 
     return (
@@ -281,19 +268,19 @@ export default function Invoice() {
             </div>
             <div className='container-invoices'>
                 <TableGrid>
-                    {tables.map(table => (
+                    {orders.map(order => (
                         <TableCard
-                            key={table.id}
-                            selected={selectedTable?.id === table.id}
-                            onClick={() => handleTableSelect(table)}
+                            key={order.Id}
+                            selected={selectedOrder?.Id === order.Id}
+                            onClick={() => handleOrderSelect(order)}
                         >
                             <MdTableRestaurant className='text-4xl text-azuloscuro' />
-                            {table.name}
+                            {order.TableName || `Pedido ${order.Id}`}
                         </TableCard>
                     ))}
                 </TableGrid>
                 <AnimatePresence>
-                    {!isMobile && selectedTable && preInvoice && (
+                    {!isMobile && selectedOrder && (
                         <AnimatedOrderDetails
                             initial="hidden"
                             animate="visible"
@@ -301,20 +288,20 @@ export default function Invoice() {
                             variants={containerVariants}
                         >
                             <div className='header'>
-                                <h2>Pre-factura para {selectedTable.name}</h2>
+                                <h2>Pre-factura para {selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</h2>
                             </div>
                             <motion.ul variants={containerVariants}>
-                                {preInvoice.items.map((item, index) => (
+                                {selectedOrder.Products.map((item, index) => (
                                     <AnimatedListItem key={index} variants={itemVariants}>
-                                        <div>{item.quantity}</div>
-                                        <div>{item.name}</div>
+                                        <div>{item.Quantity}</div>
+                                        <div>{item.Name}</div>
                                         =
-                                        <div>${item.price}</div>
+                                        <div>${item.Price * item.Quantity}</div>
                                     </AnimatedListItem>
                                 ))}
                             </motion.ul>
                             <div className='total'>
-                                <p>Total: ${preInvoice.total}</p>
+                                <p>Total: ${calculateTotal(selectedOrder)}</p>
                             </div>
                             <Button onClick={handleInvoice}>Facturar</Button>
                         </AnimatedOrderDetails>
@@ -324,28 +311,27 @@ export default function Invoice() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                table={selectedTable}
-                preInvoice={preInvoice}
+                order={selectedOrder}
                 onGenerateInvoice={handleInvoice}
             />
             <div style={{ display: 'none' }}>
                 <PrintableInvoice ref={printRef}>
                     <h2>Invoice #{invoiceNumber.toString().padStart(5, '0')}</h2>
                     <p>Date: {new Date().toLocaleDateString()}</p>
-                    <p>Table: {selectedTable?.name}</p>
+                    <p>{selectedOrder?.TableName || `Pedido ${selectedOrder?.Id}`}</p>
                     <ul>
-                        {preInvoice?.items.map((item, index) => (
+                        {selectedOrder?.Products.map((item, index) => (
                             <li key={index}>
                                 <div>
-                                    {item.name} - ${item.price} x {item.quantity} =
+                                    {item.Name} - ${item.Price} x {item.Quantity} =
                                 </div>
                                 <div>
-                                    ${item.price * item.quantity}
+                                    ${item.Price * item.Quantity}
                                 </div>
                             </li>
                         ))}
                     </ul>
-                    <p>Total: ${preInvoice?.total}</p>
+                    <p>Total: ${selectedOrder ? calculateTotal(selectedOrder) : 0}</p>
                 </PrintableInvoice>
             </div>
         </ModuleContainer>

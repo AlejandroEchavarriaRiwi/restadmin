@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:next\" \"npm run dev:json\"",
+    "dev": "concurrently \"npm run dev:next\"",
     "dev:next": "next dev",
-    "dev:json": "json-server --watch database/db.json --port 8001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -18,6 +17,7 @@
     "clsx": "^2.1.1",
     "concurrently": "^8.2.2",
     "framer-motion": "^11.5.4",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.436.0",
     "motion": "^10.18.0",
     "next": "14.2.7",
