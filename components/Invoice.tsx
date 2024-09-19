@@ -1,24 +1,31 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useReactToPrint } from 'react-to-print';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/buttons/Button';
 import Modal from '@/components/modals/ModalMobileView'
 import { FaFileInvoiceDollar } from 'react-icons/fa6';
 import { MdTableRestaurant } from 'react-icons/md';
 
+interface Product {
+  Id: number;
+  Name: string;
+  Price: number;
+  Quantity: number;
+  ImageURL: string;
+  Category: {
+    Id: number;
+    Name: string;
+  };
+  Status: number;
+}
+
 interface Order {
   Id: number;
   TablesId: number | null;
   TableName: string | null;
   Status: number;
-  Products: {
-    Id: number;
-    Name: string;
-    Price: number;
-    Quantity: number;
-  }[];
+  Products: Product[];
   Observations: string;
 }
 
@@ -140,14 +147,11 @@ const AnimatedListItem = motion.li;
 export default function Invoice() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [invoiceNumber, setInvoiceNumber] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const printRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         fetchOrders();
-        fetchLastInvoiceNumber();
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -178,22 +182,9 @@ export default function Invoice() {
             const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data: Order[] = await response.json();
-            setOrders(data.filter(order => order.Status === 3)); // Status 3 is "Por facturar"
+            setOrders(data.filter(order => order.Status === 2)); // Filtrar órdenes con Status 2
         } catch (error) {
             console.error("Could not fetch orders:", error);
-        }
-    };
-
-    const fetchLastInvoiceNumber = async () => {
-        try {
-            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice?_sort=number&_order=desc&_limit=1');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            if (data.length > 0) {
-                setInvoiceNumber(data[0].number + 1);
-            }
-        } catch (error) {
-            console.error("Could not fetch last invoice number:", error);
         }
     };
 
@@ -204,55 +195,45 @@ export default function Invoice() {
         }
     };
 
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-    });
-
-    const handleInvoice = async () => {
-        if (!selectedOrder) return;
-
+    const completeOrder = async (order: Order) => {
         try {
-            // Create invoice
-            const invoiceResponse = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    number: invoiceNumber,
-                    orderId: selectedOrder.Id,
-                    date: new Date().toISOString()
-                }),
-            });
+            let updatedOrderData: any = {
+                Observations: order.Observations,
+                Status: 3, // Cambiar a status 3
+                OrderProducts: order.Products.map(product => ({
+                    ProductId: product.Id,
+                    OrderId: order.Id,
+                    Quantity: product.Quantity
+                }))
+            };
 
-            if (!invoiceResponse.ok) {
-                throw new Error(`Failed to create invoice. Status: ${invoiceResponse.status}`);
+            if (order.TablesId !== null) {
+                updatedOrderData.TablesId = order.TablesId;
             }
 
-            // Update order status
-            const orderResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${selectedOrder.Id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...selectedOrder, Status: 4 }), // Status 4 is "Facturado"
+            const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(updatedOrderData),
             });
 
-            if (!orderResponse.ok) {
-                throw new Error(`Failed to update order status. Status: ${orderResponse.status}`);
+            if (!response.ok) {
+                throw new Error(`Failed to update order. Status: ${response.status}`);
             }
 
-            // Print invoice
-            handlePrint();
-
-            // Update local state
-            setInvoiceNumber(prev => prev + 1);
-            setOrders(prev => prev.filter(o => o.Id !== selectedOrder.Id));
+            // Actualizar el estado local
+            setOrders(orders.filter(o => o.Id !== order.Id));
             setSelectedOrder(null);
+            if (isMobile) {
+                setIsModalOpen(false);
+            }
 
-            alert('Invoice generated and order status updated successfully!');
+            alert('Orden completada exitosamente!');
         } catch (error) {
-            console.error("Error processing invoice:", error);
-            alert(`Error processing invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-        if (isMobile) {
-            setIsModalOpen(false);
+            console.error("Error completing order:", error);
+            alert(`Error al completar la orden: ${error instanceof Error ? error.message : 'Error desconocido'}`);
         }
     };
 
@@ -264,7 +245,7 @@ export default function Invoice() {
         <ModuleContainer>
             <div className="bg-[#f8f9fa] p-[20px] flex items-center justify-center lg:justify-start gap-2  w-full ">
                 <FaFileInvoiceDollar className='text-[2em] text-gray-800' />
-                <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Pre-Facturas</h1>
+                <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Órdenes por Completar</h1>
             </div>
             <div className='container-invoices'>
                 <TableGrid>
@@ -288,7 +269,7 @@ export default function Invoice() {
                             variants={containerVariants}
                         >
                             <div className='header'>
-                                <h2>Pre-factura para {selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</h2>
+                                <h2>Detalles de {selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</h2>
                             </div>
                             <motion.ul variants={containerVariants}>
                                 {selectedOrder.Products.map((item, index) => (
@@ -303,7 +284,7 @@ export default function Invoice() {
                             <div className='total'>
                                 <p>Total: ${calculateTotal(selectedOrder)}</p>
                             </div>
-                            <Button onClick={handleInvoice}>Facturar</Button>
+                            <Button onClick={() => completeOrder(selectedOrder)}>Completar Orden</Button>
                         </AnimatedOrderDetails>
                     )}
                 </AnimatePresence>
@@ -312,28 +293,8 @@ export default function Invoice() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 order={selectedOrder}
-                onGenerateInvoice={handleInvoice}
+                onGenerateInvoice={() => selectedOrder && completeOrder(selectedOrder)}
             />
-            <div style={{ display: 'none' }}>
-                <PrintableInvoice ref={printRef}>
-                    <h2>Invoice #{invoiceNumber.toString().padStart(5, '0')}</h2>
-                    <p>Date: {new Date().toLocaleDateString()}</p>
-                    <p>{selectedOrder?.TableName || `Pedido ${selectedOrder?.Id}`}</p>
-                    <ul>
-                        {selectedOrder?.Products.map((item, index) => (
-                            <li key={index}>
-                                <div>
-                                    {item.Name} - ${item.Price} x {item.Quantity} =
-                                </div>
-                                <div>
-                                    ${item.Price * item.Quantity}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                    <p>Total: ${selectedOrder ? calculateTotal(selectedOrder) : 0}</p>
-                </PrintableInvoice>
-            </div>
         </ModuleContainer>
     );
 }

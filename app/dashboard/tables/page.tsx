@@ -6,11 +6,12 @@ import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
 import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
+
 interface Table {
   Id: number;
   Name: string;
+  State: string;
 }
-
 interface Category {
   Id: number;
   Name: string;
@@ -268,6 +269,8 @@ const DivOrder = styled.div`
   }
 `;
 
+type TableState = "Disponible" | "Cocinando" | "Ocupada" | "Por Facturar";
+
 export default function Tables() {
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<Product[]>([]);
@@ -405,13 +408,46 @@ export default function Tables() {
     }
   };
 
+  const handlePreInvoice = async () => {
+    if (currentOrder && currentOrder.Id !== 0) {
+      try {
+        const response = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...currentOrder, Status: 2 }), // Cambio a Status 2
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update order status. Status: ${response.status}`
+          );
+        }
+
+        await fetchOrders();
+        setSelectedTable(null);
+        setCurrentOrder(null);
+
+      } catch (error) {
+        console.error("Error handling pre-invoice:", error);
+        alert(
+          `Error handling pre-invoice: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    }
+  };
+
   const handleSendToKitchen = async () => {
     if (currentOrder && selectedTable) {
       try {
         const orderForCreation = {
           TablesId: selectedTable.Id,
           Observations: currentOrder.Observations,
-          Status: 0, // Cooking
+          Status: 1, // Cambio a Status 1 (Ocupada)
           OrderProducts: currentOrder.Products.map(product => ({
             ProductId: product.Id,
             OrderId: currentOrder.Id || 0,
@@ -458,45 +494,13 @@ export default function Tables() {
     }
   };
 
-  const handlePreInvoice = async () => {
-    if (currentOrder && currentOrder.Id !== 0) {
-      try {
-        const response = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...currentOrder, Status: 3 }), // Status 3: Por facturar
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to update order status. Status: ${response.status}`
-          );
-        }
-
-        await fetchOrders();
-        setSelectedTable(null);
-        setCurrentOrder(null);
-
-      } catch (error) {
-        console.error("Error handling pre-invoice:", error);
-        alert(
-          `Error handling pre-invoice: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
-    }
-  };
-
   const addTable = async () => {
-    const newTable: Omit<Table, "Id"> = {
-      Name: `Mesa ${tables.length + 1}`,
-    };
-
     try {
+      const newTable: Omit<Table, "Id"> = {
+        Name: `Mesa ${tables.length + 1}`,
+        State: "Disponible"
+      };
+
       const response = await fetch(
         "https://restadmin.azurewebsites.net/api/v1/Tables",
         {
@@ -509,7 +513,8 @@ export default function Tables() {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to add table. Status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to add table. Status: ${response.status}. Error: ${errorText}`);
       }
 
       const data = await response.json();
@@ -524,47 +529,99 @@ export default function Tables() {
     }
   };
 
-  const removeTable = async () => {
-    if (tables.length > 0) {
-      const lastTable = tables[tables.length - 1];
 
-      try {
-        const tableResponse = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Tables/${lastTable.Id}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!tableResponse.ok) {
-          throw new Error(
-            `Failed to delete table. Status: ${tableResponse.status}`
-          );
-        }
-
-        setTables((prevTables) => prevTables.slice(0, -1));
-        console.log("Table removed successfully");
-      } catch (error) {
-        console.error("Error removing table:", error);
-        alert(
-          `Error removing table: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
-    }
-  };
-
-  const getTableStatus = (tableId: number) => {
-    const tableOrder = orders.find(order => order.TablesId === tableId && order.Status !== 4 && order.Status !== 5);
+  const getTableStatus = (tableId: number): TableState => {
+    const tableOrder = orders.find(order => order.TablesId === tableId);
     if (!tableOrder) return "Disponible";
     switch (tableOrder.Status) {
       case 0: return "Cocinando";
       case 1: return "Ocupada";
-      case 3: return "Por Facturar";
+      case 2: return "Por Facturar";
+      case 3:
+      case 4:
+        return "Disponible";
       default: return "Disponible";
     }
   };
+
+  const updateTableState = async (tableId: number, newState: string) => {
+    try {
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ State: newState }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update table state. Status: ${response.status}`);
+      }
+
+      // Actualizar el estado local de las mesas
+      setTables(prevTables =>
+        prevTables.map(table =>
+          table.Id === tableId ? { ...table, State: newState } : table
+        )
+      );
+    } catch (error) {
+      console.error("Error updating table state:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Actualizar el estado de las mesas cada vez que cambian las órdenes
+    tables.forEach(table => {
+      const newState = getTableStatus(table.Id);
+      if (newState !== table.State) {
+        updateTableState(table.Id, newState);
+      }
+    });
+  }, [orders, tables]);
+
+
+  const removeTable = async () => {
+    if (tables.length > 0) {
+      // Encontrar la última mesa que no tenga una orden activa
+      const tableToRemove = [...tables].reverse().find(table => {
+        const tableOrder = orders.find(order => order.TablesId === table.Id && order.Status !== 4 && order.Status !== 5);
+        return !tableOrder;
+      });
+
+      if (tableToRemove) {
+        try {
+          const tableResponse = await fetch(
+            `https://restadmin.azurewebsites.net/api/v1/Tables/${tableToRemove.Id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (!tableResponse.ok) {
+            throw new Error(
+              `Failed to delete table. Status: ${tableResponse.status}`
+            );
+          }
+
+          setTables((prevTables) => prevTables.filter(t => t.Id !== tableToRemove.Id));
+          console.log("Table removed successfully");
+        } catch (error) {
+          console.error("Error removing table:", error);
+          alert(
+            `Error removing table: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      } else {
+        alert("No hay mesas disponibles para eliminar.");
+      }
+    }
+  };
+
 
   const filteredMenuItems =
     selectedCategory === "Todos"
@@ -591,7 +648,7 @@ export default function Tables() {
             Eliminar Mesa
           </Button>
         </div>
-        </NavBar>
+      </NavBar>
       <Container>
         {tables.length > 0 ? (
           tables.map((table) => (
