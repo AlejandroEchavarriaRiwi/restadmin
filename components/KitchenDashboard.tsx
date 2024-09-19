@@ -6,24 +6,18 @@ import { useReactToPrint } from "react-to-print";
 import { CheckCircle, ClipboardList, Printer, Utensils } from "lucide-react";
 import { FaKitchenSet } from "react-icons/fa6";
 
-interface KitchenTicket {
-  Id: number;
-  OrderId: number;
-  Order: {
-    Observations: string;
-    TablesId: number;
-    Products: {
-      Name: string;
-      Quantity: number;
-    }[];
-  };
-  TableName?: string;
-}
-
 interface Order {
   Id: number;
-  TableName: string;
+  Observations: string;
+  Status: number;
+  TablesId: number | null;
+  TableName: string | null;
+  Products: {
+    Name: string;
+    Quantity: number;
+  }[];
 }
+
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
@@ -127,36 +121,25 @@ const PrintableTicket = styled.div`
 `;
 
 export default function KitchenDashboard() {
-  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchTickets();
+    fetchOrders();
   }, []);
 
-  const fetchTickets = async () => {
+  const fetchOrders = async () => {
     try {
-      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Kitchen");
+      const response = await fetch("https://restadmin.azurewebsites.net/api/v1/Order");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: KitchenTicket[] = await response.json();
-      
-      // Fetch order details for each ticket
-      const ticketsWithTableNames = await Promise.all(
-        data.map(async (ticket) => {
-          const orderResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${ticket.OrderId}`);
-          if (orderResponse.ok) {
-            const orderData: Order = await orderResponse.json();
-            return { ...ticket, TableName: orderData.TableName };
-          }
-          return ticket;
-        })
-      );
-
-      setTickets(ticketsWithTableNames);
+      const data: Order[] = await response.json();
+      // Filtrar órdenes con Status 0 (cocinando)
+      const cookingOrders = data.filter(order => order.Status === 0);
+      setOrders(cookingOrders);
     } catch (error) {
-      console.error("Could not fetch tickets:", error);
+      console.error("Could not fetch orders:", error);
     }
   };
 
@@ -164,35 +147,36 @@ export default function KitchenDashboard() {
     content: () => printRef.current,
   });
 
-  const completeTicket = async (ticketId: number, tableId: number, tableName: string) => {
+  const completeOrder = async (order: Order) => {
     try {
-      // Remove ticket from kitchen
-      await fetch(`https://restadmin.azurewebsites.net/api/v1/Kitchen/${ticketId}`, {
-        method: "DELETE",
-      });
+      const newStatus = order.TablesId ? 1 : 2; // 1 para órdenes de mesa, 2 para órdenes sin mesa (por facturar)
+      const updatedOrder = { ...order, Status: newStatus };
 
-      // Update table state
-      await fetch(`https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`, {
+      const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ Id: tableId, Name: tableName, State: "Ocupada" }),
+        body: JSON.stringify(updatedOrder),
       });
 
-      // Refresh tickets
-      fetchTickets();
+      if (!response.ok) {
+        throw new Error(`Failed to update order. Status: ${response.status}`);
+      }
+
+      // Actualizar el estado local
+      setOrders(orders.filter(o => o.Id !== order.Id));
     } catch (error) {
-      console.error("Error completing ticket:", error);
+      console.error("Error completing order:", error);
     }
   };
 
-  const renderObservations = (ticket: KitchenTicket) => {
+  const renderObservations = (order: Order) => {
     return (
       <>
-        {ticket.Order.Observations && (
+        {order.Observations && (
           <ObservationText>
-            Observaciones generales: {ticket.Order.Observations}
+            Observaciones generales: {order.Observations}
           </ObservationText>
         )}
       </>
@@ -210,29 +194,29 @@ export default function KitchenDashboard() {
       <DashboardContainer>
         <div className="bg-primary text-primary-foreground py-2 px-2 mb-5 rounded-xl">
           <div className="flex justify-center">
-            <h1 className="text-2xl font-bold mb-4 sm:mb-0"></h1>
+            <h1 className="text-2xl font-bold mb-4 sm:mb-0">Órdenes en Preparación</h1>
           </div>
         </div>
         <TicketGrid>
-          {tickets.map((ticket) => (
-            <TicketCard key={ticket.Id}>
-              <TicketHeader>{ticket.TableName || `Mesa ${ticket.Order.TablesId}`}</TicketHeader>
+          {orders.map((order) => (
+            <TicketCard key={order.Id}>
+              <TicketHeader>
+                {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
+              </TicketHeader>
               <ItemList>
-                {ticket.Order.Products.map((item, index) => (
+                {order.Products.map((item, index) => (
                   <ItemListItem key={index}>
                     {item.Quantity}x {item.Name}
                   </ItemListItem>
                 ))}
               </ItemList>
-              {renderObservations(ticket)}
+              {renderObservations(order)}
               <div className="px-6 py-4">
                 <Button onClick={handlePrint}>
                   <Printer className="h-4 w-4 mr-2 text-amarillo" />
                   Imprimir Ticket
                 </Button>
-                <Button
-                  onClick={() => completeTicket(ticket.Id, ticket.Order.TablesId, ticket.TableName || `Mesa ${ticket.Order.TablesId}`)}
-                >
+                <Button onClick={() => completeOrder(order)}>
                   <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
                   Marcar como Completado
                 </Button>
@@ -242,17 +226,19 @@ export default function KitchenDashboard() {
         </TicketGrid>
         <div style={{ display: "none" }}>
           <PrintableTicket ref={printRef}>
-            {tickets.map((ticket) => (
-              <div key={ticket.Id}>
-                <h2>{ticket.TableName || `Mesa ${ticket.Order.TablesId}`}</h2>
+            {orders.map((order) => (
+              <div key={order.Id}>
+                <h2>
+                  {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
+                </h2>
                 <ItemList>
-                  {ticket.Order.Products.map((item, index) => (
+                  {order.Products.map((item, index) => (
                     <li key={index}>
                       {item.Quantity}x {item.Name}
                     </li>
                   ))}
                 </ItemList>
-                {renderObservations(ticket)}
+                {renderObservations(order)}
               </div>
             ))}
           </PrintableTicket>

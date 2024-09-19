@@ -38,6 +38,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 cost,
                 imageURL,
                 categoryId: category!.Id,
+                status: 0, // Añadimos el campo Status con valor 0 por defecto
             };
 
             const response = await fetch('/api/v1/Product', {
@@ -63,7 +64,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 Price: data.Price,
                 ImageURL: data.ImageURL,
                 Category: { Id: data.CategoryId, Name: category!.Name },
-                CategoryId: data.CategoryId
+                CategoryId: data.CategoryId,
+                Status: data.Status, // Añadimos el campo Status al nuevo producto
             };
 
             onProductAdded(newProduct);
