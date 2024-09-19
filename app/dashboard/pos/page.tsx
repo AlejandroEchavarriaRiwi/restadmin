@@ -300,29 +300,28 @@ const OrderItemPrice = styled.p`
 const QuantityControl = styled.div`
   display: flex;
   align-items: center;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
 `;
 
-const QuantityButton = styled(Button)`
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const QuantityButton = styled.button`
+  background-color: transparent;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1.2em;
+  color: #4655c4;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
 `;
 
 const OrderItemQuantity = styled.span`
-  background-color: #4655c4;
-  color: white;
-  padding: 2px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  margin: 0 5px;
-  font-size: 0.9em;
+  padding: 0 10px;
+  font-weight: bold;
 `;
 
 const ObservationSection = styled.div`
@@ -526,7 +525,7 @@ export default function MenuOrder() {
   return (
     <Container>
       <NavBar>
-        <div className="flex items-center">
+        <div className="flex items-center justify-center w-full ">
           <HiComputerDesktop className="text-3xl text-gray-800" />
           <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
         </div>
@@ -563,7 +562,7 @@ export default function MenuOrder() {
                   <MenuItemCard key={item.Id} onClick={() => addToOrder(item)}>
                     <MenuItemImage src={item.ImageURL} alt={item.Name} />
                     <MenuItemName>{item.Name}</MenuItemName>
-                    <MenuItemPrice>${item.Price.toFixed(2)}</MenuItemPrice>
+                    <MenuItemPrice>${item.Price}</MenuItemPrice>
                   </MenuItemCard>
                 ))}
               </Cardscontainer>
@@ -582,15 +581,15 @@ export default function MenuOrder() {
               <OrderItem key={item.Id}>
                 <OrderItemInfo>
                   <OrderItemName>{item.Name}</OrderItemName>
-                  <OrderItemPrice>${(item.Price * item.quantity).toFixed(2)}</OrderItemPrice>
+                  <OrderItemPrice>${(item.Price * item.quantity)}</OrderItemPrice>
                 </OrderItemInfo>
                 <QuantityControl>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} $variant="primary">
-                    <Minus size={16} />
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} >
+                    -
                   </QuantityButton>
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)} $variant="primary">
-                    <Plus size={16} />
+                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)}>
+                  +
                   </QuantityButton>
                 </QuantityControl>
               </OrderItem>
@@ -606,7 +605,7 @@ export default function MenuOrder() {
             />
           </ObservationSection>
           <TotalSection>
-            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0).toFixed(2)}
+            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
           </TotalSection>
           <ActionButton
             onClick={generateInvoiceAndSendToKitchen}

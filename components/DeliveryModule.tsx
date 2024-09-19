@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -5,6 +6,10 @@ import styled, { keyframes } from "styled-components";
 import { useReactToPrint } from "react-to-print";
 import Button from "../components/buttons/Button";
 import { MdDeliveryDining } from "react-icons/md";
+import { TbClipboardList } from "react-icons/tb";
+import { IoIosCloseCircleOutline } from "react-icons/io";
+
+
 
 interface Client {
   Id: number;
@@ -50,30 +55,44 @@ interface Order {
   OrderProducts: OrderProduct[];
 }
 
+
+
 const NavBar = styled.nav`
   background-color: #f8f9fa;
-  padding: 20px;
+  padding: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   h1 {
     font-weight: bold;
-    font-size: 1.5em;
+    font-size: 1.2em;
+    margin: 0;
   }
+
+  @media (min-width: 768px) {
+    justify-content: space-between;
+    padding: 20px;
+
+    h1 {
+      font-size: 1.5em;
+    }
+  }
+
   @media screen and (max-width: 600px) {
-    flex-direction: column;
     h1 {
       margin-left: 0;
     }
     div {
-      flex-direction: row;
-      margin-bottom: 10px;
-      gap: 10px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      text-align: center;
       margin-right: 0;
     }
   }
 `;
+
 const ModuleContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -94,30 +113,83 @@ const ModuleContainer = styled.div`
 const DeliveryContainer = styled.div`
   display: flex;
   height: 100%;
+  flex-direction: column;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 `;
+
+const CategoryTitle = styled.h2`
+  font-weight: bold;
+
+`
 
 const LeftColumn = styled.div`
-  width: 60%;
+  width: 100%;
   height: 100%;
-  padding: 20px;
+  padding: 15px;
   overflow-y: auto;
+
+  @media (min-width: 768px) {
+    width: 60%;
+    padding: 20px;
+  }
 `;
 
-const RightColumn = styled.div`
-  position: relative;
-  width: 40%;
-  margin: 20px;
-  padding: 20px;
-  border-radius: 8px;
-  border-left: 1px solid #ddd;
-  overflow-y: auto;
-  border: 1px solid #ddd;
+const CartButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
-const SearchContainer = styled.div`
-  div {
-    display: flex;
-    justify-content: space-between;
+const RightColumn = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 90%;
+  max-width: 350px;
+  height: 100%;
+  background-color: #ffffff;
+  padding: 20px;
+  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-shadow: ${props => props.$isOpen ? '-5px 0 25px rgba(0,0,0,0.1)' : 'none'};
+  z-index: 1000;
+
+  @media (min-width: 768px) {
+    position: static;
+    width: 40%;
+    max-width: none;
+    transform: none;
+    box-shadow: none;
+    border-left: 1px solid #e0e0e0;
+  }
+`;;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  align-self: flex-end;
+  color: #333;
+  font-size: 1.5em;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: #4655c4;
+  }
+
+  @media (min-width: 768px) {
+    display: none;
   }
 `;
 
@@ -151,26 +223,49 @@ const CategoryTabs = styled.div`
   display: flex;
   overflow-x: auto;
   margin-bottom: 20px;
+  gap: 10px;
+  padding-bottom: 10px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+`;
+
+const SearchContainer = styled.div`
+  div {
+    display: flex;
+    justify-content: space-between;
+  }
 `;
 
 const CategoryTab = styled.button<{ active: boolean }>`
-  padding: 10px 20px;
+  padding: 8px 16px;
   background-color: ${(props) => (props.active ? "#4655c4" : "#f8f9fa")};
   color: ${(props) => (props.active ? "white" : "black")};
   border: none;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
-  margin-right: 5px;
+  font-weight: bold;
+  white-space: nowrap;
+
   &:hover {
-    background-color: ${(props) => (props.active ? "#4655c4" : "#e9ecef")};
+    opacity: 0.8;
   }
 `;
 
 const MenuItemGrid = styled.div`
   display: grid;
-  height: 100%;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 15px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `;
 
 const MenuItemCard = styled.div`
@@ -178,21 +273,73 @@ const MenuItemCard = styled.div`
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
 
   img {
     width: 100%;
-    height: 120px;
+    height: 100px;
     object-fit: cover;
-    border-top-right-radius: 8px;
-    border-top-left-radius: 8px;
   }
+
+  @media (min-width: 768px) {
+    img {
+      height: 12rem;
+    }
+  }
+
   &:hover {
     background-color: #f0f0f0;
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
 const OrderSection = styled.div`
   height: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+
+const OrderHeader = styled.h2`
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+`;
+
+const OrderItemList = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+`;
+
+const OrderItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const OrderItemDetails = styled.div`
+  flex-grow: 1;
+`;
+
+const OrderItemName = styled.p`
+  font-weight: bold;
+  margin-bottom: 5px;
+`;
+
+const OrderItemPrice = styled.p`
+  color: #666;
 `;
 
 const SearchResultsContainer = styled.div`
@@ -218,14 +365,41 @@ const NoResultsMessage = styled.div`
   color: #666;
 `;
 
-const DeliveryFeeInput = styled.input`
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+const TotalSection = styled.div`
+  margin-top: 20px;
+  border-top: 2px solid #e0e0e0;
+  padding-top: 15px;
 `;
 
+const TotalItem = styled.p`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+
+  &:last-child {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-top: 15px;
+  }
+`;
+
+const SendButton = styled.button`
+  width: 100%;
+  padding: 15px;
+  background-color: #4655c4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #3a46a3;
+  }
+`;
 const Modal = styled.div`
   position: fixed;
   top: 0;
@@ -242,7 +416,8 @@ const ModalContent = styled.div`
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  width: 400px;
+  width: 90%;
+  max-width: 400px;
 `;
 
 const PrintableTicket = styled.div`
@@ -263,17 +438,40 @@ const CompanyLogo = styled.img`
 const QuantityControl = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 5px;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
 `;
 
 const QuantityButton = styled.button`
-  background-color: #f0f0f0;
+  background-color: transparent;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+  font-size: 1.2em;
+  color: #4655c4;
+  transition: background-color 0.2s ease-in-out;
+
   &:hover {
     background-color: #e0e0e0;
+  }
+`;
+const QuantityDisplay = styled.span`
+  padding: 0 10px;
+  font-weight: bold;
+`;
+
+const DeliveryFeeInput = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 1em;
+
+  &:focus {
+    outline: none;
+    border-color: #4655c4;
   }
 `;
 
@@ -330,7 +528,6 @@ const MenuItemGridSkeleton = () => (
     ))}
   </MenuItemGrid>
 );
-
 export default function DeliveryModule() {
   const [client, setClient] = useState<Client>({
     Id: 0,
@@ -353,10 +550,12 @@ export default function DeliveryModule() {
   const [currentDate, setCurrentDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const printRef = useRef<HTMLDivElement>(null);
+  const [isRightColumnOpen, setIsRightColumnOpen] = useState(false);
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState<Category[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -391,12 +590,17 @@ export default function DeliveryModule() {
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Product[] = await response.json();
       setProducts(data);
+
+      // Update categoriesWithProducts
+      const uniqueCategories = Array.from(new Set(data.map(product => product.Category.Id)));
+      setCategoriesWithProducts(categories.filter(category => uniqueCategories.includes(category.Id)));
     } catch (error) {
       console.error("Could not fetch products:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const fetchCompanyInfo = async () => {
     try {
@@ -429,7 +633,6 @@ export default function DeliveryModule() {
       setIsCategoriesLoading(false);
     }
   };
-
   const fetchAllClients = async () => {
     try {
       const response = await fetch(
@@ -515,16 +718,27 @@ export default function DeliveryModule() {
     }));
   };
 
-  const filteredProducts =
-    selectedCategory === 0
-      ? products
-      : products.filter((product) => product.CategoryId === selectedCategory);
+  const groupProductsByCategory = (products: Product[]) => {
+    return products.reduce((acc, product) => {
+      const categoryName = product.Category.Name;
+      if (!acc[categoryName]) {
+        acc[categoryName] = [];
+      }
+      acc[categoryName].push(product);
+      return acc;
+    }, {} as Record<string, Product[]>);
+  };
 
+  const filteredProducts = selectedCategory === 0
+    ? products
+    : products.filter((product) => product.CategoryId === selectedCategory);
 
   const searchFilteredProducts = filteredProducts.filter((product) =>
     product.Name.toLowerCase().includes(productSearchTerm.toLowerCase())
-
   );
+
+  const groupedMenuItems = groupProductsByCategory(searchFilteredProducts);
+
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {
@@ -534,8 +748,9 @@ export default function DeliveryModule() {
     },
   });
 
+
   const handleDeliveryFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fee = parseFloat(e.target.value) || 0;
+    const fee = e.target.value; // No lo convertimos aún
     setDeliveryFee(fee);
   };
 
@@ -544,9 +759,11 @@ export default function DeliveryModule() {
       const product = products.find((p) => p.Id === item.ProductId);
       return sum + (product ? product.Price * item.Quantity : 0);
     }, 0);
-    return itemsTotal + deliveryFee;
-  };
 
+    // Convertimos el deliveryFee a número aquí si no es un valor válido
+    const validDeliveryFee = parseFloat(deliveryFee) || 0;
+    return itemsTotal + validDeliveryFee;
+  };
   const sendToKitchenAndInvoice = async () => {
     try {
       // Crear la orden
@@ -581,7 +798,7 @@ export default function DeliveryModule() {
       setOrder({ TablesId: 0, Observations: "", OrderProducts: [] });
       setClient({ Id: 0, Name: "", Phone: "", Address: "" });
       setSearchTerm("");
-      setDeliveryFee(0);
+      setDeliveryFee("");
 
       alert("Pedido enviado a cocina y factura creada!");
     } catch (error) {
@@ -597,6 +814,9 @@ export default function DeliveryModule() {
           <MdDeliveryDining className="text-3xl text-gray-800" />
           <h1 className="ml-4 text-gray-800">Gestión de domicilios</h1>
         </div>
+        <CartButton onClick={() => setIsRightColumnOpen(true)}>
+          <TbClipboardList className='text-[30px] text-gray-800' />
+        </CartButton>
       </NavBar>
       <ModuleContainer>
         <DeliveryContainer>
@@ -644,7 +864,14 @@ export default function DeliveryModule() {
                 <CategoryTabsSkeleton />
               ) : (
                 <CategoryTabs>
-                  {categories.map((category) => (
+                  <CategoryTab
+                    key={0}
+                    active={selectedCategory === 0}
+                    onClick={() => setSelectedCategory(0)}
+                  >
+                    Todas
+                  </CategoryTab>
+                  {categoriesWithProducts.map((category) => (
                     <CategoryTab
                       key={category.Id}
                       active={selectedCategory === category.Id}
@@ -658,30 +885,39 @@ export default function DeliveryModule() {
               {isLoading ? (
                 <MenuItemGridSkeleton />
               ) : (
-                <MenuItemGrid>
-                  {searchFilteredProducts.map((product) => (
-                    <MenuItemCard
-                      key={product.Id}
-                      onClick={() => addToOrder(product)}
-                    >
-                      <img
-                        src={product.ImageURL}
-                        alt={product.Name}
-                        className="w-full h-48 object-cover"
-                      />
-                      <h3>{product.Name}</h3>
-                      <p>${product.Price}</p>
-                    </MenuItemCard>
-                  ))}
-                </MenuItemGrid>
+                Object.entries(groupedMenuItems).map(([categoryName, items]) => (
+                  <div key={categoryName}>
+                    <CategoryTitle>{categoryName}</CategoryTitle>
+                    <MenuItemGrid>
+                      {items.map((product) => (
+                        <MenuItemCard
+                          key={product.Id}
+                          onClick={() => addToOrder(product)}
+                        >
+                          <img
+                            src={product.ImageURL}
+                            alt={product.Name}
+                            className="w-full h-48 object-cover"
+                          />
+                          <h3>{product.Name}</h3>
+                          <p>${product.Price}</p>
+                        </MenuItemCard>
+                      ))}
+                    </MenuItemGrid>
+                  </div>
+                ))
               )}
             </MenuSection>
           </LeftColumn>
 
-          <RightColumn>
+          <RightColumn $isOpen={isRightColumnOpen}>
+            <CloseButton onClick={() => setIsRightColumnOpen(false)}>
+              <IoIosCloseCircleOutline />
+            </CloseButton>
+
             {client.Id !== 0 && (
               <div>
-                <h2>Cliente seleccionado</h2>
+                <OrderHeader>Cliente seleccionado</OrderHeader>
                 <p>Nombre: {client.Name}</p>
                 <p>Teléfono: {client.Phone}</p>
                 <p>Dirección: {client.Address}</p>
@@ -689,47 +925,60 @@ export default function DeliveryModule() {
             )}
 
             <OrderSection>
-              <h2>Pedido actual</h2>
-              {order.OrderProducts.map((item) => {
-                const product = products.find((p) => p.Id === item.ProductId);
-                return product ? (
-                  <div key={item.ProductId}>
-                    {product.Name} - ${product.Price} x {item.Quantity}
-                    <QuantityControl>
-                      <QuantityButton
-                        onClick={() => updateItemQuantity(item.ProductId, -1)}
-                      >
-                        -
-                      </QuantityButton>
-                      <span>{item.Quantity}</span>
-                      <QuantityButton
-                        onClick={() => updateItemQuantity(item.ProductId, 1)}
-                      >
-                        +
-                      </QuantityButton>
-                    </QuantityControl>
-                  </div>
-                ) : null;
-              })}
-              <h3>Valor de domicilio:</h3>
+              <OrderHeader>Pedido actual</OrderHeader>
+              <OrderItemList>
+                {order.OrderProducts.map((item) => {
+                  const product = products.find((p) => p.Id === item.ProductId);
+                  return product ? (
+                    <OrderItem key={item.ProductId}>
+                      <OrderItemDetails>
+                        <OrderItemName>{product.Name}</OrderItemName>
+                        <OrderItemPrice>${product.Price} x {item.Quantity}</OrderItemPrice>
+                      </OrderItemDetails>
+                      <QuantityControl>
+                        <QuantityButton onClick={() => updateItemQuantity(item.ProductId, -1)}>
+                          -
+                        </QuantityButton>
+                        <QuantityDisplay>{item.Quantity}</QuantityDisplay>
+                        <QuantityButton onClick={() => updateItemQuantity(item.ProductId, 1)}>
+                          +
+                        </QuantityButton>
+                      </QuantityControl>
+                    </OrderItem>
+                  ) : null;
+                })}
+              </OrderItemList>
+
               <DeliveryFeeInput
                 type="number"
                 value={deliveryFee}
                 onChange={handleDeliveryFeeChange}
                 placeholder="Costo de domicilio"
               />
-              <p>
-                Subtotal: $
-                {order.OrderProducts.reduce((sum, item) => {
-                  const product = products.find((p) => p.Id === item.ProductId);
-                  return sum + (product ? product.Price * item.Quantity : 0);
-                }, 0)}
-              </p>
-              <p>Valor domicilio: ${deliveryFee}</p>
-              <p>Total: ${calculateTotal()}</p>
-              <Button onClick={sendToKitchenAndInvoice}>
+
+              <TotalSection>
+                <TotalItem>
+                  <span>Subtotal:</span>
+                  <span>
+                    ${order.OrderProducts.reduce((sum, item) => {
+                      const product = products.find((p) => p.Id === item.ProductId);
+                      return sum + (product ? product.Price * item.Quantity : 0);
+                    }, 0)}
+                  </span>
+                </TotalItem>
+                <TotalItem>
+                  <span>Valor domicilio:</span>
+                  <span>${deliveryFee}</span>
+                </TotalItem>
+                <TotalItem>
+                  <span>Total:</span>
+                  <span>${calculateTotal()}</span>
+                </TotalItem>
+              </TotalSection>
+
+              <SendButton onClick={sendToKitchenAndInvoice}>
                 Enviar a cocina y Facturar
-              </Button>
+              </SendButton>
             </OrderSection>
           </RightColumn>
 
