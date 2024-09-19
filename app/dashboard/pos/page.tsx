@@ -41,23 +41,16 @@ const Container = styled.div`
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
+  position: relative;
   padding: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  h1 {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin: 0;
-  }
 
   @media (min-width: 768px) {
     padding: 20px;
 
-    h1 {
-      font-size: 1.5em;
-    }
   }
 `;
 
@@ -65,7 +58,10 @@ const CartButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  position: absolute;
   padding: 5px;
+  right: 10px;
+  top:10px;
 
   @media (min-width: 768px) {
     display: none;
@@ -136,9 +132,9 @@ const Button = styled.button<{ $active?: boolean; $variant?: string }>`
   font-weight: bold;
   white-space: nowrap;
   background-color: ${props => {
-    if (props.$active) return '#007bff';
+    if (props.$active) return '#67b7f7';
     switch (props.$variant) {
-      case 'primary': return '#007bff';
+      case 'primary': return '#67b7f7';
       case 'alert': return '#ffc107';
       default: return '#f8f9fa';
     }
@@ -154,7 +150,9 @@ const CategoryTitle = styled.h2`
   font-weight: bold;
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid 
+#67b7f7
+;
 `;
 
 const Cardscontainer = styled.div`
@@ -227,6 +225,7 @@ const OrderSection = styled.div<{ $isOpen: boolean }>`
   display: flex;
   flex-direction: column;
   box-shadow: ${props => props.$isOpen ? '-5px 0 15px rgba(0,0,0,0.1)' : 'none'};
+
 
   @media (min-width: 768px) {
     position: static;
@@ -325,6 +324,9 @@ const OrderItemQuantity = styled.span`
 `;
 
 const ObservationSection = styled.div`
+border-top: 2px solid 
+#67b7f7
+;
   margin-bottom: 15px;
 `;
 
@@ -361,6 +363,9 @@ const TotalSection = styled.div`
   font-weight: bold;
   font-size: 1.1rem;
   margin-bottom: 15px;
+  border-top: 2px solid 
+#67b7f7
+;
 
   @media (min-width: 768px) {
     font-size: 1.2rem;
@@ -370,7 +375,9 @@ const TotalSection = styled.div`
 const ActionButton = styled.button`
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: 
+#67b7f7
+;
   color: white;
   border: none;
   border-radius: 5px;
@@ -525,11 +532,11 @@ export default function MenuOrder() {
   return (
     <Container>
       <NavBar>
-        <div className="flex items-center justify-center w-full ">
-          <HiComputerDesktop className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+        <div className="flex items-center justify-center w-full gap-2 ">
+          <HiComputerDesktop className="text-[2em] text-gray-800 font-bold flex" />
+          <h1 className="ml-4 text-[1.5em] text-gray-800 font-bold flex">Venta Rápida</h1>
         </div>
-        <CartButton onClick={() => setIsCartOpen(!isCartOpen)}>
+        <CartButton  onClick={() => setIsCartOpen(!isCartOpen)}>
           <TbClipboardList className='text-[30px] text-gray-800' />
         </CartButton>
       </NavBar>
