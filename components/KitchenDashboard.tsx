@@ -13,10 +13,12 @@ interface Order {
   TablesId: number | null;
   TableName: string | null;
   Products: {
+    Id: number;
     Name: string;
     Quantity: number;
   }[];
 }
+
 
 
 const NavBar = styled.nav`
@@ -134,7 +136,6 @@ export default function KitchenDashboard() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: Order[] = await response.json();
-      // Filtrar órdenes con Status 0 (cocinando)
       const cookingOrders = data.filter(order => order.Status === 0);
       setOrders(cookingOrders);
     } catch (error) {
@@ -148,15 +149,28 @@ export default function KitchenDashboard() {
 
   const completeOrder = async (order: Order) => {
     try {
-      const newStatus = order.TablesId ? 1 : 2; // 1 para órdenes de mesa, 2 para órdenes sin mesa (por facturar)
-      const updatedOrder = { ...order, Status: newStatus };
+      const newStatus = order.TablesId !== null ? 1 : 2;
+      
+      let updatedOrderData: any = {
+        Observations: order.Observations,
+        Status: newStatus,
+        OrderProducts: order.Products.map(product => ({
+          ProductId: product.Id,
+          OrderId: order.Id,
+          Quantity: product.Quantity
+        }))
+      };
+
+      if (order.TablesId !== null) {
+        updatedOrderData.TablesId = order.TablesId;
+      }
 
       const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedOrder),
+        body: JSON.stringify(updatedOrderData),
       });
 
       if (!response.ok) {

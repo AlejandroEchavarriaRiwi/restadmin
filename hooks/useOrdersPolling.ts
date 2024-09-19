@@ -1,6 +1,5 @@
-// hooks/useOrdersPolling.ts
+'use client'
 import { useState, useEffect, useCallback } from 'react';
-import { useNotifications } from '../contexts/NotificationContext';
 
 interface Order {
   Id: number;
@@ -8,9 +7,14 @@ interface Order {
   TablesId: number | null;
 }
 
-const useOrdersPolling = (userRole: 'Cajero' | 'Mesero' | 'Administrador' | 'guest') => {
+type UserRole = 'Cajero' | 'Mesero' | 'Administrador' | 'guest';
+type NotificationType = 'error' | 'info' | 'warning' | 'success';
+
+const useOrdersPolling = (
+  userRole: UserRole, 
+  addNotification: (notification: { message: string; type: NotificationType }) => void
+) => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const { addNotification } = useNotifications();
 
   const notifyOrderChange = useCallback((order: Order) => {
     if (userRole === 'guest') return;
@@ -38,6 +42,7 @@ const useOrdersPolling = (userRole: 'Cajero' | 'Mesero' | 'Administrador' | 'gue
     }
 
     if (shouldNotify) {
+      console.log("Adding notification:", message); // Debugging log
       addNotification({ message, type: 'info' });
     }
   }, [userRole, addNotification]);

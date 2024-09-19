@@ -1,4 +1,3 @@
-// components/notifications/notificationsWrapper.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +7,13 @@ import { DesktopNotification, MobileNotification, NotificationContainer } from '
 import { getUserRole } from '@/utils/auth';
 
 type UserRole = 'Cajero' | 'Mesero' | 'Administrador' | 'guest';
+type NotificationType = 'error' | 'info' | 'warning' | 'success';
+
+interface Notification {
+  id: string;
+  message: string;
+  type: NotificationType;
+}
 
 interface NotificationWrapperProps {
     initialUserRole?: UserRole;
@@ -15,24 +21,35 @@ interface NotificationWrapperProps {
 
 const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ initialUserRole = 'guest' }) => {
     const [userRole, setUserRole] = useState<UserRole>(initialUserRole);
-    const { notifications, removeNotification } = useNotifications();
+    const { notifications, removeNotification, addNotification } = useNotifications();
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        setUserRole(getUserRole());
+        const role = getUserRole();
+        setUserRole(role);
+        console.log("Current user role:", role); // Debugging log
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Ahora siempre llamamos a useOrdersPolling, incluso para 'guest'
-    const orders = useOrdersPolling(userRole);
+    // Aseguramos que addNotification tenga el tipo correcto
+    const typedAddNotification = (notification: Omit<Notification, 'id'>) => {
+        addNotification(notification);
+    };
+
+    useOrdersPolling(userRole, typedAddNotification);
+
+    useEffect(() => {
+        console.log("Current notifications:", notifications); // Debugging log
+    }, [notifications]);
 
     return (
         <NotificationContainer>
-            {notifications.map(notification => 
-                isMobile ? (
+            {notifications.map(notification => {
+                console.log("Rendering notification:", notification); // Debugging log
+                return isMobile ? (
                     <MobileNotification
                         key={notification.id}
                         {...notification}
@@ -44,8 +61,8 @@ const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ initialUserRo
                         {...notification}
                         onClose={() => removeNotification(notification.id)}
                     />
-                )
-            )}
+                );
+            })}
         </NotificationContainer>
     );
 };
