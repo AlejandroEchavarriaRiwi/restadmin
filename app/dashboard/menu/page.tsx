@@ -86,7 +86,7 @@ const ProductGridSkeleton = () => (
 export default function Menu() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [isDisableMode, setIsDisableMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +102,7 @@ export default function Menu() {
       .then((data: Product[]) => {
         if (Array.isArray(data)) {
           setProducts(data);
-          console.log("Productos cargados:", data); // Para depuración
+          console.log("Productos cargados:", data);
         } else {
           console.error("Formato de datos incorrecto");
         }
@@ -115,22 +115,29 @@ export default function Menu() {
     setProducts([...products, newProduct]);
   };
 
-  const handleDeleteProduct = async (id: number) => {
+  const handleDisableProduct = async (id: number) => {
     try {
       const result = await AlertConfirm(
-        "¿Estás seguro de querer eliminar este producto?"
+        "¿Estás seguro de querer deshabilitar este producto?"
       );
 
       if (result.isConfirmed) {
+        const productToUpdate = products.find(p => p.Id === id);
+        if (!productToUpdate) throw new Error("Producto no encontrado");
+
         const response = await fetch(`/api/v1/Product/${id}`, {
-          method: "DELETE",
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...productToUpdate, Status: 1 }),
         });
 
         if (response.ok) {
-          setProducts(products.filter((product) => product.Id !== id));
-          setIsDeleteMode(false);
+          setProducts(products.map(p => p.Id === id ? { ...p, Status: 1 } : p));
+          setIsDisableMode(false);
           await InputAlert(
-            "El producto ha sido exitosamente eliminado",
+            "El producto ha sido deshabilitado exitosamente",
             "success"
           );
         } else {
@@ -138,8 +145,8 @@ export default function Menu() {
         }
       }
     } catch (error) {
-      console.error("Error al enviar solicitud DELETE:", error);
-      await InputAlert("Error eliminando el producto", "error");
+      console.error("Error al deshabilitar el producto:", error);
+      await InputAlert("Error deshabilitando el producto", "error");
     }
   };
 
@@ -171,19 +178,19 @@ export default function Menu() {
     }
   };
 
-  const toggleDeleteMode = () => {
-    setIsDeleteMode(!isDeleteMode);
+  const toggleDisableMode = () => {
+    setIsDisableMode(!isDisableMode);
     setIsEditMode(false);
   };
 
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
-    setIsDeleteMode(false);
+    setIsDisableMode(false);
   };
 
   const handleProductClick = (id: number) => {
-    if (isDeleteMode) {
-      handleDeleteProduct(id);
+    if (isDisableMode) {
+      handleDisableProduct(id);
     } else if (isEditMode) {
       const productToEdit = products.find((p) => p.Id === id);
       if (productToEdit) {
@@ -191,6 +198,8 @@ export default function Menu() {
       }
     }
   };
+
+  const enabledProducts = products.filter(p => p.Status === 0);
 
   return (
     <div className="">
@@ -214,21 +223,21 @@ export default function Menu() {
             }`}
             variant="secondary"
             onClick={toggleEditMode}
-            disabled={isDeleteMode}
+            disabled={isDisableMode}
           >
             <Edit className="mr-2 h-4 w-4 text-blue-500" />
             {isEditMode ? "Cancelar Edición" : "Editar Productos"}
           </Button>
           <Button
             className={`flex items-center ${
-              isDeleteMode ? "text-red-600" : "text-black"
+              isDisableMode ? "text-red-600" : "text-black"
             }`}
             variant="secondary"
-            onClick={toggleDeleteMode}
+            onClick={toggleDisableMode}
             disabled={isEditMode}
           >
             <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-            {isDeleteMode ? "Cancelar Eliminación" : "Eliminar Productos"}
+            {isDisableMode ? "Cancelar Deshabilitación" : "Deshabilitar Productos"}
           </Button>
         </div>
       </NavBar>
@@ -237,8 +246,8 @@ export default function Menu() {
         <ProductGridSkeleton />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 m-10">
-          {products.length > 0 ? (
-            products.map((product, index) => (
+          {enabledProducts.length > 0 ? (
+            enabledProducts.map((product, index) => (
               <ProductCard
                 key={product.Id}
                 product={product}
