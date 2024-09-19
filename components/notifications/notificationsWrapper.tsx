@@ -5,46 +5,49 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import useOrdersPolling from '@/hooks/useOrdersPolling';
 import { DesktopNotification, MobileNotification, NotificationContainer } from '@/components/notifications/notifications';
-import { Order } from '@/models/order.models'; // Asegúrate de que esta importación es correcta
+import { Order } from '@/models/order.models';
+import { getUserRole } from '@/utils/auth';
 
 type UserRole = 'Cajero' | 'Mesero' | 'Administrador' | 'guest';
 
 interface NotificationWrapperProps {
-    userRole: UserRole;
+    initialUserRole?: UserRole;
 }
 
-// Definimos un tipo para los datos que devuelve useOrdersPolling
+// Definición de PolledOrder basada en Order, pero con campos opcionales
 type PolledOrder = Omit<Order, 'Observations' | 'TableName' | 'Products'> & {
     Observations?: string;
     TableName?: string | null;
-    Products?: { Name: string; Quantity: number; }[];
+    Products?: Array<{ Name: string; Quantity: number }>;
 };
 
-const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ userRole }) => {
+const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ initialUserRole = 'guest' }) => {
+    const [userRole, setUserRole] = useState<UserRole>(initialUserRole);
     const { notifications, removeNotification, addNotification } = useNotifications();
     const [isMobile, setIsMobile] = useState(false);
     const [previousOrders, setPreviousOrders] = useState<Order[]>([]);
 
-    const polledOrders = useOrdersPolling(userRole as 'Cajero' | 'Mesero' | 'Administrador');
-
     useEffect(() => {
+        setUserRole(getUserRole());
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    const polledOrders = userRole !== 'guest' ? useOrdersPolling(userRole) : [];
+
     const checkOrderChanges = useCallback(() => {
         if (userRole === 'guest') return;
 
-        const completeOrders: Order[] = polledOrders.map((order: PolledOrder): Order => ({
+        const completeOrders: Order[] = (polledOrders as PolledOrder[]).map((order): Order => ({
             ...order,
             Observations: order.Observations || '',
             TableName: order.TableName || null,
             Products: order.Products || []
         }));
 
-        completeOrders.forEach((order: Order) => {
+        completeOrders.forEach((order) => {
             const previousOrder = previousOrders.find(po => po.Id === order.Id);
             
             if (!previousOrder || previousOrder.Status !== order.Status) {
@@ -56,19 +59,19 @@ const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ userRole }) =
                         if (order.Status === 0 || order.Status === 2) {
                             shouldNotify = true;
                             message = order.Status === 0 
-                                ? `Orden ${order.Id} Mesa ${order.TableName} en cocina` 
-                                : `Orden ${order.Id} Mesa ${order.TableName} lista para facturar`;
+                                ? `Orden ${order.Id} en cocina` 
+                                : `Orden ${order.Id} lista para facturar`;
                         }
                         break;
                     case 'Mesero':
                         if (order.Status === 1) {
                             shouldNotify = true;
-                            message = `Orden ${order.Id} Mesa ${order.TableName} lista para servir`;
+                            message = `Orden ${order.Id} lista para servir`;
                         }
                         break;
                     case 'Administrador':
                         shouldNotify = true;
-                        message = `Orden ${order.Id} Mesa ${order.TableName} cambió a estado ${order.Status}`;
+                        message = `Orden ${order.Id} cambió a estado ${order.Status}`;
                         break;
                 }
 
