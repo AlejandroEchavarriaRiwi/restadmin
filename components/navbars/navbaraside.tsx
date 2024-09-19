@@ -187,7 +187,7 @@ export default function NavBarAsideDashboard() {
                         exit={{ scale: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
                         onClick={toggleNavbar}
-                        className="fixed top-4 left-4 z-50 bg-azuloscuro text-white p-4 rounded-full shadow-lg hover:bg-azulmedio"
+                        className="fixed top-1 left-1 z-50 bg-azuloscuro text-white p-4 rounded-full shadow-lg hover:bg-azulmedio"
                     >
                         <GiKnifeFork className="text-2xl" />
                     </motion.button>

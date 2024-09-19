@@ -56,33 +56,23 @@ interface Order {
 }
 
 
-
 const NavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 15px;
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  h1 {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin: 0;
-  }
 
   @media (min-width: 768px) {
     justify-content: space-between;
     padding: 20px;
 
-    h1 {
-      font-size: 1.5em;
-    }
   }
 
   @media screen and (max-width: 600px) {
-    h1 {
-      margin-left: 0;
-    }
+
     div {
       width: 100%;
       display: flex;
@@ -142,6 +132,9 @@ const CartButton = styled.button`
   border: none;
   cursor: pointer;
   padding: 5px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
 
   @media (min-width: 768px) {
     display: none;
@@ -199,7 +192,7 @@ const Input = styled.input`
   border: 1px solid #e8e8e9;
   border-radius: 5px;
   &:focus {
-    border: 2px solid #4655c4;
+    border: 2px solid #67b7f7;
     outline: none;
   }
 `;
@@ -208,7 +201,7 @@ const MenuSection = styled.div`
   display: flex;
   flex-direction: column;
   h2 {
-    border-top: 1px solid #e8e8e9;
+    border-top: 2px solid#67b7f7;
     padding: 20px 0px;
     font-weight: bold;
     font-size: 1.3em;
@@ -245,7 +238,7 @@ const SearchContainer = styled.div`
 
 const CategoryTab = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background-color: ${(props) => (props.active ? "#4655c4" : "#f8f9fa")};
+  background-color: ${(props) => (props.active ? "#67b7f7" : "#f8f9fa")};
   color: ${(props) => (props.active ? "white" : "black")};
   border: none;
   border-radius: 20px;
@@ -367,7 +360,7 @@ const NoResultsMessage = styled.div`
 
 const TotalSection = styled.div`
   margin-top: 20px;
-  border-top: 2px solid #e0e0e0;
+  border-top: 2px solid #67b7f7;
   padding-top: 15px;
 `;
 
@@ -526,7 +519,7 @@ const MenuItemGridSkeleton = () => (
     {[...Array(8)].map((_, index) => (
       <MenuItemCardSkeleton key={index} />
     ))}
-  </MenuItemGrid>
+  </MenuItemGrid> 
 );
 export default function DeliveryModule() {
   const [client, setClient] = useState<Client>({
@@ -550,12 +543,11 @@ export default function DeliveryModule() {
   const [currentDate, setCurrentDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState<string>('');
+  const [deliveryFee, setDeliveryFee] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const printRef = useRef<HTMLDivElement>(null);
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false);
-  const [categoriesWithProducts, setCategoriesWithProducts] = useState<Category[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -591,9 +583,16 @@ export default function DeliveryModule() {
       const data: Product[] = await response.json();
       setProducts(data);
 
-      // Update categoriesWithProducts
-      const uniqueCategories = Array.from(new Set(data.map(product => product.Category.Id)));
-      setCategoriesWithProducts(categories.filter(category => uniqueCategories.includes(category.Id)));
+      const uniqueCategoryIds = Array.from(new Set(data.map(product => product.Category.Id)));
+
+      setCategories(prevCategories => {
+        const filteredCategories = prevCategories.filter(category =>
+          category.Id === 0 || uniqueCategoryIds.includes(category.Id)
+        );
+        return filteredCategories;
+      });
+
+      setSelectedCategory(0);
     } catch (error) {
       console.error("Could not fetch products:", error);
     } finally {
@@ -601,6 +600,34 @@ export default function DeliveryModule() {
     }
   };
 
+  const fetchCategories = async () => {
+    setIsCategoriesLoading(true);
+    try {
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Categories"
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data: Category[] = await response.json();
+      setCategories([{ Id: 0, Name: "Todas" }, ...data]);
+    } catch (error) {
+      console.error("Could not fetch categories:", error);
+    } finally {
+      setIsCategoriesLoading(false);
+    }
+  };
+
+  const renderCategories = () => {
+    return categories.map((category) => (
+      <button
+        key={category.Id}
+        onClick={() => setSelectedCategory(category.Id)}
+        className={selectedCategory === category.Id ? 'active' : ''}
+      >
+        {category.Name}
+      </button>
+    ));
+  };
 
   const fetchCompanyInfo = async () => {
     try {
@@ -616,23 +643,7 @@ export default function DeliveryModule() {
     }
   };
 
-  const fetchCategories = async () => {
-    setIsCategoriesLoading(true);
-    try {
-      const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Categories"
-      );
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      const data: Category[] = await response.json();
-      setCategories([{ Id: 0, Name: "Todos" }, ...data]);
-      setSelectedCategory(0);
-    } catch (error) {
-      console.error("Could not fetch categories:", error);
-    } finally {
-      setIsCategoriesLoading(false);
-    }
-  };
+
   const fetchAllClients = async () => {
     try {
       const response = await fetch(
@@ -810,9 +821,9 @@ export default function DeliveryModule() {
   return (
     <>
       <NavBar>
-        <div className="flex items-center ">
-          <MdDeliveryDining className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Gestión de domicilios</h1>
+        <div className="flex items-center gap-2 ">
+          <MdDeliveryDining className="text-[2.1em] text-gray-800 font-bold flex" />
+          <h1 className="ml-4 text-[1.5em] text-gray-800 font-bold flex">Gestión de domicilios</h1>
         </div>
         <CartButton onClick={() => setIsRightColumnOpen(true)}>
           <TbClipboardList className='text-[30px] text-gray-800' />
@@ -864,14 +875,7 @@ export default function DeliveryModule() {
                 <CategoryTabsSkeleton />
               ) : (
                 <CategoryTabs>
-                  <CategoryTab
-                    key={0}
-                    active={selectedCategory === 0}
-                    onClick={() => setSelectedCategory(0)}
-                  >
-                    Todas
-                  </CategoryTab>
-                  {categoriesWithProducts.map((category) => (
+                  {categories.map((category) => (
                     <CategoryTab
                       key={category.Id}
                       active={selectedCategory === category.Id}
