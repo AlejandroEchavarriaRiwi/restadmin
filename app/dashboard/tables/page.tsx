@@ -6,11 +6,12 @@ import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
 import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
+
 interface Table {
   Id: number;
   Name: string;
+  State: string;
 }
-
 interface Category {
   Id: number;
   Name: string;
@@ -495,74 +496,92 @@ export default function Tables() {
 
   const addTable = async () => {
     try {
-      // Primero, verifica si hay mesas existentes que puedan ser reutilizadas
-      const availableTable = tables.find(table => {
-        const tableOrder = orders.find(order => order.TablesId === table.Id);
-        return !tableOrder || tableOrder.Status === 3 || tableOrder.Status === 4;
-      });
+      const newTable: Omit<Table, "Id"> = {
+        Name: `Mesa ${tables.length + 1}`,
+        State: "Disponible"
+      };
 
-      if (availableTable) {
-        // Si hay una mesa disponible, actualiza su estado a disponible
-        const response = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Tables/${availableTable.Id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ...availableTable, Status: 0 }), // Asumiendo que 0 es el estado "Disponible"
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to update table. Status: ${response.status}`);
+      const response = await fetch(
+        "https://restadmin.azurewebsites.net/api/v1/Tables",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newTable),
         }
+      );
 
-        await fetchTables(); // Actualiza la lista de mesas
-      } else {
-        // Si no hay mesas disponibles, crea una nueva
-        const newTable: Omit<Table, "Id"> = {
-          Name: `Mesa ${tables.length + 1}`,
-        };
-
-        const response = await fetch(
-          "https://restadmin.azurewebsites.net/api/v1/Tables",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newTable),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to add table. Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setTables([...tables, data]);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add table. Status: ${response.status}. Error: ${errorText}`);
       }
+
+      const data = await response.json();
+      setTables([...tables, data]);
     } catch (error) {
-      console.error("Error adding/updating table:", error);
+      console.error("Error adding table:", error);
       alert(
-        `Error adding/updating table: ${
+        `Error adding table: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
   };
 
+
   const getTableStatus = (tableId: number): TableState => {
-    const tableOrder = orders.find(order => order.TablesId === tableId && order.Status !== 4 && order.Status !== 5);
+    const tableOrder = orders.find(order => order.TablesId === tableId);
     if (!tableOrder) return "Disponible";
     switch (tableOrder.Status) {
       case 0: return "Cocinando";
       case 1: return "Ocupada";
       case 2: return "Por Facturar";
+      case 3:
+      case 4:
+        return "Disponible";
       default: return "Disponible";
     }
   };
+
+  const updateTableState = async (tableId: number, newState: string) => {
+    try {
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ State: newState }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update table state. Status: ${response.status}`);
+      }
+
+      // Actualizar el estado local de las mesas
+      setTables(prevTables =>
+        prevTables.map(table =>
+          table.Id === tableId ? { ...table, State: newState } : table
+        )
+      );
+    } catch (error) {
+      console.error("Error updating table state:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Actualizar el estado de las mesas cada vez que cambian las órdenes
+    tables.forEach(table => {
+      const newState = getTableStatus(table.Id);
+      if (newState !== table.State) {
+        updateTableState(table.Id, newState);
+      }
+    });
+  }, [orders, tables]);
+
 
   const removeTable = async () => {
     if (tables.length > 0) {
