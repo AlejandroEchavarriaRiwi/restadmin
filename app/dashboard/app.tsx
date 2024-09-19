@@ -1,11 +1,13 @@
+// app/dashboard/app.tsx
 import React from 'react';
-import Layout from './layout';
+import DashboardLayout from './layout';
 
 const App: React.FC = () => {
   return (
-    <Layout children={undefined}>
-      {/* Resto de tu aplicación */}
-    </Layout>
+    <DashboardLayout>
+      {/* Aquí va el contenido del dashboard */}
+      <div>Contenido del Dashboard</div>
+    </DashboardLayout>
   );
 };
 
