@@ -18,7 +18,6 @@ interface Order {
   }[];
 }
 
-
 const NavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 20px;
@@ -60,6 +59,7 @@ const TicketCard: React.FC<{ children: ReactNode }> = ({ children }) => (
     {children}
   </div>
 );
+
 const ObservationText = styled.p`
   font-style: italic;
   color: #555;
@@ -135,8 +135,7 @@ export default function KitchenDashboard() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: Order[] = await response.json();
-      // Filtrar órdenes con Status 0 (cocinando)
-      const cookingOrders = data.filter(order => order.Status === 0);
+      const cookingOrders = data.filter((order) => order.Status === 0);
       setOrders(cookingOrders);
     } catch (error) {
       console.error("Could not fetch orders:", error);
@@ -149,27 +148,59 @@ export default function KitchenDashboard() {
 
   const completeOrder = async (order: Order) => {
     try {
-      const newStatus = order.TablesId ? 1 : 2; // 1 para órdenes de mesa, 2 para órdenes sin mesa (por facturar)
-      const updatedOrder = { ...order, Status: newStatus };
-
-      const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedOrder),
-      });
-
+      // Step 1: Fetch all products to match their Ids
+      const productResponse = await fetch("https://restadmin.azurewebsites.net/api/v1/Product");
+      if (!productResponse.ok) {
+        throw new Error(`Failed to fetch products. Status: ${productResponse.status}`);
+      }
+      const productsData = await productResponse.json();
+  
+      // Step 2: Prepare the updated order payload with the correct ProductId
+      const newStatus = order.TablesId ? 1 : 2;
+  
+      const updatedOrder = {
+        TablesId: order.TablesId || null,
+        Observations: order.Observations || "",
+        Status: newStatus,
+        OrderProducts: order.Products.map((product) => {
+          const matchingProduct = productsData.find((p: { Name: string; }) => p.Name === product.Name);
+          if (!matchingProduct) {
+            throw new Error(`Product ${product.Name} not found.`);
+          }
+          return {
+            ProductId: matchingProduct.Id, // Use the ProductId from the fetched data
+            OrderId: order.Id,
+            Quantity: product.Quantity,
+          };
+        }),
+      };
+  
+      // Log the payload for debugging
+      console.log("Payload being sent:", JSON.stringify(updatedOrder));
+  
+      // Step 3: Send the PUT request to update the order
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedOrder),
+        }
+      );
+  
       if (!response.ok) {
         throw new Error(`Failed to update order. Status: ${response.status}`);
       }
-
-      // Actualizar el estado local
-      setOrders(orders.filter(o => o.Id !== order.Id));
+  
+      // Update the local state by removing the completed order
+      setOrders(orders.filter((o) => o.Id !== order.Id));
     } catch (error) {
       console.error("Error completing order:", error);
     }
   };
+  
 
   const renderObservations = (order: Order) => {
     return (
@@ -194,14 +225,17 @@ export default function KitchenDashboard() {
       <DashboardContainer>
         <div className="bg-primary text-primary-foreground py-2 px-2 mb-5 rounded-xl">
           <div className="flex justify-center">
-            <h1 className="text-2xl font-bold mb-4 sm:mb-0">Órdenes en Preparación</h1>
+            <h1 className="text-2xl font-bold mb-4 sm:mb-0">
+              Órdenes en Preparación
+            </h1>
           </div>
         </div>
         <TicketGrid>
           {orders.map((order) => (
             <TicketCard key={order.Id}>
               <TicketHeader>
-                {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
+                {order.TableName ||
+                  (order.TablesId ? `Mesa ${order.TablesId}` : "Pedido para llevar")}
               </TicketHeader>
               <ItemList>
                 {order.Products.map((item, index) => (
@@ -229,7 +263,8 @@ export default function KitchenDashboard() {
             {orders.map((order) => (
               <div key={order.Id}>
                 <h2>
-                  {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
+                  {order.TableName ||
+                    (order.TablesId ? `Mesa ${order.TablesId}` : "Pedido para llevar")}
                 </h2>
                 <ItemList>
                   {order.Products.map((item, index) => (
