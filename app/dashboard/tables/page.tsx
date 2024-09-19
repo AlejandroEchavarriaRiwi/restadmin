@@ -58,14 +58,10 @@ const NavBar = styled.nav`
   }
   @media screen and (max-width: 600px) {
     flex-direction: column;
-    h1 {
-      margin-left: 0;
-    }
     div {
       flex-direction: row;
       margin-bottom: 10px;
       gap: 10px;
-      margin-right: 0;
     }
   }
 `;
@@ -578,20 +574,20 @@ export default function Tables() {
   return (
     <>
       <NavBar>
-        <div className="flex items-center ">
-          <MdTableRestaurant className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Mesas</h1>
+        <div className="flex items-center gap-2 ">
+          <MdTableRestaurant className="text-[2em] text-gray-800" />
+          <h1 className="text-[1.5em] text-gray-800">Mesas</h1>
         </div>
         <div className="flex gap-4 mr-4 ">
           <Button
             className="flex items-center text-gray-800"
             onClick={addTable}
           >
-            <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+            <PlusCircle className="mr-2 h-6 w-6 text-green-500" />
             Agregar Mesa
           </Button>
           <Button className={`flex items-center`} onClick={removeTable}>
-            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+            <Trash2 className="mr-2 h-6 w-6 text-red-500" />
             Eliminar Mesa
           </Button>
         </div>

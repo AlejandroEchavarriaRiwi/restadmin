@@ -44,14 +44,24 @@ const NavBar = styled.nav`
   position: relative;
   padding: 15px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  width: 100%;
 
-
-  @media (min-width: 768px) {
-    padding: 20px;
-
+  div{
+    display: flex;
+    justify-content: start;
   }
+
+  @media screen and (max-width: 600px) {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    
+    div{
+    display: flex;
+    justify-content: center;
+  }
+  }
+
 `;
 
 const CartButton = styled.button`
@@ -534,9 +544,9 @@ export default function MenuOrder() {
       <NavBar>
         <div className="flex items-center justify-center w-full gap-2 ">
           <HiComputerDesktop className="text-[2em] text-gray-800 font-bold flex" />
-          <h1 className="ml-4 text-[1.5em] text-gray-800 font-bold flex">Venta Rápida</h1>
+          <h1 className="text-[1.5em] text-gray-800 font-bold flex">Venta Rápida</h1>
         </div>
-        <CartButton  onClick={() => setIsCartOpen(!isCartOpen)}>
+        <CartButton onClick={() => setIsCartOpen(!isCartOpen)}>
           <TbClipboardList className='text-[30px] text-gray-800' />
         </CartButton>
       </NavBar>
@@ -596,7 +606,7 @@ export default function MenuOrder() {
                   </QuantityButton>
                   <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
                   <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)}>
-                  +
+                    +
                   </QuantityButton>
                 </QuantityControl>
               </OrderItem>

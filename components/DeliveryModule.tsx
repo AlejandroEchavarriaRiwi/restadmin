@@ -64,11 +64,8 @@ const NavBar = styled.nav`
   justify-content: space-between;
   align-items: center;
 
-
   @media (min-width: 768px) {
     justify-content: space-between;
-    padding: 20px;
-
   }
 
   @media screen and (max-width: 600px) {
@@ -822,8 +819,8 @@ export default function DeliveryModule() {
     <>
       <NavBar>
         <div className="flex items-center gap-2 ">
-          <MdDeliveryDining className="text-[2.1em] text-gray-800 font-bold flex" />
-          <h1 className="ml-4 text-[1.5em] text-gray-800 font-bold flex">Gestión de domicilios</h1>
+          <MdDeliveryDining className="text-[2em] text-gray-800 font-bold flex" />
+          <h1 className="text-[1.5em] text-gray-800 font-bold flex">Gestión de domicilios</h1>
         </div>
         <CartButton onClick={() => setIsRightColumnOpen(true)}>
           <TbClipboardList className='text-[30px] text-gray-800' />

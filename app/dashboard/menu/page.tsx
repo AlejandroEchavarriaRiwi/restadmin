@@ -118,7 +118,7 @@ export default function Menu() {
   const handleDisableProduct = async (id: number) => {
     try {
       const result = await AlertConfirm(
-        "¿Estás seguro de querer deshabilitar este producto?"
+        "¿Estás seguro de querer eliminar este producto?"
       );
 
       if (result.isConfirmed) {
@@ -137,7 +137,7 @@ export default function Menu() {
           setProducts(products.map(p => p.Id === id ? { ...p, Status: 1 } : p));
           setIsDisableMode(false);
           await InputAlert(
-            "El producto ha sido deshabilitado exitosamente",
+            "El producto ha sido eliminado exitosamente",
             "success"
           );
         } else {
@@ -145,8 +145,7 @@ export default function Menu() {
         }
       }
     } catch (error) {
-      console.error("Error al deshabilitar el producto:", error);
-      await InputAlert("Error deshabilitando el producto", "error");
+      await InputAlert("Error eliminando el producto", "error");
     }
   };
 
@@ -204,40 +203,39 @@ export default function Menu() {
   return (
     <div className="">
       <NavBar>
-        <div className="flex items-center ">
-          <BiSolidFoodMenu className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Gestión de productos</h1>
+        <div className="flex items-center gap-2 ">
+          <BiSolidFoodMenu className="text-[2em] text-gray-800" />
+          <h1 className="text-[1.5em] text-gray-800">Gestión de productos</h1>
         </div>
-        <div className="flex gap-8">
+        <div className="flex gap-8 mt-3 lg:mt-0">
           <Button
             variant="secondary"
-            className="flex items-center"
+            className="flex flex-col items-center lg:flex-row"
             onClick={() => setIsModalOpen(true)}
           >
-            <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
-            Agregar Producto
+              <PlusCircle className="mr-2 w-6 h-6   text-green-500 " />
+              Agregar Producto
+
           </Button>
           <Button
-            className={`flex items-center  ${
-              isEditMode ? "text-blue-600" : "text-black"
-            }`}
+            className={`flex flex-col items-center lg:flex-row  ${isEditMode ? "text-blue-600" : "text-black"
+              }`}
             variant="secondary"
             onClick={toggleEditMode}
             disabled={isDisableMode}
           >
-            <Edit className="mr-2 h-4 w-4 text-blue-500" />
+            <Edit className="mr-2 w-6 h-6 text-blue-500" />
             {isEditMode ? "Cancelar Edición" : "Editar Productos"}
           </Button>
           <Button
-            className={`flex items-center ${
-              isDisableMode ? "text-red-600" : "text-black"
-            }`}
+            className={`flex flex-col items-center lg:flex-row ${isDisableMode ? "text-red-600" : "text-black"
+              }`}
             variant="secondary"
             onClick={toggleDisableMode}
             disabled={isEditMode}
           >
-            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-            {isDisableMode ? "Cancelar Deshabilitación" : "Deshabilitar Productos"}
+            <Trash2 className="mr-2 w-6 h-6 text-red-500" />
+            {isDisableMode ? "Cancelar Eliminación" : "Eliminar Productos"}
           </Button>
         </div>
       </NavBar>
