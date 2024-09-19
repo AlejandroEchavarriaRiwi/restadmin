@@ -274,13 +274,13 @@ export default function UserManagement() {
   return (
     <>
       <NavBar>
-        <div className="flex items-center ">
-          <FaPeopleRobbery className="text-3xl text-gray-800" />
-          <h1 className="ml-4 text-gray-800">Administración de usuarios</h1>
+        <div className="flex items-center gap-2">
+          <FaPeopleRobbery className="text-[2em] text-gray-800" />
+          <h1 className="text-[1.5em] text-gray-800">Administración de usuarios</h1>
         </div>
         <div className="flex gap-4 mr-4 ">
-          <Button onClick={handleCreateUser} className="flex items-center">
-            <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+          <Button onClick={handleCreateUser} className="flex items-center flex-col lg:flex-row mt-3 lg:mt-0">
+            <PlusCircle className="mr-2 h-6 w-6 text-green-500" />
             Crear nuevo usuario
           </Button>
         </div>
