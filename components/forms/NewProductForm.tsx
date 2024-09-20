@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useFormStore from '../../app/dashboard/store';
 import ImageUpload from '../buttons/ButtonImageUpdload';
 import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
 import SubmitAlert from '../alerts/submitAlert';
 import { Product } from '@/types/Imenu';
+import { Minimize2 } from 'lucide-react';
 
 interface ProductFormProps {
     setIsModalOpen: (isOpen: boolean) => void;
@@ -11,10 +12,27 @@ interface ProductFormProps {
     onClose: () => void;
 }
 
+
 const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdded, onClose }) => {
     const { name, price, cost, setName, setPrice, setCost, imageURL, setImageURL } = useFormStore();
     const [category, setCategory] = useState<Category | null>(null);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    // Función para resetear el formulario
+    const resetForm = useCallback(() => {
+        setName('');
+        setCost(0);
+        setPrice(0);
+        setImageURL('');
+        setCategory(null);
+        setErrors({});
+    }, [setName, setCost, setPrice, setImageURL, setCategory]);
+    // Efecto para resetear el formulario cuando se cierra el modal
+    useEffect(() => {
+        return () => {
+            resetForm();
+        };
+    }, [resetForm]);
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
@@ -90,6 +108,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
     return (
         <div className="p-4 max-w-md mx-auto bg-white rounded-lg shadow-md">
             <h2 className="text-xl font-bold mb-4">Agregar Nuevo Producto</h2>
+            <button
+                className="absolute right-6 top-3 lg:right-[700px] mt-2 px-2 py-2  text-gray-950 rounded"
+                onClick={() => setIsModalOpen(false)}
+            >
+                <Minimize2 className="text-[1em]" />
+            </button>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block font-semibold mb-1">Nombre:</label>
@@ -135,7 +159,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ setIsModalOpen, onProductAdde
                 {errors.imageURL && <p className="text-red-500 text-sm mt-1">{errors.imageURL}</p>}
                 <button
                     type="submit"
-                    className="w-full py-2 bg-amarillo text-white rounded-lg hover:bg-amber-500 transition-colors"
+                    className="w-full py-2 bg-[#4655c4] text-white rounded-lg hover:bg-[#4b9fea] transition-colors"
                 >
                     Guardar Producto
                 </button>

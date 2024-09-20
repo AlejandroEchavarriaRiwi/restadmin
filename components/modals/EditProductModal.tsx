@@ -109,7 +109,7 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
                             {({ open }) => (
                                 <button
                                     type="button"
-                                    className="px-4 py-2 bg-azulmedio text-white rounded-lg hover:bg-azuloscuro"
+                                    className="px-4 py-2 bg-[#4b9fea] text-white rounded-lg hover:bg-[#4b9fea]"
                                     onClick={() => open()}
                                 >
                                     Cargar imagen
