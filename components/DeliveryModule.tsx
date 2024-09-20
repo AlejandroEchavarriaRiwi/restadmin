@@ -3,13 +3,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
-import { useReactToPrint } from "react-to-print";
 import Button from "../components/buttons/Button";
 import { MdDeliveryDining } from "react-icons/md";
 import { TbClipboardList } from "react-icons/tb";
 import { IoIosCloseCircleOutline } from "react-icons/io";
-
-
+import InputAlert from "./alerts/successAlert";
 
 interface Client {
   Id: number;
@@ -55,7 +53,6 @@ interface Order {
   OrderProducts: OrderProduct[];
 }
 
-
 const NavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 15px;
@@ -69,7 +66,6 @@ const NavBar = styled.nav`
   }
 
   @media screen and (max-width: 600px) {
-
     div {
       width: 100%;
       display: flex;
@@ -109,8 +105,7 @@ const DeliveryContainer = styled.div`
 
 const CategoryTitle = styled.h2`
   font-weight: bold;
-
-`
+`;
 
 const LeftColumn = styled.div`
   width: 100%;
@@ -147,11 +142,12 @@ const RightColumn = styled.div<{ $isOpen: boolean }>`
   height: 100%;
   background-color: #ffffff;
   padding: 20px;
-  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  box-shadow: ${props => props.$isOpen ? '-5px 0 25px rgba(0,0,0,0.1)' : 'none'};
+  box-shadow: ${(props) =>
+    props.$isOpen ? "-5px 0 25px rgba(0,0,0,0.1)" : "none"};
   z-index: 1000;
 
   @media (min-width: 768px) {
@@ -162,7 +158,7 @@ const RightColumn = styled.div<{ $isOpen: boolean }>`
     box-shadow: none;
     border-left: 1px solid #e0e0e0;
   }
-`;;
+`;
 
 const CloseButton = styled.button`
   background: none;
@@ -293,7 +289,6 @@ const OrderSection = styled.div`
   flex-direction: column;
 `;
 
-
 const OrderHeader = styled.h2`
   font-size: 1.5em;
   font-weight: bold;
@@ -333,19 +328,22 @@ const OrderItemPrice = styled.p`
 `;
 
 const SearchResultsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   margin-top: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
   cursor: pointer;
   max-height: 200px;
   overflow-y: auto;
-  &:hover {
-    background-color: #f0f0f0;
-  }
+
 `;
 
 const SearchResultItem = styled.div`
-  padding: 10px;
+  padding: 10px;  
+  &:hover {
+    background-color: #f0f0f0;
+  }
 `;
 
 const NoResultsMessage = styled.div`
@@ -465,6 +463,11 @@ const DeliveryFeeInput = styled.input`
   }
 `;
 
+const ErrorMessage = styled.div`
+  color: red;
+  margin-bottom: 10px;
+`;
+
 const shimmer = keyframes`
   0% {
     background-position: -468px 0;
@@ -516,8 +519,43 @@ const MenuItemGridSkeleton = () => (
     {[...Array(8)].map((_, index) => (
       <MenuItemCardSkeleton key={index} />
     ))}
-  </MenuItemGrid> 
+  </MenuItemGrid>
 );
+
+const ObservationSection = styled.div`
+  border-top: 2px solid #67b7f7;
+  margin-bottom: 15px;
+`;
+
+const ObservationLabel = styled.label`
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+`;
+
+const ObservationTextArea = styled.textarea`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9em;
+  resize: vertical;
+  min-height: 80px;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  &::placeholder {
+    color: #6c757d;
+  }
+`;
+
 export default function DeliveryModule() {
   const [client, setClient] = useState<Client>({
     Id: 0,
@@ -534,26 +572,22 @@ export default function DeliveryModule() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Client[]>([]);
   const [allClients, setAllClients] = useState<Client[]>([]);
-  const [company, setCompany] = useState<Company | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [productSearchTerm, setProductSearchTerm] = useState("");
-  const [currentDate, setCurrentDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState("");
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const printRef = useRef<HTMLDivElement>(null);
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false);
+  const [observations, setObservations] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
     fetchAllClients();
-    fetchCompanyInfo();
     fetchCategories();
-    setCurrentDate(
-      new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" })
-    );
   }, []);
 
   useEffect(() => {
@@ -569,22 +603,29 @@ export default function DeliveryModule() {
     }
   }, [searchTerm, allClients]);
 
+  const updateObservations = (newObservations: string) => {
+    setObservations(newObservations);
+  };
+
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Product"
+        "/api/v1/Product"
       );
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Product[] = await response.json();
       setProducts(data);
 
-      const uniqueCategoryIds = Array.from(new Set(data.map(product => product.Category.Id)));
+      const uniqueCategoryIds = Array.from(
+        new Set(data.map((product) => product.Category.Id))
+      );
 
-      setCategories(prevCategories => {
-        const filteredCategories = prevCategories.filter(category =>
-          category.Id === 0 || uniqueCategoryIds.includes(category.Id)
+      setCategories((prevCategories) => {
+        const filteredCategories = prevCategories.filter(
+          (category) =>
+            category.Id === 0 || uniqueCategoryIds.includes(category.Id)
         );
         return filteredCategories;
       });
@@ -601,7 +642,7 @@ export default function DeliveryModule() {
     setIsCategoriesLoading(true);
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Categories"
+        "/api/v1/Categories"
       );
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -619,32 +660,18 @@ export default function DeliveryModule() {
       <button
         key={category.Id}
         onClick={() => setSelectedCategory(category.Id)}
-        className={selectedCategory === category.Id ? 'active' : ''}
+        className={selectedCategory === category.Id ? "active" : ""}
       >
         {category.Name}
       </button>
     ));
   };
 
-  const fetchCompanyInfo = async () => {
-    try {
-      const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Company"
-      );
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      const data: Company = await response.json();
-      setCompany(data);
-    } catch (error) {
-      console.error("Could not fetch company info:", error);
-    }
-  };
-
 
   const fetchAllClients = async () => {
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Clients"
+        "/api/v1/Clients"
       );
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -670,7 +697,7 @@ export default function DeliveryModule() {
 
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Clients",
+        "/api/v1/Clients",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -716,13 +743,11 @@ export default function DeliveryModule() {
   const updateItemQuantity = (productId: number, change: number) => {
     setOrder((prev) => ({
       ...prev,
-      OrderProducts: prev.OrderProducts
-        .map((item) =>
-          item.ProductId === productId
-            ? { ...item, Quantity: Math.max(0, item.Quantity + change) }
-            : item
-        )
-        .filter((item) => item.Quantity > 0),
+      OrderProducts: prev.OrderProducts.map((item) =>
+        item.ProductId === productId
+          ? { ...item, Quantity: Math.max(0, item.Quantity + change) }
+          : item
+      ).filter((item) => item.Quantity > 0),
     }));
   };
 
@@ -737,24 +762,16 @@ export default function DeliveryModule() {
     }, {} as Record<string, Product[]>);
   };
 
-  const filteredProducts = selectedCategory === 0
-    ? products
-    : products.filter((product) => product.CategoryId === selectedCategory);
+  const filteredProducts =
+    selectedCategory === 0
+      ? products
+      : products.filter((product) => product.CategoryId === selectedCategory);
 
   const searchFilteredProducts = filteredProducts.filter((product) =>
     product.Name.toLowerCase().includes(productSearchTerm.toLowerCase())
   );
 
   const groupedMenuItems = groupProductsByCategory(searchFilteredProducts);
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    onBeforeGetContent: () => {
-      setCurrentDate(
-        new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" })
-      );
-    },
-  });
 
 
   const handleDeliveryFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -773,46 +790,73 @@ export default function DeliveryModule() {
     return itemsTotal + validDeliveryFee;
   };
   const sendToKitchenAndInvoice = async () => {
+    if (!isOrderValid()) {
+      setError(
+        "Por favor, complete todos los campos requeridos y agregue al menos un producto."
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    const clientInfo = `Cliente: ${client.Name}, Teléfono: ${client.Phone}, Dirección: ${client.Address}`;
+    const fullObservations = `${clientInfo}. Costo de domicilio: $${deliveryFee}. ${observations}`;
+
+    const orderData = {
+      Status: 0,
+      Observations: fullObservations,
+      OrderProducts: order.OrderProducts.map((item) => ({
+        ProductId: item.ProductId,
+        OrderId: 0,
+        Quantity: item.Quantity,
+      })),
+    };
+
     try {
-      // Crear la orden
-      const orderResponse = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Order",
+      const response = await fetch(
+        "/api/v1/Order",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(order),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderData),
         }
       );
-      if (!orderResponse.ok)
-        throw new Error(`HTTP error! status: ${orderResponse.status}`);
-      const createdOrder = await orderResponse.json();
 
-      // Crear la factura basada en la orden
-      const invoiceResponse = await fetch(
-        `https://restadmin.azurewebsites.net/api/v1/Invoice/create-from-order/${createdOrder.Id}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!invoiceResponse.ok)
-        throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
-      const createdInvoice = await invoiceResponse.json();
-
-      // Imprimir ticket
-      handlePrint();
-
-      // Resetear el estado
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      // Reset the form
       setOrder({ TablesId: 0, Observations: "", OrderProducts: [] });
       setClient({ Id: 0, Name: "", Phone: "", Address: "" });
-      setSearchTerm("");
+      setObservations("");
       setDeliveryFee("");
 
-      alert("Pedido enviado a cocina y factura creada!");
+      await InputAlert(
+        "Orden generada correctamente y enviada a cocina!",
+        "success"
+      );
     } catch (error) {
-      console.error("Error al procesar el pedido:", error);
-      alert("Error al procesar el pedido. Por favor, intente de nuevo.");
+      await InputAlert(
+        "Error al procesar el pedido. Por favor, intente de nuevo.",
+        "error"
+      );
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const isOrderValid = () => {
+    return (
+      order.OrderProducts.length > 0 &&
+      client.Id !== 0 &&
+      client.Name !== "" &&
+      client.Phone !== "" &&
+      client.Address !== "" &&
+      deliveryFee !== ""
+    );
   };
 
   return (
@@ -820,10 +864,12 @@ export default function DeliveryModule() {
       <NavBar>
         <div className="flex items-center gap-2 ">
           <MdDeliveryDining className="text-[2em] text-gray-800 font-bold flex" />
-          <h1 className="text-[1.5em] text-gray-800 font-bold flex">Gestión de domicilios</h1>
+          <h1 className="text-[1.5em] text-gray-800 font-bold flex">
+            Gestión de domicilios
+          </h1>
         </div>
         <CartButton onClick={() => setIsRightColumnOpen(true)}>
-          <TbClipboardList className='text-[30px] text-gray-800' />
+          <TbClipboardList className="text-[30px] text-gray-800" />
         </CartButton>
       </NavBar>
       <ModuleContainer>
@@ -886,27 +932,29 @@ export default function DeliveryModule() {
               {isLoading ? (
                 <MenuItemGridSkeleton />
               ) : (
-                Object.entries(groupedMenuItems).map(([categoryName, items]) => (
-                  <div key={categoryName}>
-                    <CategoryTitle>{categoryName}</CategoryTitle>
-                    <MenuItemGrid>
-                      {items.map((product) => (
-                        <MenuItemCard
-                          key={product.Id}
-                          onClick={() => addToOrder(product)}
-                        >
-                          <img
-                            src={product.ImageURL}
-                            alt={product.Name}
-                            className="w-full h-48 object-cover"
-                          />
-                          <h3>{product.Name}</h3>
-                          <p>${product.Price}</p>
-                        </MenuItemCard>
-                      ))}
-                    </MenuItemGrid>
-                  </div>
-                ))
+                Object.entries(groupedMenuItems).map(
+                  ([categoryName, items]) => (
+                    <div key={categoryName}>
+                      <CategoryTitle>{categoryName}</CategoryTitle>
+                      <MenuItemGrid>
+                        {items.map((product) => (
+                          <MenuItemCard
+                            key={product.Id}
+                            onClick={() => addToOrder(product)}
+                          >
+                            <img
+                              src={product.ImageURL}
+                              alt={product.Name}
+                              className="w-full h-48 object-cover"
+                            />
+                            <h3>{product.Name}</h3>
+                            <p>${product.Price}</p>
+                          </MenuItemCard>
+                        ))}
+                      </MenuItemGrid>
+                    </div>
+                  )
+                )
               )}
             </MenuSection>
           </LeftColumn>
@@ -934,14 +982,20 @@ export default function DeliveryModule() {
                     <OrderItem key={item.ProductId}>
                       <OrderItemDetails>
                         <OrderItemName>{product.Name}</OrderItemName>
-                        <OrderItemPrice>${product.Price} x {item.Quantity}</OrderItemPrice>
+                        <OrderItemPrice>
+                          ${product.Price} x {item.Quantity}
+                        </OrderItemPrice>
                       </OrderItemDetails>
                       <QuantityControl>
-                        <QuantityButton onClick={() => updateItemQuantity(item.ProductId, -1)}>
+                        <QuantityButton
+                          onClick={() => updateItemQuantity(item.ProductId, -1)}
+                        >
                           -
                         </QuantityButton>
                         <QuantityDisplay>{item.Quantity}</QuantityDisplay>
-                        <QuantityButton onClick={() => updateItemQuantity(item.ProductId, 1)}>
+                        <QuantityButton
+                          onClick={() => updateItemQuantity(item.ProductId, 1)}
+                        >
                           +
                         </QuantityButton>
                       </QuantityControl>
@@ -949,21 +1003,38 @@ export default function DeliveryModule() {
                   ) : null;
                 })}
               </OrderItemList>
+              <ObservationSection>
+                <ObservationLabel htmlFor="observation">
+                  Observaciones
+                </ObservationLabel>
+                <ObservationTextArea
+                  id="observation"
+                  value={observations}
+                  onChange={(e) => updateObservations(e.target.value)}
+                  placeholder="Añade observaciones generales para tu orden..."
+                />
+              </ObservationSection>
 
               <DeliveryFeeInput
                 type="number"
                 value={deliveryFee}
                 onChange={handleDeliveryFeeChange}
                 placeholder="Costo de domicilio"
+                required
               />
 
               <TotalSection>
                 <TotalItem>
                   <span>Subtotal:</span>
                   <span>
-                    ${order.OrderProducts.reduce((sum, item) => {
-                      const product = products.find((p) => p.Id === item.ProductId);
-                      return sum + (product ? product.Price * item.Quantity : 0);
+                    $
+                    {order.OrderProducts.reduce((sum, item) => {
+                      const product = products.find(
+                        (p) => p.Id === item.ProductId
+                      );
+                      return (
+                        sum + (product ? product.Price * item.Quantity : 0)
+                      );
                     }, 0)}
                   </span>
                 </TotalItem>
@@ -977,8 +1048,13 @@ export default function DeliveryModule() {
                 </TotalItem>
               </TotalSection>
 
-              <SendButton onClick={sendToKitchenAndInvoice}>
-                Enviar a cocina y Facturar
+              {error && <ErrorMessage>{error}</ErrorMessage>}
+
+              <SendButton
+                onClick={sendToKitchenAndInvoice}
+                disabled={!isOrderValid() || isLoading}
+              >
+                {isLoading ? "Procesando..." : "Generar orden"}
               </SendButton>
             </OrderSection>
           </RightColumn>
@@ -1020,45 +1096,6 @@ export default function DeliveryModule() {
               </ModalContent>
             </Modal>
           )}
-
-          <PrintableTicket ref={printRef}>
-            {company && (
-              <>
-                <CompanyLogo src={company.LogoURL} alt={company.Name} />
-                <h2>{company.Name}</h2>
-                <p>NIT: {company.NIT}</p>
-                <p>Dirección: {company.Address}</p>
-                <p>Teléfono: {company.Phone}</p>
-                <p>Email: {company.Email}</p>
-              </>
-            )}
-            <h3>Domicilios</h3>
-            <p>Cliente: {client.Name}</p>
-            <p>Celular: {client.Phone}</p>
-            <p>Dirección: {client.Address}</p>
-            <h4>Productos:</h4>
-            {order.OrderProducts.map((item, index) => {
-              const product = products.find((p) => p.Id === item.ProductId);
-              return product ? (
-                <p key={index}>
-                  {product.Name} - ${product.Price} x {item.Quantity} = $
-                  {product.Price * item.Quantity}
-                </p>
-              ) : null;
-            })}
-            <p>
-              Subtotal: $
-              {order.OrderProducts.reduce((sum, item) => {
-                const product = products.find((p) => p.Id === item.ProductId);
-                return sum + (product ? product.Price * item.Quantity : 0);
-              }, 0)}
-            </p>
-            <p>Valor domicilio: ${deliveryFee}</p>
-            <p>
-              <strong>Total: ${calculateTotal()}</strong>
-            </p>
-            <p>Fecha: {currentDate}</p>
-          </PrintableTicket>
         </DeliveryContainer>
       </ModuleContainer>
     </>

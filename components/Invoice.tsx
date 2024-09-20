@@ -1,12 +1,13 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/buttons/Button';
 import Modal from '@/components/modals/ModalMobileView'
 import { FaFileInvoiceDollar } from 'react-icons/fa6';
 import { MdTableRestaurant } from 'react-icons/md';
-
+import { useReactToPrint } from 'react-to-print';
+import InputAlert from './alerts/successAlert';
 interface Product {
   Id: number;
   Name: string;
@@ -28,6 +29,30 @@ interface Order {
   Products: Product[];
   Observations: string;
 }
+
+interface Company {
+  Id: number;
+  Name: string;
+  Email: string;
+  Nit: string;
+  Phone: string;
+  Address: string;
+  LogoURL: string;
+}
+
+const PrintableInvoice = styled.div`
+  @media print {
+    display: block;
+    width: 80mm;
+    padding: 10mm;
+    font-family: Arial, sans-serif;
+  }
+`;
+
+const CompanyLogo = styled.img`
+  width: 60mm;
+  margin-bottom: 5mm;
+`;
 
 const ModuleContainer = styled.div`
   width: 100%;
@@ -123,40 +148,40 @@ const OrderDetails = styled.div`
     margin: 25px;
   }
 `;
-const PrintableInvoice = styled.div`
-  padding: 20px;
-  margin-top: 20px;
-  width: 80mm;
-  font-size: 8px;
-  ul{
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-
-  }
-  li{
-    display: flex;
-    justify-content: space-between;
-  }
-`;
-
 
 const AnimatedOrderDetails = motion(OrderDetails);
 const AnimatedListItem = motion.li;
-
 export default function Invoice() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [company, setCompany] = useState<Company | null>(null);
+    const [currentDate, setCurrentDate] = useState("");
+    const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchOrders();
+        fetchCompanyInfo();
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    const fetchCompanyInfo = async () => {
+        try {
+            const response = await fetch("/api/v1/Company");
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Company[] = await response.json();
+            if (data.length > 0) {
+                setCompany(data[0]); // Set the first (and likely only) company in the array
+            }
+        } catch (error) {
+            console.error("Could not fetch company info:", error);
+        }
+    }
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -179,10 +204,10 @@ export default function Invoice() {
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order');
+            const response = await fetch('/api/v1/Order');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data: Order[] = await response.json();
-            setOrders(data.filter(order => order.Status === 2)); // Filtrar órdenes con Status 2
+            setOrders(data.filter(order => order.Status === 2));
         } catch (error) {
             console.error("Could not fetch orders:", error);
         }
@@ -195,23 +220,75 @@ export default function Invoice() {
         }
     };
 
-    const completeOrder = async (order: Order) => {
+    const generateInvoice = async (orderId: number) => {
+        setIsLoading(true);
         try {
+            const response = await fetch(`/api/v1/Invoice/create-from-order?orderId=${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to generate invoice. Status: ${response.status}`);
+            }
+
+            const invoiceData = await response.json();
+            console.log('Invoice generated:', invoiceData);
+            return invoiceData;
+        } catch (error) {
+            console.error("Error generating invoice:", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePrint = useReactToPrint({
+        content: () => printRef.current,
+        onBeforeGetContent: () => {
+        return new Promise<void>((resolve) => {
+            const formattedDate = new Date().toLocaleString("es-CO", { 
+              timeZone: "America/Bogota",
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            setCurrentDate(formattedDate);
+            resolve();
+          });
+        },
+        onAfterPrint: () => {
+          // Remove the order from the list after printing
+          setOrders(prevOrders => prevOrders.filter(o => o.Id !== selectedOrder?.Id));
+          setSelectedOrder(null);
+        }
+      });
+
+    const completeOrder = async (order: Order) => {
+        if (isLoading) return; // Prevent multiple clicks
+        setIsLoading(true);
+        try {
+            await generateInvoice(order.Id);
+
             let updatedOrderData: any = {
                 Observations: order.Observations,
-                Status: 3, // Cambiar a status 3
+                Status: 3,
                 OrderProducts: order.Products.map(product => ({
                     ProductId: product.Id,
                     OrderId: order.Id,
                     Quantity: product.Quantity
                 }))
             };
-
             if (order.TablesId !== null) {
                 updatedOrderData.TablesId = order.TablesId;
             }
 
-            const response = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${order.Id}`, {
+            const response = await fetch(`/api/v1/Order/${order.Id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -223,17 +300,20 @@ export default function Invoice() {
                 throw new Error(`Failed to update order. Status: ${response.status}`);
             }
 
-            // Actualizar el estado local
-            setOrders(orders.filter(o => o.Id !== order.Id));
-            setSelectedOrder(null);
+            setSelectedOrder(order);  // Set the selected order for printing
+            
             if (isMobile) {
                 setIsModalOpen(false);
             }
 
-            alert('Orden completada exitosamente!');
+            // Trigger print immediately
+            handlePrint();
+
+            await InputAlert('Orden completada y factura generada exitosamente!','success');
         } catch (error) {
-            console.error("Error completing order:", error);
-            alert(`Error al completar la orden: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+            alert(`Error al completar la orden y generar la factura: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -246,6 +326,7 @@ export default function Invoice() {
             <div className="bg-[#f8f9fa] p-[20px] flex items-center justify-center lg:justify-start gap-2  w-full ">
                 <FaFileInvoiceDollar className='text-[2em] text-gray-800' />
                 <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Órdenes por Completar</h1>
+                
             </div>
             <div className='container-invoices'>
                 <TableGrid>
@@ -284,17 +365,48 @@ export default function Invoice() {
                             <div className='total'>
                                 <p>Total: ${calculateTotal(selectedOrder)}</p>
                             </div>
-                            <Button onClick={() => completeOrder(selectedOrder)}>Completar Orden</Button>
+                            <Button onClick={() => completeOrder(selectedOrder)} disabled={isLoading}>
+                                {isLoading ? 'Procesando...' : 'Completar Orden y Generar Factura'}
+                            </Button>
                         </AnimatedOrderDetails>
                     )}
                 </AnimatePresence>
-            </div>
+                </div>
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 order={selectedOrder}
                 onGenerateInvoice={() => selectedOrder && completeOrder(selectedOrder)}
+                isLoading={isLoading}
             />
+            <div style={{ display: 'none' }}>
+                <PrintableInvoice ref={printRef}>
+                    {company && selectedOrder && (
+                        <>
+                            <CompanyLogo src={company.LogoURL} alt={company.Name} />
+                            <h2>{company.Name}</h2>
+                            <p>NIT: {company.Nit}</p>
+                            <p>Dirección: {company.Address}</p>
+                            <p>Teléfono: {company.Phone}</p>
+                            <p>Email: {company.Email}</p>
+                            <p>{selectedOrder.Observations}</p>
+                            <h3>Orden de venta</h3>
+                            <p>{selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</p>
+                            <h4>Productos:</h4>
+                            <p>Cant.   Producto       Precio</p>
+                            {selectedOrder.Products.map((item, index) => (
+                                <p key={index}>
+                                    {item.Quantity}x{item.Name} ______ ${item.Price}
+                                </p>
+                            ))}
+                            <p>
+                                <strong>Total: ${calculateTotal(selectedOrder)}</strong>
+                            </p>
+                            <p>Fecha: {currentDate}</p>
+                        </>
+                    )}
+                </PrintableInvoice>
+            </div>
         </ModuleContainer>
     );
 }
