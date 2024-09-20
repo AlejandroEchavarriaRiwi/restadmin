@@ -31,6 +31,7 @@ export default function NavBarAsideDashboard() {
     const [isMobile, setIsMobile] = useState(false);
     const { user, loading, error, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!loading && !user) {
@@ -46,6 +47,13 @@ export default function NavBarAsideDashboard() {
 
         return () => window.removeEventListener('resize', checkIfMobile);
     }, [loading, user, router]);
+
+    useEffect(() => {
+        if (isMobile) {
+            setIsOpen(false);
+            setIsCollapsed(true);
+        }
+    }, [isMobile]);
 
     if (loading) {
         return (
@@ -77,15 +85,15 @@ export default function NavBarAsideDashboard() {
         label: string;
         condition?: boolean;
         isOpen: boolean;
+        onClick: () => void;
     }
 
-    const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, condition = true, isOpen }) => {
-        const pathname = usePathname();
+    const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, condition = true, isOpen, onClick }) => {
         const isActive = pathname === href;
 
         if (!condition) return null;
         return (
-            <Link href={href} className="w-full">
+            <Link href={href} className="w-full" onClick={onClick}>
                 <div
                     className={`
                     group flex items-center 
@@ -114,10 +122,17 @@ export default function NavBarAsideDashboard() {
                 setTimeout(() => setIsCollapsed(true), 300);
             } else {
                 setIsCollapsed(false);
-                setTimeout(() => setIsOpen(true), 300);
+                setTimeout(() => setIsOpen(true), 50);
             }
         } else {
             setIsOpen(!isOpen);
+        }
+    };
+
+    const handleNavItemClick = () => {
+        if (isMobile) {
+            setIsOpen(false);
+            setTimeout(() => setIsCollapsed(true), 300);
         }
     };
 
@@ -158,17 +173,17 @@ export default function NavBarAsideDashboard() {
                 </div>
             )}
 
-            <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
-                <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} />
-                <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} />
-                <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} />
-                <NavItem href="/dashboard/kitchen" icon={FaKitchenSet} label="COCINA" condition={isAdmin || isCashier} isOpen={isOpen} />
-                <NavItem href="/dashboard/delivery" icon={MdDeliveryDining} label="DOMICILIOS" condition={isAdmin || isCashier} isOpen={isOpen} />
-                <NavItem href="/dashboard/sales" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} isOpen={isOpen} />
-                <NavItem href="/dashboard/stadistics" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} />
-                <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} isOpen={isOpen} />
-                <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} />
-            </nav>
+                <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
+                <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/kitchen" icon={FaKitchenSet} label="COCINA" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/delivery" icon={MdDeliveryDining} label="DOMICILIOS" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/sales" icon={RiStackOverflowFill} label="MOVIMIENTOS" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/stadistics" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
+                <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
+                </nav>
 
             <button onClick={logout} className={`my-2 m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left ml-3' : 'text-center justify-center w-full ml-0'}`}>
                 <TbLogout2 className="text-5xl mr-2" />
