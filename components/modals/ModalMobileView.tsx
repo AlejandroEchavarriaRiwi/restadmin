@@ -23,9 +23,18 @@ interface ModalProps {
   preInvoice?: PreInvoice | null;
   order?: Order | null;
   onGenerateInvoice: () => void;
+  isLoading: boolean; // Added isLoading prop
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, table, preInvoice, order, onGenerateInvoice }) => {
+const Modal: React.FC<ModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  table, 
+  preInvoice, 
+  order, 
+  onGenerateInvoice, 
+  isLoading 
+}) => {
   if (!isOpen) return null;
 
   let title: string;
@@ -79,8 +88,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, table, preInvoice, order
           <button
             className="bg-azuloscuro text-blanco -foreground hover:bg-primary/90 px-4 py-2 rounded-md"
             onClick={onGenerateInvoice}
+            disabled={isLoading}
           >
-            Imprimir Factura
+            {isLoading ? 'Procesando...' : 'Imprimir Factura'}
           </button>
         </div>
       </div>

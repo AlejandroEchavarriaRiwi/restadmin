@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import useOrdersPolling from '@/hooks/useOrdersPolling';
 import { DesktopNotification, MobileNotification, NotificationContainer } from '@/components/notifications/notifications';
@@ -27,42 +27,40 @@ const NotificationWrapper: React.FC<NotificationWrapperProps> = ({ initialUserRo
     useEffect(() => {
         const role = getUserRole();
         setUserRole(role);
-        console.log("Current user role:", role); // Debugging log
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Aseguramos que addNotification tenga el tipo correcto
-    const typedAddNotification = (notification: Omit<Notification, 'id'>) => {
+    const typedAddNotification = useCallback((notification: Omit<Notification, 'id'>) => {
+        // Remover todas las notificaciones existentes antes de agregar la nueva
+        notifications.forEach(n => removeNotification(n.id));
         addNotification(notification);
-    };
+    }, [addNotification, removeNotification, notifications]);
 
     useOrdersPolling(userRole, typedAddNotification);
 
-    useEffect(() => {
-        console.log("Current notifications:", notifications); // Debugging log
-    }, [notifications]);
+    // Obtener solo la última notificación
+    const lastNotification = notifications.length > 0 ? notifications[notifications.length - 1] : null;
 
     return (
         <NotificationContainer>
-            {notifications.map(notification => {
-                console.log("Rendering notification:", notification); // Debugging log
-                return isMobile ? (
+            {lastNotification && (
+                isMobile ? (
                     <MobileNotification
-                        key={notification.id}
-                        {...notification}
-                        onClose={() => removeNotification(notification.id)}
+                        key={lastNotification.id}
+                        {...lastNotification}
+                        onClose={() => removeNotification(lastNotification.id)}
                     />
                 ) : (
                     <DesktopNotification
-                        key={notification.id}
-                        {...notification}
-                        onClose={() => removeNotification(notification.id)}
+                        key={lastNotification.id}
+                        {...lastNotification}
+                        onClose={() => removeNotification(lastNotification.id)}
                     />
-                );
-            })}
+                )
+            )}
         </NotificationContainer>
     );
 };

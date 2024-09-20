@@ -1,15 +1,30 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from "styled-components";
 import { Loader2, ArrowUpDown, Printer } from "lucide-react";
+import { useReactToPrint } from 'react-to-print';
 
 interface Invoice {
-  id: number;
-  number: number;
-  orderId: number;
-  observations: string;
-  total: number;
-  dateInvoice: string;
+  Id: number;
+  Number: number;
+  OrderId: number;
+  Observations: string;
+  Total: number;
+  DateInvoice: string;
+}
+
+interface OrderDetails {
+  Id: number;
+  TablesId: number | null;
+  TableName: string | null;
+  Status: number;
+  Products: {
+    Id: number;
+    Name: string;
+    Price: number;
+    Quantity: number;
+  }[];
+  Observations: string;
 }
 
 const Container = styled.div`
@@ -135,30 +150,126 @@ const TableSkeleton = () => (
   </tbody>
 );
 
-const months = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
+const DateSelector = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
 
-export default function MonthlySalesSelector() {
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Invoice; direction: 'ascending' | 'descending' } | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(20);
-  
+const DateInput = styled.input`
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+`;
+
+const PrintableInvoice = styled.div`
+  @media print {
+    display: block;
+    width: 80mm;
+    padding: 10mm;
+    font-family: Arial, sans-serif;
+  }
+`;
+
+const CompanyLogo = styled.img`
+  width: 60mm;
+  margin-bottom: 5mm;
+`;
+
+interface Company {
+  Id: number;
+  Name: string;
+  Email: string;
+  Nit: string;
+  Phone: string;
+  Address: string;
+  LogoURL: string;
+}
+
+const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | null, orderDetails: OrderDetails | null }> = ({ invoice, company, orderDetails }) => {
+  if (!invoice || !company || !orderDetails) return null;
+
+  const calculateTotal = (products: OrderDetails['Products']) => {
+    return products.reduce((total, product) => total + product.Price * product.Quantity, 0);
+  };
+
+  return (
+    <PrintableInvoice>
+      <CompanyLogo src={company.LogoURL} alt={company.Name} />
+      <h2>{company.Name}</h2>
+      <p>NIT: {company.Nit}</p>
+      <p>Dirección: {company.Address}</p>
+      <p>Teléfono: {company.Phone}</p>
+      <p>Email: {company.Email}</p>
+      <h3>Factura #{invoice.Number}</h3>
+      <p>Fecha: {new Date(invoice.DateInvoice).toLocaleString("es-CO")}</p>
+      <p>{orderDetails.TableName || `Pedido ${orderDetails.Id}`}</p>
+      <h4>Productos:</h4>
+      {orderDetails.Products.map((product, index) => (
+        <p key={index}>
+          {product.Quantity}x {product.Name} - ${product.Price * product.Quantity}
+        </p>
+      ))}
+      <p><strong>Total: ${calculateTotal(orderDetails.Products).toLocaleString()}</strong></p>
+      <p>Observaciones: {orderDetails.Observations}</p>
+    </PrintableInvoice>
+  );
+};
+
+export default function DailySalesSelector() {
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Invoice; direction: 'ascending' | 'descending' } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchInvoices(selectedMonth);
-  }, [selectedMonth]);
+    if (selectedDate) {
+      fetchInvoices(selectedDate);
+    }
+    fetchCompanyInfo();
+  }, [selectedDate]);
 
-  const fetchInvoices = async (month: number) => {
+  const fetchCompanyInfo = async () => {
+    try {
+      const response = await fetch("/api/v1/Company");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data: Company[] = await response.json();
+      if (data.length > 0) {
+        setCompany(data[0]);
+      } else {
+        console.error("No company data received");
+      }
+    } catch (error) {
+      console.error("Could not fetch company info:", error);
+    }
+  };
+
+  const fetchOrderDetails = async (orderId: number) => {
+    try {
+      const response = await fetch(`/api/v1/Order/${orderId}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data: OrderDetails = await response.json();
+      setOrderDetails(data);
+    } catch (error) {
+      console.error("Could not fetch order details:", error);
+    }
+  };
+
+
+  const fetchInvoices = async (date: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/v1/Product/salesByMonth?month=${month}`);
+      const [year, month, day] = date.split('-');
+      const response = await fetch(`/api/v1/Product/salesByDay?day=${day}&month=${month}&year=${year}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -173,17 +284,17 @@ export default function MonthlySalesSelector() {
     }
   };
 
-  const handleMonthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedMonth(parseInt(event.target.value));
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(event.target.value);
   };
 
   const formatCurrency = (value: number) => {
-    return value ? `${value.toLocaleString()}` : 'no hay ventas';
+    return value ? `$${value.toLocaleString()}` : 'No hay ventas';
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const handleSort = (key: keyof Invoice) => {
@@ -222,16 +333,30 @@ export default function MonthlySalesSelector() {
 
 
   const fieldTranslations = {
-    number: 'Número',
-    dateInvoice: 'Fecha',
-    orderId: 'ID de Orden',
-    total: 'Total',
-    observations: 'Observaciones'
+    Number: 'Número',
+    DateInvoice: 'Fecha',
+    OrderId: 'ID de Orden',
+    Total: 'Total',
+    Observations: 'Observaciones'
   };
 
-  const handlePrint = (invoice: Invoice) => {
-    console.log("Reimprimiendo factura:", invoice);
-    // Aquí iría la lógica para reimprimir la factura
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    onBeforeGetContent: () => {
+      // You can update any state here if needed before printing
+    },
+    onAfterPrint: () => {
+      setSelectedInvoice(null);
+      setOrderDetails(null);
+    },
+  });
+
+  const printInvoice = async (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    await fetchOrderDetails(invoice.OrderId);
+    setTimeout(() => {
+      handlePrint();
+    }, 100);
   };
 
   const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
@@ -239,19 +364,20 @@ export default function MonthlySalesSelector() {
 
   return (
     <Container>
-      <Title>Facturas Mensuales</Title>
-      <Select value={selectedMonth} onChange={handleMonthChange}>
-        {months.map((month, index) => (
-          <option key={index} value={index + 1}>
-            {month}
-          </option>
-        ))}
-      </Select>
+      <Title>Facturas Diarias</Title>
+      <DateSelector>
+        <DateInput
+          type="date"
+          value={selectedDate}
+          onChange={handleDateChange}
+          max={new Date().toISOString().split('T')[0]}
+        />
+      </DateSelector>
 
       <Table>
         <thead>
           <tr>
-            {['number', 'dateInvoice', 'orderId', 'total', 'observations'].map((key) => (
+            {['Number', 'DateInvoice', 'OrderId', 'Total', 'Observations'].map((key) => (
               <Th key={key} onClick={() => handleSort(key as keyof Invoice)}>
                 <SortIcon size={14} />
                 {fieldTranslations[key as keyof typeof fieldTranslations]}
@@ -270,29 +396,30 @@ export default function MonthlySalesSelector() {
           </tbody>
         ) : currentItems.length > 0 ? (
           <tbody>
-            {currentItems.map((invoice) => (
-              <tr key={invoice.id}>
-                <Td>{invoice.number}</Td>
-                <Td>{formatDate(invoice.dateInvoice)}</Td>
-                <Td>{invoice.orderId}</Td>
-                <Td>{formatCurrency(invoice.total)}</Td>
-                <Td>{invoice.observations}</Td>
-                <Td>
-                  <Button onClick={() => handlePrint(invoice)}>
-                    <Printer size={18} />
-                  </Button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
+          {currentItems.map((invoice) => (
+            <tr key={invoice.Id}>
+              <Td>{invoice.Number}</Td>
+              <Td>{formatDate(invoice.DateInvoice)}</Td>
+              <Td>{invoice.OrderId}</Td>
+              <Td>{formatCurrency(invoice.Total)}</Td>
+              <Td>{invoice.Observations}</Td>
+              <Td>
+                <Button onClick={() => printInvoice(invoice)}>
+                  <Printer size={18} />
+                </Button>
+              </Td>
+            </tr>
+          ))}
+        </tbody>
         ) : (
           <tbody>
             <tr>
-              <td colSpan={6} className="text-center py-4">No hay facturas disponibles para este mes.</td>
+              <td colSpan={6} className="text-center py-4">No hay facturas disponibles para esta fecha.</td>
             </tr>
           </tbody>
         )}
       </Table>
+
 
       {!isLoading && currentItems.length > 0 && (
         <Pagination>
@@ -313,6 +440,11 @@ export default function MonthlySalesSelector() {
           </PaginationButton>
         </Pagination>
       )}
+      <div style={{ display: 'none' }}>
+        <div ref={printRef}>
+          <InvoiceToPrint invoice={selectedInvoice} company={company} orderDetails={orderDetails} />
+        </div>
+      </div>
     </Container>
   );
 }

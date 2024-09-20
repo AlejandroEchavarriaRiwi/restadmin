@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { X, Plus, Minus } from 'lucide-react';
-import { pdf } from '@react-pdf/renderer';
-import PDFDocument from '../../../components/print/PDFprint';
-import InputAlert from '@/components/alerts/successAlert';
 import { HiComputerDesktop } from 'react-icons/hi2';
 import { TbClipboardList } from 'react-icons/tb';
+import InputAlert from '@/components/alerts/successAlert';
 
-export interface MenuItem {
+interface MenuItem {
   Id: number;
   Name: string;
   Price: number;
@@ -22,15 +20,18 @@ export interface MenuItem {
   };
 }
 
-interface OrderItem extends MenuItem {
-  quantity: number;
+interface OrderItem {
+  ProductId: number;
+  OrderId: number;
+  Quantity: number;
 }
 
 interface Order {
-  items: OrderItem[];
-  tableId: string;
-  generalObservation: string;
+  Status: number;
+  Observations: string;
+  OrderProducts: OrderItem[];
 }
+
 
 const Container = styled.div`
   display: flex;
@@ -407,11 +408,16 @@ const ActionButton = styled.button`
 
 export default function MenuOrder() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [order, setOrder] = useState<Order>({ items: [], tableId: 'pos1', generalObservation: '' });
+  const [order, setOrder] = useState<Order>({
+    Status: 0,
+    Observations: "",
+    OrderProducts: [],
+  });
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchMenuItems();
@@ -437,20 +443,20 @@ export default function MenuOrder() {
 
   const addToOrder = (item: MenuItem) => {
     setOrder(prevOrder => {
-      const existingItem = prevOrder.items.find(orderItem => orderItem.Id === item.Id);
+      const existingItem = prevOrder.OrderProducts.find(orderItem => orderItem.ProductId === item.Id);
       if (existingItem) {
         return {
           ...prevOrder,
-          items: prevOrder.items.map(orderItem =>
-            orderItem.Id === item.Id
-              ? { ...orderItem, quantity: orderItem.quantity + 1 }
+          OrderProducts: prevOrder.OrderProducts.map(orderItem =>
+            orderItem.ProductId === item.Id
+              ? { ...orderItem, Quantity: orderItem.Quantity + 1 }
               : orderItem
           )
         };
       } else {
         return {
           ...prevOrder,
-          items: [...prevOrder.items, { ...item, quantity: 1 }]
+          OrderProducts: [...prevOrder.OrderProducts, { ProductId: item.Id, OrderId: 0, Quantity: 1 }]
         };
       }
     });
@@ -459,25 +465,30 @@ export default function MenuOrder() {
   const updateItemQuantity = (itemId: number, change: number) => {
     setOrder(prevOrder => ({
       ...prevOrder,
-      items: prevOrder.items.map(item =>
-        item.Id === itemId
-          ? { ...item, quantity: Math.max(0, item.quantity + change) }
+      OrderProducts: prevOrder.OrderProducts.map(item =>
+        item.ProductId === itemId
+          ? { ...item, Quantity: Math.max(0, item.Quantity + change) }
           : item
-      ).filter(item => item.quantity > 0)
+      ).filter(item => item.Quantity > 0)
     }));
   };
 
-  const updateGeneralObservation = (observation: string) => {
+  const updateObservations = (observation: string) => {
     setOrder(prevOrder => ({
       ...prevOrder,
-      generalObservation: observation
+      Observations: observation
     }));
   };
 
-  const generateInvoiceAndSendToKitchen = async () => {
+  const sendOrderToKitchen = async () => {
+    if (order.OrderProducts.length === 0) {
+      await InputAlert("No se puede enviar una orden vacía", "error");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Send to kitchen
-      const kitchenResponse = await fetch('http://localhost:8001/kitchen', {
+      const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -485,45 +496,27 @@ export default function MenuOrder() {
         body: JSON.stringify(order),
       });
 
-      if (!kitchenResponse.ok) {
-        throw new Error(`HTTP error! status: ${kitchenResponse.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Generate invoice
-      const invoice = {
-        ...order,
-        total: order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0),
-        date: new Date().toISOString()
-      };
-
-      const invoiceResponse = await fetch('http://localhost:8001/invoices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(invoice),
+      // Reset the order
+      setOrder({
+        Status: 0,
+        Observations: "",
+        OrderProducts: [],
       });
 
-      if (!invoiceResponse.ok) {
-        throw new Error(`HTTP error! status: ${invoiceResponse.status}`);
-      }
-
-      // Generate and show PDF
-      const blob = await pdf(<PDFDocument order={invoice} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const printWindow = window.open(url, '_blank');
-      printWindow?.print();
-
-      // Clear the order
-      setOrder({ items: [], tableId: 'pos1', generalObservation: '' });
-
-      // Show success message
-      await InputAlert('Orden enviada a cocina y facturada correctamente!', 'success');
+      await InputAlert("Orden enviada a cocina correctamente!", "success");
     } catch (error) {
       console.error("Error al procesar la orden:", error);
-      alert('Error al procesar la orden. Por favor, intente de nuevo.');
+      await InputAlert("Error al procesar la orden. Por favor, intente de nuevo.", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+
 
   const filteredMenuItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'Todas' || item.Category.Name === selectedCategory;
@@ -594,45 +587,50 @@ export default function MenuOrder() {
             </CloseButton>
           </OrderHeader>
           <OrderItemsContainer>
-            {order.items.map(item => (
-              <OrderItem key={item.Id}>
-                <OrderItemInfo>
-                  <OrderItemName>{item.Name}</OrderItemName>
-                  <OrderItemPrice>${(item.Price * item.quantity)}</OrderItemPrice>
-                </OrderItemInfo>
-                <QuantityControl>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, -1)} >
-                    -
-                  </QuantityButton>
-                  <OrderItemQuantity>{item.quantity}</OrderItemQuantity>
-                  <QuantityButton onClick={() => updateItemQuantity(item.Id, 1)}>
-                    +
-                  </QuantityButton>
-                </QuantityControl>
-              </OrderItem>
-            ))}
+            {order.OrderProducts.map(item => {
+              const menuItem = menuItems.find(menuItem => menuItem.Id === item.ProductId);
+              return menuItem ? (
+                <OrderItem key={item.ProductId}>
+                  <OrderItemInfo>
+                    <OrderItemName>{menuItem.Name}</OrderItemName>
+                    <OrderItemPrice>${(menuItem.Price * item.Quantity).toFixed(2)}</OrderItemPrice>
+                  </OrderItemInfo>
+                  <QuantityControl>
+                    <QuantityButton onClick={() => updateItemQuantity(item.ProductId, -1)}>
+                      -
+                    </QuantityButton>
+                    <OrderItemQuantity>{item.Quantity}</OrderItemQuantity>
+                    <QuantityButton onClick={() => updateItemQuantity(item.ProductId, 1)}>
+                      +
+                    </QuantityButton>
+                  </QuantityControl>
+                </OrderItem>
+              ) : null;
+            })}
           </OrderItemsContainer>
           <ObservationSection>
             <ObservationLabel htmlFor="observation">Observaciones</ObservationLabel>
             <ObservationTextArea
               id="observation"
-              value={order.generalObservation}
-              onChange={(e) => updateGeneralObservation(e.target.value)}
+              value={order.Observations}
+              onChange={(e) => updateObservations(e.target.value)}
               placeholder="Añade observaciones generales para tu orden..."
             />
           </ObservationSection>
           <TotalSection>
-            Total: ${order.items.reduce((sum, item) => sum + item.Price * item.quantity, 0)}
+            Total: ${order.OrderProducts.reduce((sum, item) => {
+              const menuItem = menuItems.find(menuItem => menuItem.Id === item.ProductId);
+              return sum + (menuItem ? menuItem.Price * item.Quantity : 0);
+            }, 0).toFixed(2)}
           </TotalSection>
           <ActionButton
-            onClick={generateInvoiceAndSendToKitchen}
-            disabled={order.items.length === 0}
+            onClick={sendOrderToKitchen}
+            disabled={order.OrderProducts.length === 0 || isLoading}
           >
-            Facturar y Enviar a Cocina
+            {isLoading ? "Procesando..." : "Enviar a Cocina"}
           </ActionButton>
         </OrderSection>
       </Content>
     </Container>
   );
-
 }
