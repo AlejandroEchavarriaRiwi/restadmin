@@ -123,14 +123,33 @@ const CartButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
   position: absolute;
+  padding: 5px;
   right: 10px;
   top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @media (min-width: 768px) {
     display: none;
   }
+`;
+
+const CartCounter = styled.span`
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: -5px;
+  right: -5px;
+  background-color: #4b9fea;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const RightColumn = styled.div<{ $isOpen: boolean }>`
@@ -859,6 +878,10 @@ export default function DeliveryModule() {
     );
   };
 
+  const getTotalItemsInCart = () => {
+    return order.OrderProducts.reduce((total, item) => total + item.Quantity, 0);
+  };
+
   return (
     <>
       <NavBar>
@@ -870,6 +893,9 @@ export default function DeliveryModule() {
         </div>
         <CartButton onClick={() => setIsRightColumnOpen(true)}>
           <TbClipboardList className="text-[30px] text-gray-800" />
+          {getTotalItemsInCart() > 0 && (
+            <CartCounter><p>{getTotalItemsInCart()}</p></CartCounter>
+          )}
         </CartButton>
       </NavBar>
       <ModuleContainer>

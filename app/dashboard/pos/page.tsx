@@ -72,11 +72,30 @@ const CartButton = styled.button`
   position: absolute;
   padding: 5px;
   right: 10px;
-  top:10px;
+  top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @media (min-width: 768px) {
     display: none;
   }
+`;
+
+const CartCounter = styled.span`
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: -5px;
+  right: -5px;
+  background-color: #4b9fea;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const Content = styled.div`
@@ -532,6 +551,10 @@ export default function MenuOrder() {
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
+  const getTotalItemsInCart = () => {
+    return order.OrderProducts.reduce((total, item) => total + item.Quantity, 0);
+  };
+
   return (
     <Container>
       <NavBar>
@@ -541,6 +564,9 @@ export default function MenuOrder() {
         </div>
         <CartButton onClick={() => setIsCartOpen(!isCartOpen)}>
           <TbClipboardList className='text-[30px] text-gray-800' />
+          {getTotalItemsInCart() > 0 && (
+            <CartCounter>{getTotalItemsInCart()}</CartCounter>
+          )}
         </CartButton>
       </NavBar>
       <Content>
@@ -593,7 +619,7 @@ export default function MenuOrder() {
                 <OrderItem key={item.ProductId}>
                   <OrderItemInfo>
                     <OrderItemName>{menuItem.Name}</OrderItemName>
-                    <OrderItemPrice>${(menuItem.Price * item.Quantity).toFixed(2)}</OrderItemPrice>
+                    <OrderItemPrice>${(menuItem.Price * item.Quantity)}</OrderItemPrice>
                   </OrderItemInfo>
                   <QuantityControl>
                     <QuantityButton onClick={() => updateItemQuantity(item.ProductId, -1)}>

@@ -299,7 +299,7 @@ export default function Tables() {
   const fetchOrders = async () => {
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Order"
+        "/api/v1/Order"
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch orders. Status: ${response.status}`);
@@ -341,7 +341,7 @@ export default function Tables() {
   const fetchTables = async () => {
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Tables"
+        "/api/v1/Tables"
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch tables. Status: ${response.status}`);
@@ -361,7 +361,7 @@ export default function Tables() {
   const fetchMenuItems = async () => {
     try {
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Product"
+        "/api/v1/Product"
       );
       if (!response.ok) {
         throw new Error(
@@ -415,7 +415,7 @@ export default function Tables() {
     if (currentOrder && currentOrder.Id !== 0) {
       try {
         const response = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+          `/api/v1/Order/${currentOrder.Id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -461,7 +461,7 @@ export default function Tables() {
         if (currentOrder.Id !== 0) {
           // Existing order, just update it
           response = await fetch(
-            `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+            `/api/v1/Order/${currentOrder.Id}`,
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -470,7 +470,7 @@ export default function Tables() {
           );
         } else {
           // New order, create it
-          response = await fetch("https://restadmin.azurewebsites.net/api/v1/Order", {
+          response = await fetch("/api/v1/Order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(orderForCreation),
@@ -480,8 +480,7 @@ export default function Tables() {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Failed to ${
-              currentOrder.Id !== 0 ? "update" : "create"
+            `Failed to ${currentOrder.Id !== 0 ? "update" : "create"
             } order. Status: ${response.status}, Response: ${errorText}`
           );
         }
@@ -495,8 +494,7 @@ export default function Tables() {
       } catch (error) {
         console.error("Error processing order:", error);
         alert(
-          `Error processing order: ${
-            error instanceof Error ? error.message : "Unknown error"
+          `Error processing order: ${error instanceof Error ? error.message : "Unknown error"
           }`
         );
       }
@@ -518,7 +516,7 @@ export default function Tables() {
         };
 
         const response = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+          `/api/v1/Order/${currentOrder.Id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -553,7 +551,7 @@ export default function Tables() {
       };
 
       const response = await fetch(
-        "https://restadmin.azurewebsites.net/api/v1/Tables",
+        "/api/v1/Tables",
         {
           method: "POST",
           headers: {
@@ -596,14 +594,20 @@ export default function Tables() {
 
   const updateTableState = async (tableId: number, newState: string) => {
     try {
+
+      const updatedTableData = {
+        Id: tableId, // Include the table Id in the request body
+        Name: tables.find((table) => table.Id === tableId)?.Name || "", // Retrieve the existing name or provide a default
+        State: newState,
+      };
       const response = await fetch(
-        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
+        `/api/v1/Tables/${tableId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ State: newState }),
+          body: JSON.stringify(updatedTableData),
         }
       );
 
@@ -644,7 +648,7 @@ export default function Tables() {
       if (tableToRemove) {
         try {
           const tableResponse = await fetch(
-            `https://restadmin.azurewebsites.net/api/v1/Tables/${tableToRemove.Id}`,
+            `/api/v1/Tables/${tableToRemove.Id}`,
             {
               method: "DELETE",
             }
@@ -782,20 +786,20 @@ export default function Tables() {
                   {(!currentOrder ||
                     (currentOrder.Status === 1 &&
                       currentOrder.Products.length > 0)) && (
-                    <Button
-                      className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
-                      onClick={handleSendToKitchen}
-                      disabled={
-                        currentOrder && currentOrder.Products.length === 0
-                      }
-                    >
-                      <ChefHat className="text-[#d97706]" />
-                      Enviar a Cocina
-                    </Button>
-                  )}
+                      <Button
+                        className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                        onClick={handleSendToKitchen}
+                        disabled={
+                          currentOrder && currentOrder.Products.length === 0
+                        }
+                      >
+                        <ChefHat className="text-[#d97706]" />
+                        Enviar a Cocina
+                      </Button>
+                    )}
 
                   {/* Show "Update Order" only when the order is "Cocinando" */}
-                  {currentOrder.Status === 0  && (
+                  {currentOrder.Status === 0 && (
                     <Button
                       className="flex gap-1 border-2 p-2 rounded-lg bg-[#dbeafe] border-[#2563eb] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
                       onClick={handleUpdateOrder}
