@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Select from 'react-select';
 
 export interface Category {
@@ -11,14 +11,36 @@ interface CategorySelectionProps {
   setCategory: (category: Category | null) => void;
 }
 
+// Hook personalizado para detectar clics fuera del elemento
+const useClickOutside = (ref: React.RefObject<HTMLElement>, callback: () => void) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        callback();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, callback]);
+};
+
 const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCategory }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const addCategoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  // Usar el hook personalizado
+  useClickOutside(addCategoryRef, () => {
+    setIsAddingCategory(false);
+  });
 
   const fetchCategories = async () => {
     try {
@@ -107,12 +129,12 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
       <button
         type="button"
         onClick={() => setIsAddingCategory(true)}
-        className="mt-2 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        className="mt-2 w-full py-2 bg-[#67b7f7] text-white rounded-lg hover:bg-[#4b9fea]"
       >
         Añadir Nueva Categoría
       </button>
       {isAddingCategory && (
-        <div className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
+        <div ref={addCategoryRef} className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
           <input
             type="text"
             value={newCategory}
@@ -123,7 +145,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
           <button
             type="button"
             onClick={handleAddCategory}
-            className="w-full py-2 bg-green-500 text-white rounded-b-lg hover:bg-green-600"
+            className="w-full py-2 bg-[#67b7f7] text-white rounded-b-lg hover:bg-[#4b9fea]"
           >
             Añadir Categoría
           </button>

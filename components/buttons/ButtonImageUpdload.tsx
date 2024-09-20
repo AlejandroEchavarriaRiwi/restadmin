@@ -26,7 +26,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, setImageUrl }) => {
                 {({ open }) => (
                     <button
                         type="button"
-                        className="px-4 py-2 bg-azulmedio text-white rounded-lg hover:bg-azuloscuro"
+                        className="px-4 py-2 bg-[#67b7f7] text-white rounded-lg hover:bg-[#4b9fea]"
                         onClick={() => open()}
                     >
                         Cargar imagen
