@@ -33,7 +33,7 @@ const Container = styled.div`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 20px auto;
-  max-width: 1000px;
+  max-width: 1200px;
 `;
 
 const Title = styled.h2`
@@ -43,43 +43,66 @@ const Title = styled.h2`
   color: #333;
 `;
 
-const Select = styled.select`
-  width: 200px;
-  padding: 10px;
+const DateSelector = styled.div`
+  display: flex;
+  gap: 10px;
   margin-bottom: 20px;
+`;
+
+const DateInput = styled.input`
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
 `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
+const CardContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 `;
 
-const Th = styled.th`
-  text-align: left;
-  padding: 12px;
-  border-bottom: 2px solid #e0e0e0;
-  cursor: pointer;
+const Card = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
 `;
 
-const SortIcon = styled(ArrowUpDown)`
-  vertical-align: middle;
-  margin-right: 5px;
+const CardField = styled.p`
+  margin-bottom: 10px;
+  font-size: 14px;
+
+  strong {
+    font-weight: 600;
+    margin-right: 5px;
+  }
 `;
 
-const Td = styled.td`
-  padding: 12px;
-  border-bottom: 1px solid #e0e0e0;
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
 `;
 
-const Button = styled.button`
+const ActionButton = styled.button`
   background-color: transparent;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
+  color: #4a5568;
+  font-size: 14px;
+
+  &:hover {
+    color: #2d3748;
+  }
 `;
 
 const Pagination = styled.div`
@@ -95,14 +118,14 @@ const PageInfo = styled.span`
 `;
 
 const PaginationButton = styled.button<{ disabled: boolean }>`
-  background-color: ${props => props.disabled ? '#e0e0e0' : 'transparent'};
-  color: ${props => props.disabled ? '#999' : '#333'};
-  border: 1px solid #ccc;
+  background-color: ${props => props.disabled ? '#e0e0e0' : '#4a5568'};
+  color: ${props => props.disabled ? '#999' : 'white'};
+  border: none;
   border-radius: 4px;
   padding: 8px 12px;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   &:hover {
-    background-color: ${props => props.disabled ? '#e0e0e0' : '#f0f0f0'};
+    background-color: ${props => props.disabled ? '#e0e0e0' : '#2d3748'};
   }
 `;
 
@@ -150,18 +173,6 @@ const TableSkeleton = () => (
   </tbody>
 );
 
-const DateSelector = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-`;
-
-const DateInput = styled.input`
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-`;
 
 const PrintableInvoice = styled.div`
   @media print {
@@ -224,7 +235,7 @@ export default function DailySalesSelector() {
   const [error, setError] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: keyof Invoice; direction: 'ascending' | 'descending' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
+  const [itemsPerPage] = useState(9);
   const [company, setCompany] = useState<Company | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
@@ -332,14 +343,6 @@ export default function DailySalesSelector() {
   };
 
 
-  const fieldTranslations = {
-    Number: 'Número',
-    DateInvoice: 'Fecha',
-    OrderId: 'ID de Orden',
-    Total: 'Total',
-    Observations: 'Observaciones'
-  };
-
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {
@@ -361,6 +364,20 @@ export default function DailySalesSelector() {
 
   const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
 
+  const renderInvoiceCard = (invoice: Invoice) => (
+    <Card key={invoice.Id}>
+      <CardField><strong>Número:</strong> {invoice.Number}</CardField>
+      <CardField><strong>Fecha:</strong> {formatDate(invoice.DateInvoice)}</CardField>
+      <CardField><strong>ID de Orden:</strong> {invoice.OrderId}</CardField>
+      <CardField><strong>Total:</strong> {formatCurrency(invoice.Total)}</CardField>
+      <CardField><strong>Observaciones:</strong> {invoice.Observations}</CardField>
+      <CardActions>
+        <ActionButton onClick={() => printInvoice(invoice)}>
+          <Printer size={18} /> Imprimir
+        </ActionButton>
+      </CardActions>
+    </Card>
+  );
 
   return (
     <Container>
@@ -374,52 +391,23 @@ export default function DailySalesSelector() {
         />
       </DateSelector>
 
-      <Table>
-        <thead>
-          <tr>
-            {['Number', 'DateInvoice', 'OrderId', 'Total', 'Observations'].map((key) => (
-              <Th key={key} onClick={() => handleSort(key as keyof Invoice)}>
-                <SortIcon size={14} />
-                {fieldTranslations[key as keyof typeof fieldTranslations]}
-              </Th>
-            ))}
-            <Th>Acciones</Th>
-          </tr>
-        </thead>
-        {isLoading ? (
-          <TableSkeleton />
-        ) : error ? (
-          <tbody>
-            <tr>
-              <td colSpan={6} className="text-center text-red-500 py-4">{error}</td>
-            </tr>
-          </tbody>
-        ) : currentItems.length > 0 ? (
-          <tbody>
-          {currentItems.map((invoice) => (
-            <tr key={invoice.Id}>
-              <Td>{invoice.Number}</Td>
-              <Td>{formatDate(invoice.DateInvoice)}</Td>
-              <Td>{invoice.OrderId}</Td>
-              <Td>{formatCurrency(invoice.Total)}</Td>
-              <Td>{invoice.Observations}</Td>
-              <Td>
-                <Button onClick={() => printInvoice(invoice)}>
-                  <Printer size={18} />
-                </Button>
-              </Td>
-            </tr>
+      {isLoading ? (
+        <CardContainer>
+          {[...Array(6)].map((_, index) => (
+            <Card key={index}>
+              <SkeletonPulse />
+            </Card>
           ))}
-        </tbody>
-        ) : (
-          <tbody>
-            <tr>
-              <td colSpan={6} className="text-center py-4">No hay facturas disponibles para esta fecha.</td>
-            </tr>
-          </tbody>
-        )}
-      </Table>
-
+        </CardContainer>
+      ) : error ? (
+        <p className="text-center text-red-500 py-4">{error}</p>
+      ) : currentItems.length > 0 ? (
+        <CardContainer>
+          {currentItems.map(renderInvoiceCard)}
+        </CardContainer>
+      ) : (
+        <p className="text-center py-4">No hay facturas disponibles para esta fecha.</p>
+      )}
 
       {!isLoading && currentItems.length > 0 && (
         <Pagination>
@@ -440,6 +428,7 @@ export default function DailySalesSelector() {
           </PaginationButton>
         </Pagination>
       )}
+      
       <div style={{ display: 'none' }}>
         <div ref={printRef}>
           <InvoiceToPrint invoice={selectedInvoice} company={company} orderDetails={orderDetails} />
