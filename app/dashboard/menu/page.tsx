@@ -6,10 +6,11 @@ import EditProductModal from "@/components/modals/EditProductModal";
 import { AlertConfirm } from "@/components/alerts/questionAlert";
 import InputAlert from "@/components/alerts/successAlert";
 import ProductForm from "@/components/forms/NewProductForm";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Minimize2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { Product } from "@/types/Imenu";
+
 
 const NavBar = styled.nav`
   background-color: #f8f9fa;
@@ -41,6 +42,50 @@ const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
+`;
+
+const SearchBar = styled.input`
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 20px;
+
+  @media (min-width: 768px) {
+    width: 350px;
+  }
+`;
+
+const CategoryButtons = styled.div`
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+`;
+
+const CategoryButton = styled.button<{ $active?: boolean }>`
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+  background-color: ${props => props.$active ? '#67b7f7' : '#f8f9fa'};
+  color: ${props => props.$active ? 'white' : 'black'};
+
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 // Skeleton styles
@@ -90,6 +135,9 @@ export default function Menu() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+  const [categories, setCategories] = useState<string[]>(['Todas']);
 
   useEffect(() => {
     fetchProducts();
@@ -103,6 +151,12 @@ export default function Menu() {
         if (Array.isArray(data)) {
           setProducts(data);
           console.log("Productos cargados:", data);
+
+          // Extract categories
+          const categorySet = new Set<string>();
+          data.forEach((item: Product) => categorySet.add(item.Category.Name));
+          const uniqueCategories = ['Todas', ...Array.from(categorySet)];
+          setCategories(uniqueCategories);
         } else {
           console.error("Formato de datos incorrecto");
         }
@@ -110,7 +164,6 @@ export default function Menu() {
       .catch((error) => console.error("Error fetching data:", error))
       .finally(() => setIsLoading(false));
   };
-
   const handleProductAdded = (newProduct: Product) => {
     setProducts([...products, newProduct]);
   };
@@ -200,6 +253,12 @@ export default function Menu() {
 
   const enabledProducts = products.filter(p => p.Status === 0);
 
+  const filteredProducts = enabledProducts.filter(product => {
+    const matchesCategory = selectedCategory === 'Todas' || product.Category.Name === selectedCategory;
+    const matchesSearch = product.Name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="">
       <NavBar>
@@ -213,8 +272,8 @@ export default function Menu() {
             className="flex flex-col items-center lg:flex-row"
             onClick={() => setIsModalOpen(true)}
           >
-              <PlusCircle className="mr-2 w-6 h-6   text-green-500 " />
-              Agregar Producto
+            <PlusCircle className="mr-2 w-6 h-6   text-green-500 " />
+            Agregar Producto
 
           </Button>
           <Button
@@ -240,34 +299,50 @@ export default function Menu() {
         </div>
       </NavBar>
 
-      {isLoading ? (
-        <ProductGridSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 m-10">
-          {enabledProducts.length > 0 ? (
-            enabledProducts.map((product, index) => (
-              <ProductCard
-                key={product.Id}
-                product={product}
-                onClick={handleProductClick}
-                priority={index === 0}
-              />
-            ))
-          ) : (
-            <p className="col-span-full text-center">No hay productos disponibles</p>
-          )}
-        </div>
-      )}
+      <div className="m-5 lg:m-10">
+        <SearchBar
+          type="text"
+          placeholder="Buscar..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
 
+        <CategoryButtons>
+          {categories.map(category => (
+            <CategoryButton
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              $active={selectedCategory === category}
+            >
+              {category}
+            </CategoryButton>
+          ))}
+        </CategoryButtons>
+
+        {isLoading ? (
+          <ProductGridSkeleton />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.Id}
+                  product={product}
+                  onClick={handleProductClick}
+                  priority={index === 0}
+                />
+              ))
+            ) : (
+              <p className="col-span-full text-center">No hay productos disponibles</p>
+            )}
+          </div>
+        )}
+      </div>
+      
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative bg-white p-4 rounded-lg shadow-lg max-w-md w-full">
-            <button
-              className="absolute top-1 right-5 mt-2 px-2 py-2 bg-red-500 text-white rounded"
-              onClick={() => setIsModalOpen(false)}
-            >
-              X
-            </button>
+          <div className="relative p-4 rounded-lg w-full">
+            
             <ProductForm
               onProductAdded={handleProductAdded}
               setIsModalOpen={setIsModalOpen}

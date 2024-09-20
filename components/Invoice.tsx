@@ -1,26 +1,58 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { useReactToPrint } from 'react-to-print';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/buttons/Button';
 import Modal from '@/components/modals/ModalMobileView'
 import { FaFileInvoiceDollar } from 'react-icons/fa6';
 import { MdTableRestaurant } from 'react-icons/md';
+import { useReactToPrint } from 'react-to-print';
+import InputAlert from './alerts/successAlert';
+interface Product {
+  Id: number;
+  Name: string;
+  Price: number;
+  Quantity: number;
+  ImageURL: string;
+  Category: {
+    Id: number;
+    Name: string;
+  };
+  Status: number;
+}
 
 interface Order {
   Id: number;
   TablesId: number | null;
   TableName: string | null;
   Status: number;
-  Products: {
-    Id: number;
-    Name: string;
-    Price: number;
-    Quantity: number;
-  }[];
+  Products: Product[];
   Observations: string;
 }
+
+interface Company {
+  Id: number;
+  Name: string;
+  Email: string;
+  Nit: string;
+  Phone: string;
+  Address: string;
+  LogoURL: string;
+}
+
+const PrintableInvoice = styled.div`
+  @media print {
+    display: block;
+    width: 80mm;
+    padding: 10mm;
+    font-family: Arial, sans-serif;
+  }
+`;
+
+const CompanyLogo = styled.img`
+  width: 60mm;
+  margin-bottom: 5mm;
+`;
 
 const ModuleContainer = styled.div`
   width: 100%;
@@ -116,43 +148,40 @@ const OrderDetails = styled.div`
     margin: 25px;
   }
 `;
-const PrintableInvoice = styled.div`
-  padding: 20px;
-  margin-top: 20px;
-  width: 80mm;
-  font-size: 8px;
-  ul{
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-
-  }
-  li{
-    display: flex;
-    justify-content: space-between;
-  }
-`;
-
 
 const AnimatedOrderDetails = motion(OrderDetails);
 const AnimatedListItem = motion.li;
-
 export default function Invoice() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [invoiceNumber, setInvoiceNumber] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const printRef = useRef<HTMLDivElement>(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [company, setCompany] = useState<Company | null>(null);
+    const [currentDate, setCurrentDate] = useState("");
+    const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchOrders();
-        fetchLastInvoiceNumber();
+        fetchCompanyInfo();
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    const fetchCompanyInfo = async () => {
+        try {
+            const response = await fetch("/api/v1/Company");
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data: Company[] = await response.json();
+            if (data.length > 0) {
+                setCompany(data[0]); // Set the first (and likely only) company in the array
+            }
+        } catch (error) {
+            console.error("Could not fetch company info:", error);
+        }
+    }
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -175,25 +204,12 @@ export default function Invoice() {
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order');
+            const response = await fetch('/api/v1/Order');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data: Order[] = await response.json();
-            setOrders(data.filter(order => order.Status === 3)); // Status 3 is "Por facturar"
+            setOrders(data.filter(order => order.Status === 2));
         } catch (error) {
             console.error("Could not fetch orders:", error);
-        }
-    };
-
-    const fetchLastInvoiceNumber = async () => {
-        try {
-            const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice?_sort=number&_order=desc&_limit=1');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            if (data.length > 0) {
-                setInvoiceNumber(data[0].number + 1);
-            }
-        } catch (error) {
-            console.error("Could not fetch last invoice number:", error);
         }
     };
 
@@ -204,55 +220,100 @@ export default function Invoice() {
         }
     };
 
+    const generateInvoice = async (orderId: number) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/v1/Invoice/create-from-order?orderId=${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to generate invoice. Status: ${response.status}`);
+            }
+
+            const invoiceData = await response.json();
+            console.log('Invoice generated:', invoiceData);
+            return invoiceData;
+        } catch (error) {
+            console.error("Error generating invoice:", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
-    });
+        onBeforeGetContent: () => {
+        return new Promise<void>((resolve) => {
+            const formattedDate = new Date().toLocaleString("es-CO", { 
+              timeZone: "America/Bogota",
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            setCurrentDate(formattedDate);
+            resolve();
+          });
+        },
+        onAfterPrint: () => {
+          // Remove the order from the list after printing
+          setOrders(prevOrders => prevOrders.filter(o => o.Id !== selectedOrder?.Id));
+          setSelectedOrder(null);
+        }
+      });
 
-    const handleInvoice = async () => {
-        if (!selectedOrder) return;
-
+    const completeOrder = async (order: Order) => {
+        if (isLoading) return; // Prevent multiple clicks
+        setIsLoading(true);
         try {
-            // Create invoice
-            const invoiceResponse = await fetch('https://restadmin.azurewebsites.net/api/v1/Invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    number: invoiceNumber,
-                    orderId: selectedOrder.Id,
-                    date: new Date().toISOString()
-                }),
-            });
+            await generateInvoice(order.Id);
 
-            if (!invoiceResponse.ok) {
-                throw new Error(`Failed to create invoice. Status: ${invoiceResponse.status}`);
+            let updatedOrderData: any = {
+                Observations: order.Observations,
+                Status: 3,
+                OrderProducts: order.Products.map(product => ({
+                    ProductId: product.Id,
+                    OrderId: order.Id,
+                    Quantity: product.Quantity
+                }))
+            };
+            if (order.TablesId !== null) {
+                updatedOrderData.TablesId = order.TablesId;
             }
 
-            // Update order status
-            const orderResponse = await fetch(`https://restadmin.azurewebsites.net/api/v1/Order/${selectedOrder.Id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...selectedOrder, Status: 4 }), // Status 4 is "Facturado"
+            const response = await fetch(`/api/v1/Order/${order.Id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(updatedOrderData),
             });
 
-            if (!orderResponse.ok) {
-                throw new Error(`Failed to update order status. Status: ${orderResponse.status}`);
+            if (!response.ok) {
+                throw new Error(`Failed to update order. Status: ${response.status}`);
             }
 
-            // Print invoice
+            setSelectedOrder(order);  // Set the selected order for printing
+            
+            if (isMobile) {
+                setIsModalOpen(false);
+            }
+
+            // Trigger print immediately
             handlePrint();
 
-            // Update local state
-            setInvoiceNumber(prev => prev + 1);
-            setOrders(prev => prev.filter(o => o.Id !== selectedOrder.Id));
-            setSelectedOrder(null);
-
-            alert('Invoice generated and order status updated successfully!');
+            await InputAlert('Orden completada y factura generada exitosamente!','success');
         } catch (error) {
-            console.error("Error processing invoice:", error);
-            alert(`Error processing invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-        if (isMobile) {
-            setIsModalOpen(false);
+            alert(`Error al completar la orden y generar la factura: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -264,7 +325,8 @@ export default function Invoice() {
         <ModuleContainer>
             <div className="bg-[#f8f9fa] p-[20px] flex items-center justify-center lg:justify-start gap-2  w-full ">
                 <FaFileInvoiceDollar className='text-[2em] text-gray-800' />
-                <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Pre-Facturas</h1>
+                <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">Órdenes por Completar</h1>
+                
             </div>
             <div className='container-invoices'>
                 <TableGrid>
@@ -288,7 +350,7 @@ export default function Invoice() {
                             variants={containerVariants}
                         >
                             <div className='header'>
-                                <h2>Pre-factura para {selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</h2>
+                                <h2>Detalles de {selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</h2>
                             </div>
                             <motion.ul variants={containerVariants}>
                                 {selectedOrder.Products.map((item, index) => (
@@ -303,35 +365,46 @@ export default function Invoice() {
                             <div className='total'>
                                 <p>Total: ${calculateTotal(selectedOrder)}</p>
                             </div>
-                            <Button onClick={handleInvoice}>Facturar</Button>
+                            <Button onClick={() => completeOrder(selectedOrder)} disabled={isLoading}>
+                                {isLoading ? 'Procesando...' : 'Completar Orden y Generar Factura'}
+                            </Button>
                         </AnimatedOrderDetails>
                     )}
                 </AnimatePresence>
-            </div>
+                </div>
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 order={selectedOrder}
-                onGenerateInvoice={handleInvoice}
+                onGenerateInvoice={() => selectedOrder && completeOrder(selectedOrder)}
+                isLoading={isLoading}
             />
             <div style={{ display: 'none' }}>
                 <PrintableInvoice ref={printRef}>
-                    <h2>Invoice #{invoiceNumber.toString().padStart(5, '0')}</h2>
-                    <p>Date: {new Date().toLocaleDateString()}</p>
-                    <p>{selectedOrder?.TableName || `Pedido ${selectedOrder?.Id}`}</p>
-                    <ul>
-                        {selectedOrder?.Products.map((item, index) => (
-                            <li key={index}>
-                                <div>
-                                    {item.Name} - ${item.Price} x {item.Quantity} =
-                                </div>
-                                <div>
-                                    ${item.Price * item.Quantity}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                    <p>Total: ${selectedOrder ? calculateTotal(selectedOrder) : 0}</p>
+                    {company && selectedOrder && (
+                        <>
+                            <CompanyLogo src={company.LogoURL} alt={company.Name} />
+                            <h2>{company.Name}</h2>
+                            <p>NIT: {company.Nit}</p>
+                            <p>Dirección: {company.Address}</p>
+                            <p>Teléfono: {company.Phone}</p>
+                            <p>Email: {company.Email}</p>
+                            <p>{selectedOrder.Observations}</p>
+                            <h3>Orden de venta</h3>
+                            <p>{selectedOrder.TableName || `Pedido ${selectedOrder.Id}`}</p>
+                            <h4>Productos:</h4>
+                            <p>Cant.   Producto       Precio</p>
+                            {selectedOrder.Products.map((item, index) => (
+                                <p key={index}>
+                                    {item.Quantity}x{item.Name} ______ ${item.Price}
+                                </p>
+                            ))}
+                            <p>
+                                <strong>Total: ${calculateTotal(selectedOrder)}</strong>
+                            </p>
+                            <p>Fecha: {currentDate}</p>
+                        </>
+                    )}
                 </PrintableInvoice>
             </div>
         </ModuleContainer>

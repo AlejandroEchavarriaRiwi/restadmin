@@ -31,9 +31,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, priority = 
             <div className="p-4">
                 <h3 className="text-lg font-semibold">{product.Name}</h3>
                 <p className="text-sm text-gray-500 mt-1">Categoría: {product.Category?.Name || 'N/A'}</p>
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex justify-between items-center mt-2 gap-4">
                     <span className="text-primary font-semibold">{formatPrice(product.Price)}</span>
-                    <span className="text-sm text-gray-500">Costo: {formatPrice(product.Cost)}</span>
+                    <span className="text-sm flex justify-self-end text-gray-500">Costo: {formatPrice(product.Cost)}</span>
                 </div>
             </div>
         </div>

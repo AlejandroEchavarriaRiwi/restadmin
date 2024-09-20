@@ -4,13 +4,14 @@ import styled from "styled-components";
 import "./style.sass";
 import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
-import { PlusCircle, Trash2, CreditCard, ChefHat, Minus } from "lucide-react";
+import { PlusCircle, Trash2, CreditCard, ChefHat, Minus, RefreshCw } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
+
 interface Table {
   Id: number;
   Name: string;
+  State: string;
 }
-
 interface Category {
   Id: number;
   Name: string;
@@ -268,6 +269,8 @@ const DivOrder = styled.div`
   }
 `;
 
+type TableState = "Disponible" | "Cocinando" | "Ocupada" | "Por Facturar";
+
 export default function Tables() {
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<Product[]>([]);
@@ -306,8 +309,7 @@ export default function Tables() {
     } catch (error) {
       console.error("Error fetching orders:", error);
       alert(
-        `Error fetching orders: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error fetching orders: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -315,10 +317,16 @@ export default function Tables() {
 
   const handleTableClick = (table: Table) => {
     setSelectedTable(table);
-    const tableOrder = orders.find(order => order.TablesId === table.Id && order.Status !== 4 && order.Status !== 5);
-    setCurrentOrder(tableOrder || createEmptyOrder(table.Id));
-  };
+    const tableOrder = orders.find((order) => order.TablesId === table.Id && (order.Status === 0 || order.Status === 1 || order.Status === 2));
 
+    if (tableOrder) {
+      setCurrentOrder(tableOrder);
+      updateTableState(table.Id, getTableStatus(table.Id));
+    } else {
+      setCurrentOrder(createEmptyOrder(table.Id));
+      // No need to update table state here, it will be updated in handleSendToKitchen
+    }
+  };
   const createEmptyOrder = (tableId: number): Order => {
     return {
       Id: 0,
@@ -344,8 +352,7 @@ export default function Tables() {
     } catch (error) {
       console.error("Error fetching tables:", error);
       alert(
-        `Error fetching tables: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error fetching tables: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -368,8 +375,7 @@ export default function Tables() {
     } catch (error) {
       console.error("Error fetching menu data:", error);
       alert(
-        `Error fetching menu items: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error fetching menu items: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -405,59 +411,6 @@ export default function Tables() {
     }
   };
 
-  const handleSendToKitchen = async () => {
-    if (currentOrder && selectedTable) {
-      try {
-        const orderForCreation = {
-          TablesId: selectedTable.Id,
-          Observations: currentOrder.Observations,
-          Status: 0, // Cooking
-          OrderProducts: currentOrder.Products.map(product => ({
-            ProductId: product.Id,
-            OrderId: currentOrder.Id || 0,
-            Quantity: product.Quantity
-          }))
-        };
-
-        let response;
-        if (currentOrder.Id !== 0) {
-          response = await fetch(
-            `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(orderForCreation),
-            }
-          );
-        } else {
-          response = await fetch(
-            "https://restadmin.azurewebsites.net/api/v1/Order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(orderForCreation),
-            }
-          );
-        }
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to ${currentOrder.Id !== 0 ? 'update' : 'create'} order. Status: ${response.status}, Response: ${errorText}`
-          );
-        }
-
-        await fetchOrders();
-        setSelectedTable(null);
-        setCurrentOrder(null);
-
-      } catch (error) {
-        console.error("Error processing order:", error);
-        alert(`Error processing order: ${error instanceof Error ? error.message : "Unknown error"}`);
-      }
-    }
-  };
-
   const handlePreInvoice = async () => {
     if (currentOrder && currentOrder.Id !== 0) {
       try {
@@ -466,7 +419,7 @@ export default function Tables() {
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...currentOrder, Status: 3 }), // Status 3: Por facturar
+            body: JSON.stringify({ ...currentOrder, Status: 2 }), // Cambio a Status 2
           }
         );
 
@@ -483,7 +436,66 @@ export default function Tables() {
       } catch (error) {
         console.error("Error handling pre-invoice:", error);
         alert(
-          `Error handling pre-invoice: ${
+          `Error handling pre-invoice: ${error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    }
+  };
+
+  const handleSendToKitchen = async () => {
+    if (currentOrder && selectedTable) {
+      try {
+        const orderForCreation = {
+          TablesId: selectedTable.Id,
+          Observations: currentOrder.Observations,
+          Status: 0, // Set to "Cocinando" for new orders
+          OrderProducts: currentOrder.Products.map((product) => ({
+            ProductId: product.Id,
+            OrderId: currentOrder.Id || 0,
+            Quantity: product.Quantity,
+          })),
+        };
+
+        let response;
+        if (currentOrder.Id !== 0) {
+          // Existing order, just update it
+          response = await fetch(
+            `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...currentOrder, Status: 0 }), // Set to "Cocinando"
+            }
+          );
+        } else {
+          // New order, create it
+          response = await fetch("https://restadmin.azurewebsites.net/api/v1/Order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderForCreation),
+          });
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to ${
+              currentOrder.Id !== 0 ? "update" : "create"
+            } order. Status: ${response.status}, Response: ${errorText}`
+          );
+        }
+
+        // Update table state to "Cocinando" after sending the order
+        updateTableState(selectedTable.Id, "Cocinando");
+
+        await fetchOrders();
+        setSelectedTable(null);
+        setCurrentOrder(null);
+      } catch (error) {
+        console.error("Error processing order:", error);
+        alert(
+          `Error processing order: ${
             error instanceof Error ? error.message : "Unknown error"
           }`
         );
@@ -491,12 +503,55 @@ export default function Tables() {
     }
   };
 
-  const addTable = async () => {
-    const newTable: Omit<Table, "Id"> = {
-      Name: `Mesa ${tables.length + 1}`,
-    };
+  const handleUpdateOrder = async () => {
+    if (currentOrder && selectedTable) {
+      try {
+        const orderForUpdate = {
+          TablesId: selectedTable.Id,
+          Observations: currentOrder.Observations,
+          Status: 0, // Set back to "Cocinando"
+          OrderProducts: currentOrder.Products.map(product => ({
+            ProductId: product.Id,
+            OrderId: currentOrder.Id || 0,
+            Quantity: product.Quantity
+          }))
+        };
 
+        const response = await fetch(
+          `https://restadmin.azurewebsites.net/api/v1/Order/${currentOrder.Id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderForUpdate),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to update order. Status: ${response.status}, Response: ${errorText}`
+          );
+        }
+
+        await fetchOrders();
+        setSelectedTable(null);
+        setCurrentOrder(null);
+
+      } catch (error) {
+        console.error("Error updating order:", error);
+        alert(`Error updating order: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    }
+  };
+
+
+  const addTable = async () => {
     try {
+      const newTable: Omit<Table, "Id"> = {
+        Name: `Mesa ${tables.length + 1}`,
+        State: "Disponible"
+      };
+
       const response = await fetch(
         "https://restadmin.azurewebsites.net/api/v1/Tables",
         {
@@ -509,7 +564,8 @@ export default function Tables() {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to add table. Status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to add table. Status: ${response.status}. Error: ${errorText}`);
       }
 
       const data = await response.json();
@@ -517,54 +573,104 @@ export default function Tables() {
     } catch (error) {
       console.error("Error adding table:", error);
       alert(
-        `Error adding table: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error adding table: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
   };
 
-  const removeTable = async () => {
-    if (tables.length > 0) {
-      const lastTable = tables[tables.length - 1];
-
-      try {
-        const tableResponse = await fetch(
-          `https://restadmin.azurewebsites.net/api/v1/Tables/${lastTable.Id}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!tableResponse.ok) {
-          throw new Error(
-            `Failed to delete table. Status: ${tableResponse.status}`
-          );
-        }
-
-        setTables((prevTables) => prevTables.slice(0, -1));
-        console.log("Table removed successfully");
-      } catch (error) {
-        console.error("Error removing table:", error);
-        alert(
-          `Error removing table: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
-    }
-  };
-
-  const getTableStatus = (tableId: number) => {
-    const tableOrder = orders.find(order => order.TablesId === tableId && order.Status !== 4 && order.Status !== 5);
+  const getTableStatus = (tableId: number): TableState => {
+    const tableOrder = orders.find(order => order.TablesId === tableId);
     if (!tableOrder) return "Disponible";
     switch (tableOrder.Status) {
       case 0: return "Cocinando";
       case 1: return "Ocupada";
-      case 3: return "Por Facturar";
+      case 2: return "Por Facturar";
+      case 3: // Completed
+      case 4: // Cancelled
+        return "Disponible";
       default: return "Disponible";
     }
   };
+
+
+  const updateTableState = async (tableId: number, newState: string) => {
+    try {
+      const response = await fetch(
+        `https://restadmin.azurewebsites.net/api/v1/Tables/${tableId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ State: newState }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update table state. Status: ${response.status}`);
+      }
+
+      // Actualizar el estado local de las mesas
+      setTables(prevTables =>
+        prevTables.map(table =>
+          table.Id === tableId ? { ...table, State: newState } : table
+        )
+      );
+    } catch (error) {
+      console.error("Error updating table state:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Actualizar el estado de las mesas cada vez que cambian las órdenes
+    tables.forEach(table => {
+      const newState = getTableStatus(table.Id);
+      if (newState !== table.State) {
+        updateTableState(table.Id, newState);
+      }
+    });
+  }, [orders, tables]);
+
+
+  const removeTable = async () => {
+    if (tables.length > 0) {
+      // Encontrar la última mesa que no tenga una orden activa
+      const tableToRemove = [...tables].reverse().find(table => {
+        const tableOrder = orders.find(order => order.TablesId === table.Id && order.Status !== 4 && order.Status !== 5);
+        return !tableOrder;
+      });
+
+      if (tableToRemove) {
+        try {
+          const tableResponse = await fetch(
+            `https://restadmin.azurewebsites.net/api/v1/Tables/${tableToRemove.Id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (!tableResponse.ok) {
+            throw new Error(
+              `Failed to delete table. Status: ${tableResponse.status}`
+            );
+          }
+
+          setTables((prevTables) => prevTables.filter(t => t.Id !== tableToRemove.Id));
+          console.log("Table removed successfully");
+        } catch (error) {
+          console.error("Error removing table:", error);
+          alert(
+            `Error removing table: ${error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      } else {
+        alert("No hay mesas disponibles para eliminar.");
+      }
+    }
+  };
+
 
   const filteredMenuItems =
     selectedCategory === "Todos"
@@ -591,13 +697,13 @@ export default function Tables() {
             Eliminar Mesa
           </Button>
         </div>
-        </NavBar>
+      </NavBar>
       <Container>
         {tables.length > 0 ? (
           tables.map((table) => (
             <TableCard
               key={table.Id}
-              table={{...table, State: getTableStatus(table.Id)}}
+              table={{ ...table, State: getTableStatus(table.Id) }}
               onClick={() => handleTableClick(table)}
             />
           ))
@@ -672,16 +778,37 @@ export default function Tables() {
                   rows={4}
                 />{" "}
                 <div className="buttons">
-                  <Button
-                    className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
-                    onClick={handleSendToKitchen}
-                  >
-                    <ChefHat className="text-[#d97706]" />
-                    Enviar a Cocina
-                  </Button>
+                  {/* Show "Send to Kitchen" only when there's no active order or the order is 'Disponible' with items */}
+                  {(!currentOrder ||
+                    (currentOrder.Status === 1 &&
+                      currentOrder.Products.length > 0)) && (
+                    <Button
+                      className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                      onClick={handleSendToKitchen}
+                      disabled={
+                        currentOrder && currentOrder.Products.length === 0
+                      }
+                    >
+                      <ChefHat className="text-[#d97706]" />
+                      Enviar a Cocina
+                    </Button>
+                  )}
+
+                  {/* Show "Update Order" only when the order is "Cocinando" */}
+                  {currentOrder.Status === 0  && (
+                    <Button
+                      className="flex gap-1 border-2 p-2 rounded-lg bg-[#dbeafe] border-[#2563eb] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                      onClick={handleUpdateOrder}
+                    >
+                      <RefreshCw className="text-[#2563eb]" />
+                      Actualizar Orden
+                    </Button>
+                  )}
+
                   <Button
                     className="flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
                     onClick={handlePreInvoice}
+                    disabled={currentOrder.Products.length === 0}
                   >
                     <CreditCard className="text-[#a71c1c]" />
                     Pre-facturar
