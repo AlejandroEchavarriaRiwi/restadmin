@@ -248,10 +248,10 @@ const SearchContainer = styled.div`
   }
 `;
 
-const CategoryTab = styled.button<{ active: boolean }>`
+const CategoryTab = styled.button<{ $active: boolean }>`
   padding: 8px 16px;
-  background-color: ${(props) => (props.active ? "#67b7f7" : "#f8f9fa")};
-  color: ${(props) => (props.active ? "white" : "black")};
+  background-color: ${(props) => (props.$active ? "#67b7f7" : "#f8f9fa")};
+  color: ${(props) => (props.$active ? "white" : "black")};
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -944,16 +944,16 @@ export default function DeliveryModule() {
                 <CategoryTabsSkeleton />
               ) : (
                 <CategoryTabs>
-                  {categories.map((category) => (
-                    <CategoryTab
-                      key={category.Id}
-                      active={selectedCategory === category.Id}
-                      onClick={() => setSelectedCategory(category.Id)}
-                    >
-                      {category.Name}
-                    </CategoryTab>
-                  ))}
-                </CategoryTabs>
+                {categories.map((category) => (
+                  <CategoryTab
+                    key={category.Id}
+                    $active={selectedCategory === category.Id}
+                    onClick={() => setSelectedCategory(category.Id)}
+                  >
+                    {category.Name}
+                  </CategoryTab>
+                ))}
+              </CategoryTabs>
               )}
               {isLoading ? (
                 <MenuItemGridSkeleton />
