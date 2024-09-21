@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState } from "react";
 import InputAlert from "../alerts/successAlert";
+import LoadingSpinner from "@/components/loadingSpinner";
 
 interface User {
     token: string;
@@ -46,26 +47,18 @@ export function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         localStorage.removeItem('user');
     }, []);
-
-    const getRoleName = (roleId: number): string => {
-        switch (roleId) {
-            case 1: return "Admin";
-            case 2: return "Administrator";
-            case 3: return "Waiter";
-            default: return "Unknown";
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const userController = new UserController('https://restadmin.azurewebsites.net');
 
         try {
-            showPreloader();
+            setIsLoading(true);
             const loginResult = await userController.login(email, password);
 
             const user: User = {
@@ -75,10 +68,6 @@ export function LoginForm() {
                 roleId: loginResult.RoleId
             };
             localStorage.setItem("user", JSON.stringify(user));
-
-            console.log("Stored user:", JSON.parse(localStorage.getItem("user") || "{}"));
-
-            hidePreloader();
             await InputAlert('Bienvenido', 'success');
 
             // Redirección basada en rol
@@ -93,27 +82,18 @@ export function LoginForm() {
             window.location.href = redirectPath;
 
         } catch (error) {
-            hidePreloader();
             if (error instanceof Error) {
                 await InputAlert(error.message, 'error');
             } else {
                 await InputAlert('An unexpected error occurred', 'error');
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    function showPreloader() {
-        const preloader = document.getElementById('preloader');
-        if (preloader) {
-            preloader.style.display = 'flex';
-        }
-    }
-    
-    function hidePreloader() {
-        const preloader = document.getElementById('preloader');
-        if (preloader) {
-            preloader.style.display = 'none';
-        }
+    if (isLoading) {
+        return <LoadingSpinner />;
     }
 
     return (

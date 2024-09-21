@@ -101,7 +101,7 @@ const ProductProfitabilityChart: React.FC = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-full">
-      <h2 className="text-2xl font-bold mb-4">Rentabilidad de Productos por Unidad</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Rentabilidad de Productos por Unidad</h2>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
