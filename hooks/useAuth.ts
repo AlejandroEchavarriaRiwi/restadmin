@@ -42,7 +42,7 @@ export function useAuth() {
             } else {
                 setError('Unknown error loading user data');
             }
-            localStorage.removeItem('user'); // Clean invalid data
+            localStorage.removeItem('user');
         } finally {
             setLoading(false);
         }
