@@ -55,8 +55,8 @@ export default function SalesByHourChart() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 w-full h-96">
-        <h2 className="text-2xl font-bold mb-4">Ventas por Hora</h2>
+      <div className="bg-white rounded-lg shadow-md p-6 w-full h-96 text-center">
+        <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
         <div className="flex items-center justify-center h-80">
           <div className="animate-pulse bg-gray-200 w-full h-full rounded"></div>
         </div>
@@ -66,8 +66,8 @@ export default function SalesByHourChart() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 w-full">
-        <h2 className="text-2xl font-bold mb-4">Ventas por Hora</h2>
+      <div className="bg-white rounded-lg shadow-md p-6 w-full text-center">
+        <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -75,7 +75,7 @@ export default function SalesByHourChart() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-full">
-      <h2 className="text-2xl font-bold mb-4">Ventas por Hora</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={salesData}>

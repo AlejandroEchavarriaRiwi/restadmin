@@ -10,7 +10,7 @@ interface SellingProduct {
 }
 
 const ProductCard = ({ product }: { product: SellingProduct }) => (
-  <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+  <div className="bg-white rounded-lg shadow-md p-6 mb-4 my-6">
     <h3 className="font-bold text-lg text-blue-600 mb-2">{product.ProductName}</h3>
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -26,7 +26,7 @@ const ProductCard = ({ product }: { product: SellingProduct }) => (
 );
 
 const SkeletonCard = () => (
-  <div className="bg-white rounded-lg shadow-md p-6 mb-4">
+  <div className="bg-white rounded-lg shadow-md p-6 mb-4 my-6">
     <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -69,7 +69,7 @@ export default function TopSellingProducts() {
   if (isLoading) {
     return (
       <div>
-        <h2 className="text-2xl font-bold mb-4">Productos Más Vendidos</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">Productos Más Vendidos</h2>
         {[...Array(3)].map((_, index) => (
           <SkeletonCard key={index} />
         ))}
@@ -87,7 +87,7 @@ export default function TopSellingProducts() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Productos Más Vendidos</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Productos Más Vendidos</h2>
       {products.map((product) => (
         <ProductCard key={product.ProductId} product={product} />
       ))}

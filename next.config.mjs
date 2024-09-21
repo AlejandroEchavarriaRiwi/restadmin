@@ -6,7 +6,8 @@ const nextConfig = {
         'www.elespectador.com',
         'escuelamundopastel.com',
         'badun.nestle.es',
-        'res.cloudinary.com'
+        'res.cloudinary.com',
+        'images.rappi.com'
       ],
     },
     env: {

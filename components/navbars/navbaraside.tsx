@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
+import styled, { keyframes } from 'styled-components';
 import { MdTableRestaurant, MdDeliveryDining } from 'react-icons/md';
 import { RiStackOverflowFill } from 'react-icons/ri';
 import { ImStatsDots } from 'react-icons/im';
@@ -25,27 +27,67 @@ interface User {
     roleId: number;
 }
 
+const pulseAnimation = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 73, 229, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+`;
+
+const PulsingButton = styled(motion.button)`
+  animation: ${pulseAnimation} 2s infinite;
+`;
+
+const SkeletonLoader = () => (
+    <div className="flex items-center justify-center h-screen ">
+      <div className="relative">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-azulclaro"></div>
+        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+          <div className="animate-pulse">
+            <Image
+              src="/images/restadmin.png"
+              width={100}
+              height={100}
+              quality={25}
+              priority={true}
+              alt="RestAdmin Logo"
+              className="rounded-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+);
+
 export default function NavBarAsideDashboard() {
     const [isOpen, setIsOpen] = useState(true);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const { user, loading, error, logout } = useAuth();
+    const [isPending, startTransition] = useTransition();
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-
         const checkIfMobile = () => {
-            setIsMobile(window.innerWidth < 768); // Adjust this breakpoint as needed
+            setIsMobile(window.innerWidth < 768);
         };
 
         checkIfMobile();
         window.addEventListener('resize', checkIfMobile);
 
         return () => window.removeEventListener('resize', checkIfMobile);
+    }, []);
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
     }, [loading, user, router]);
 
     useEffect(() => {
@@ -57,8 +99,8 @@ export default function NavBarAsideDashboard() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center fixed inset-0 z-50 bg-white opacity-100">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-yellow-400"></div>
+            <div className="flex items-center justify-center fixed inset-0 z-50 bg-white">
+                <SkeletonLoader />
             </div>
         );
     }
@@ -93,7 +135,13 @@ export default function NavBarAsideDashboard() {
 
         if (!condition) return null;
         return (
-            <Link href={href} className="w-full" onClick={onClick}>
+            <Link href={href} className="w-full" onClick={(e) => {
+                e.preventDefault();
+                startTransition(() => {
+                    onClick();
+                    router.push(href);
+                });
+            }}>
                 <div
                     className={`
                     group flex items-center 
@@ -138,15 +186,23 @@ export default function NavBarAsideDashboard() {
 
     const navbarContent = (
         <motion.div
-            initial={isOpen ? { width: isMobile ? '55%' : 256 } : { width: isMobile ? 0 : 80 }}
-            animate={isOpen ? { width: isMobile ? '55%' : 256 } : { width: isMobile ? 0 : 80 }}
+            initial={false}
+            animate={{ width: isOpen ? (isMobile ? '55%' : 256) : (isMobile ? 0 : 80) }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className={`flex flex-col bg-azuloscuro text-white h-full overflow-hidden ${isMobile ? 'fixed top-0 left-0 z-50' : ''}`}
+            style={{ minHeight: '100vh' }}
         >
             <div className="flex text-center items-center justify-between p-4">
                 {isOpen && (
                     <div className="flex items-center gap-3">
-                        <img className="w-10 h-10" src="/images/restadmin.png" alt="RestAdmin Logo" />
+                        <Image 
+                            width={40} 
+                            height={40} 
+                            src="/images/restadmin.png" 
+                            alt="RestAdmin Logo"
+                            quality={15}
+                            priority
+                        />
                         <h1 className="font-bold text-lg">
                             <span className="text-yellow-400">Rest</span>Admin
                         </h1>
@@ -159,7 +215,15 @@ export default function NavBarAsideDashboard() {
 
             {isOpen && (
                 <div className="flex flex-col items-center mb-4">
-                    <img className="w-20 h-20 rounded-full object-cover" src="/images/Logo-KFC.png" alt="Company Logo" />
+                    <Image 
+                        width={80} 
+                        height={80} 
+                        className="rounded-full object-cover" 
+                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png" 
+                        alt="Company Logo"
+                        quality={15}
+                        priority={false}
+                    />
                     <h3 className="font-bold mt-2">{user.name}</h3>
                     <h3 className="text-xs">
                         {isAdmin ? 'Administrador' : isCashier ? 'Cajero' : isWaiter ? 'Mesero' : 'Usuario'}
@@ -169,11 +233,18 @@ export default function NavBarAsideDashboard() {
 
             {!isOpen && (
                 <div className="flex flex-col items-center mb-4">
-                    <img className="w-16 h-16 rounded-full object-cover" src="/images/Logo-KFC.png" alt="Company Logo" />
+                    <Image 
+                        width={64} 
+                        height={64} 
+                        className="rounded-full object-cover" 
+                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png" 
+                        alt="Company Logo" 
+                        priority={false}
+                    />
                 </div>
             )}
 
-                <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
+            <nav className={`flex-1 overflow-y-auto ${isOpen ? 'ml-4' : 'ml-0 py-16'} `}>
                 <NavItem href="/dashboard/tables" icon={MdTableRestaurant} label="MESAS" condition={isAdmin || isWaiter} isOpen={isOpen} onClick={handleNavItemClick} />
                 <NavItem href="/dashboard/invoice" icon={FaFileInvoiceDollar} label="FACTURAR" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
                 <NavItem href="/dashboard/pos" icon={HiComputerDesktop} label="POS" condition={isAdmin || isCashier} isOpen={isOpen} onClick={handleNavItemClick} />
@@ -183,7 +254,7 @@ export default function NavBarAsideDashboard() {
                 <NavItem href="/dashboard/stadistics" icon={ImStatsDots} label="ESTADISTICAS" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
                 <NavItem href="/dashboard/menu" icon={BiSolidFoodMenu} label="MENU" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
                 <NavItem href="/dashboard/createusers" icon={FaPeopleRobbery} label="EMPLEADOS" condition={isAdmin} isOpen={isOpen} onClick={handleNavItemClick} />
-                </nav>
+            </nav>
 
             <button onClick={logout} className={`my-2 m-auto text-blanco p-2 flex items-center ${isOpen ? 'text-left ml-3' : 'text-center justify-center w-full ml-0'}`}>
                 <TbLogout2 className="text-5xl mr-2" />
@@ -193,25 +264,32 @@ export default function NavBarAsideDashboard() {
     );
 
     return (
-        <AnimatePresence>
-            {isMobile ? (
-                isCollapsed ? (
-                    <motion.button
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        onClick={toggleNavbar}
-                        className="fixed top-1 left-1 z-50 bg-azuloscuro text-white p-4 rounded-full shadow-lg hover:bg-azulmedio"
-                    >
-                        <GiKnifeFork className="text-2xl" />
-                    </motion.button>
+        <>
+            <AnimatePresence>
+                {isMobile ? (
+                    isCollapsed ? (
+                        <PulsingButton
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            onClick={toggleNavbar}
+                            className="fixed top-1 left-1 z-50 bg-azuloscuro text-white p-4 rounded-full shadow-lg hover:bg-azulmedio"
+                        >
+                            <GiKnifeFork className="text-2xl" />
+                        </PulsingButton>
+                    ) : (
+                        navbarContent
+                    )
                 ) : (
                     navbarContent
-                )
-            ) : (
-                navbarContent
+                )}
+            </AnimatePresence>
+            {isPending && (
+                <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+                    <SkeletonLoader />
+                </div>
             )}
-        </AnimatePresence>
+        </>
     );
 }

@@ -178,15 +178,168 @@ const PrintableInvoice = styled.div`
   @media print {
     display: block;
     width: 80mm;
-    padding: 10mm;
-    font-family: Arial, sans-serif;
+    padding: 5mm;
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    line-height: 1.2;
   }
 `;
 
-const CompanyLogo = styled.img`
-  width: 60mm;
+const Header = styled.div`
+  text-align: center;
   margin-bottom: 5mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
+
+const CompanyLogo = styled.img`
+  width: 40mm;
+  margin-bottom: 2mm;
+`;
+
+const CompanyName = styled.h1`
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+`;
+
+const CompanyInfo = styled.div`
+  text-align: center;
+  margin-bottom: 3mm;
+`;
+
+const InfoItem = styled.p`
+  margin: 0;
+  font-size: 10px;
+`;
+
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px dashed #000;
+  margin: 3mm 0;
+`;
+
+const OrderInfo = styled.div`
+  text-align: center;
+  margin-bottom: 3mm;
+`;
+
+const OrderTitle = styled.h2`
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 1mm 0;
+`;
+
+const OrderNumber = styled.p`
+  font-size: 12px;
+  margin: 0;
+`;
+
+const OrderDate = styled.p`
+  font-size: 10px;
+  margin: 1mm 0 0 0;
+`;
+
+const ProductsTable = styled.div`
+  width: 100%;
+  margin-bottom: 3mm;
+`;
+
+const TableHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 1mm;
+`;
+
+const HeaderCell = styled.div`
+  flex: 1;
+  text-align: left;
+`;
+
+const TableRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const Cell = styled.div`
+  flex: 1;
+  text-align: left;
+`;
+
+const Total = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-top: 2mm;
+`;
+
+const TotalLabel = styled.span`
+  font-size: 14px;
+`;
+
+const TotalAmount = styled.span`
+  font-size: 14px;
+`;
+
+const Observations = styled.div`
+  margin-top: 3mm;
+`;
+
+const ObservationsTitle = styled.h3`
+  font-size: 12px;
+  font-weight: bold;
+  margin: 0 0 1mm 0;
+`;
+
+const ObservationsText = styled.p`
+  font-size: 10px;
+  margin: 0;
+`;
+
+const Footer = styled.div`
+  text-align: center;
+  margin-top: 5mm;
+`;
+
+const ThankYouMessage = styled.p`
+  font-size: 12px;
+  font-weight: bold;
+`;
+
+interface Invoice {
+  Id: number;
+  Number: number;
+  OrderId: number;
+  Observations: string;
+  Total: number;
+  DateInvoice: string;
+}
+
+interface OrderDetails {
+  Id: number;
+  TablesId: number | null;
+  TableName: string | null;
+  Status: number;
+  Products: {
+    Id: number;
+    Name: string;
+    Price: number;
+    Quantity: number;
+  }[];
+  Observations: string;
+}
+
+interface Company {
+  Id: number;
+  Name: string;
+  Email: string;
+  Nit: string;
+  Phone: string;
+  Address: string;
+  LogoURL: string;
+}
 
 interface Company {
   Id: number;
@@ -205,25 +358,64 @@ const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | nul
     return products.reduce((total, product) => total + product.Price * product.Quantity, 0);
   };
 
+  const currentDate = new Date(invoice.DateInvoice).toLocaleString("es-CO");
+
   return (
     <PrintableInvoice>
-      <CompanyLogo src={company.LogoURL} alt={company.Name} />
-      <h2>{company.Name}</h2>
-      <p>NIT: {company.Nit}</p>
-      <p>Dirección: {company.Address}</p>
-      <p>Teléfono: {company.Phone}</p>
-      <p>Email: {company.Email}</p>
-      <h3>Factura #{invoice.Number}</h3>
-      <p>Fecha: {new Date(invoice.DateInvoice).toLocaleString("es-CO")}</p>
-      <p>{orderDetails.TableName || `Pedido ${orderDetails.Id}`}</p>
-      <h4>Productos:</h4>
-      {orderDetails.Products.map((product, index) => (
-        <p key={index}>
-          {product.Quantity}x {product.Name} - ${product.Price * product.Quantity}
-        </p>
-      ))}
-      <p><strong>Total: ${calculateTotal(orderDetails.Products).toLocaleString()}</strong></p>
-      <p>Observaciones: {orderDetails.Observations}</p>
+      <Header>
+        <CompanyLogo src={company.LogoURL} alt={company.Name} />
+        <CompanyName>{company.Name}</CompanyName>
+      </Header>
+      <CompanyInfo>
+        <InfoItem>NIT: {company.Nit}</InfoItem>
+        <InfoItem>Dirección: {company.Address}</InfoItem>
+        <InfoItem>Teléfono: {company.Phone}</InfoItem>
+        <InfoItem>Email: {company.Email}</InfoItem>
+      </CompanyInfo>
+      <Divider />
+      <OrderInfo>
+        <OrderTitle>Factura #{invoice.Number}</OrderTitle>
+        <OrderNumber>
+          {orderDetails.TableName || `Pedido ${orderDetails.Id}`}
+        </OrderNumber>
+        <OrderDate>Fecha: {currentDate}</OrderDate>
+      </OrderInfo>
+      <Divider />
+      <ProductsTable>
+        <TableHeader>
+          <HeaderCell>Cant.</HeaderCell>
+          <HeaderCell>Producto</HeaderCell>
+          <HeaderCell>Precio</HeaderCell>
+        </TableHeader>
+        {orderDetails.Products.map((item, index) => (
+          <TableRow key={index}>
+            <Cell>{item.Quantity}x</Cell>
+            <Cell>{item.Name}</Cell>
+            <Cell>${item.Price * item.Quantity}</Cell>
+          </TableRow>
+        ))}
+      </ProductsTable>
+      <Divider />
+      <Total>
+        <TotalLabel>Total:</TotalLabel>
+        <TotalAmount>
+          ${calculateTotal(orderDetails.Products).toLocaleString()}
+        </TotalAmount>
+      </Total>
+      {orderDetails.Observations && (
+        <Observations>
+          <ObservationsTitle>Observaciones:</ObservationsTitle>
+          <ObservationsText>
+            {orderDetails.Observations}
+          </ObservationsText>
+        </Observations>
+      )}
+      <Footer>
+        <ThankYouMessage>¡Gracias por su compra!</ThankYouMessage>
+        <InfoItem>Elaborado desde www.restadmin.co</InfoItem>
+        <InfoItem>RestAdmin SAS</InfoItem>
+        <InfoItem>NIT 999.999.123-4</InfoItem>
+      </Footer>
     </PrintableInvoice>
   );
 };
