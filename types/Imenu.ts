@@ -1,5 +1,3 @@
-import { Category } from "@/components/buttons/selectCategoriesButton";
-
 export interface Product {
   Id: number;
   Name: string;

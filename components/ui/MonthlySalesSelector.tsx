@@ -193,6 +193,12 @@ const Header = styled.div`
   justify-content: center;
 `;
 
+const CompanyLogoDiv = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+` 
+
 const CompanyLogo = styled.img`
   width: 40mm;
   margin-bottom: 2mm;
@@ -211,7 +217,7 @@ const CompanyInfo = styled.div`
 
 const InfoItem = styled.p`
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
 `;
 
 const Divider = styled.hr`
@@ -237,7 +243,7 @@ const OrderNumber = styled.p`
 `;
 
 const OrderDate = styled.p`
-  font-size: 10px;
+  font-size: 12px;
   margin: 1mm 0 0 0;
 `;
 
@@ -258,6 +264,11 @@ const HeaderCell = styled.div`
   text-align: left;
 `;
 
+const HeaderCellLast = styled.div`
+  flex: 1;
+  text-align: right;
+`;
+
 const TableRow = styled.div`
   display: flex;
   justify-content: space-between;
@@ -266,6 +277,11 @@ const TableRow = styled.div`
 const Cell = styled.div`
   flex: 1;
   text-align: left;
+`;
+
+const CellLast = styled.div`
+  flex: 1;
+  text-align: right;
 `;
 
 const Total = styled.div`
@@ -294,7 +310,7 @@ const ObservationsTitle = styled.h3`
 `;
 
 const ObservationsText = styled.p`
-  font-size: 10px;
+  font-size: 12px;
   margin: 0;
 `;
 
@@ -363,7 +379,9 @@ const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | nul
   return (
     <PrintableInvoice>
       <Header>
-        <CompanyLogo src={company.LogoURL} alt={company.Name} />
+        <CompanyLogoDiv>
+          <CompanyLogo src={company.LogoURL} alt={company.Name} />
+        </CompanyLogoDiv>
         <CompanyName>{company.Name}</CompanyName>
       </Header>
       <CompanyInfo>
@@ -385,13 +403,13 @@ const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | nul
         <TableHeader>
           <HeaderCell>Cant.</HeaderCell>
           <HeaderCell>Producto</HeaderCell>
-          <HeaderCell>Precio</HeaderCell>
+          <HeaderCellLast>Precio</HeaderCellLast>
         </TableHeader>
         {orderDetails.Products.map((item, index) => (
           <TableRow key={index}>
             <Cell>{item.Quantity}x</Cell>
             <Cell>{item.Name}</Cell>
-            <Cell>${item.Price * item.Quantity}</Cell>
+            <CellLast>${item.Price * item.Quantity}</CellLast>
           </TableRow>
         ))}
       </ProductsTable>

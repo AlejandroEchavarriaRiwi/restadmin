@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 
 interface Notification {
   id: string;
@@ -19,15 +19,24 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const addNotification = (notification: Omit<Notification, 'id'>) => {
+  const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
     const id = Date.now().toString();
-    setNotifications(prev => [...prev, { ...notification, id }]);
-    setTimeout(() => removeNotification(id), 5000); // Auto-remove after 5 seconds
-  };
+    setNotifications(prev => {
+      // Remove existing notifications of the same type
+      const filteredNotifications = prev.filter(n => n.type !== notification.type);
+      return [...filteredNotifications, { ...notification, id }];
+    });
+    
+    // Play sound
+    const audio = new Audio('/beep.mp3');
+    audio.play().catch(e => console.error('Error playing sound:', e));
 
-  const removeNotification = (id: string) => {
+    setTimeout(() => removeNotification(id), 5000);
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
+  }, []);
 
   return (
     <NotificationContext.Provider value={{ notifications, addNotification, removeNotification }}>

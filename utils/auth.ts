@@ -1,13 +1,4 @@
-// utils/auth.ts
-
-interface UserInfo {
-    token: string;
-    email: string;
-    name: string;
-    roleId: number;
-  }
-  
-  export function getUserRole(): 'Cajero' | 'Mesero' | 'Administrador' | 'guest' {
+export function getUserRole(): 'Cajero' | 'Mesero' | 'Administrador' | 'guest' {
     if (typeof window !== 'undefined' && window.localStorage) {
         // Estamos en el cliente, podemos usar localStorage
         try {
