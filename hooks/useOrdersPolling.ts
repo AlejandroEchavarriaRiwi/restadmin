@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 
 interface Order {
@@ -16,12 +17,27 @@ const useOrdersPolling = (
 ) => {
   const [orders, setOrders] = useState<Order[]>([]);
 
+  const getStatusDescription = (status: number): string => {
+    switch (status) {
+      case 0:
+        return "cocinando";
+      case 1:
+        return "listo para la mesa";
+      case 2:
+        return "listo para facturar";
+      case 3:
+        return "facturado";
+      default:
+        return "estado desconocido";
+    }
+  };
+  
   const notifyOrderChange = useCallback((order: Order) => {
     if (userRole === 'guest') return;
-
+  
     let shouldNotify = false;
     let message = '';
-
+  
     switch (userRole) {
       case 'Cajero':
         if (order.Status === 0 || order.Status === 2) {
@@ -37,12 +53,11 @@ const useOrdersPolling = (
         break;
       case 'Administrador':
         shouldNotify = true;
-        message = `Orden ${order.Id} cambió a estado ${order.Status}`;
+        message = `Orden ${order.Id} cambió a estado: ${getStatusDescription(order.Status)}`;
         break;
     }
-
+  
     if (shouldNotify) {
-      console.log("Adding notification:", message); // Debugging log
       addNotification({ message, type: 'info' });
     }
   }, [userRole, addNotification]);
@@ -51,7 +66,7 @@ const useOrdersPolling = (
     if (userRole === 'guest') return;
 
     try {
-      const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Order');
+      const response = await fetch('/api/v1/Order');
       if (!response.ok) throw new Error('Failed to fetch orders');
       const newOrders: Order[] = await response.json();
       

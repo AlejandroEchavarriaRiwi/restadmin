@@ -45,11 +45,11 @@ const PrintableInvoice = styled.div`
     display: block;
     width: 80mm;
     padding: 5mm;
-    font-family: 'Arial', sans-serif;
+    font-family: "Arial", sans-serif;
     font-size: 12px;
     line-height: 1.2;
   }
-`
+`;
 
 const Header = styled.div`
   text-align: center;
@@ -57,122 +57,138 @@ const Header = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-`
+`;
+
+const CompanyLogoDiv = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
 
 const CompanyLogo = styled.img`
   width: 40mm;
   margin-bottom: 2mm;
-`
+`;
 
 const CompanyName = styled.h1`
   font-size: 16px;
   font-weight: bold;
   margin: 0;
-`
+`;
 
 const CompanyInfo = styled.div`
   text-align: center;
   margin-bottom: 3mm;
-`
+`;
 
 const InfoItem = styled.p`
   margin: 0;
-  font-size: 10px;
-`
+  font-size: 12px;
+`;
 
 const Divider = styled.hr`
   border: none;
   border-top: 1px dashed #000;
   margin: 3mm 0;
-`
+`;
 
 const OrderInfo = styled.div`
   text-align: center;
   margin-bottom: 3mm;
-`
+`;
 
 const OrderTitle = styled.h2`
   font-size: 14px;
   font-weight: bold;
   margin: 0 0 1mm 0;
-`
+`;
 
 const OrderNumber = styled.p`
   font-size: 12px;
   margin: 0;
-`
+`;
 
 const OrderDate = styled.p`
-  font-size: 10px;
+  font-size: 12px;
   margin: 1mm 0 0 0;
-`
+`;
 
 const ProductsTable = styled.div`
   width: 100%;
   margin-bottom: 3mm;
-`
+`;
 
 const TableHeader = styled.div`
   display: flex;
   justify-content: space-between;
   font-weight: bold;
   margin-bottom: 1mm;
-`
+`;
 
 const HeaderCell = styled.div`
   flex: 1;
   text-align: left;
-`
+`;
+
+const HeaderCellLast = styled.div`
+  flex: 1;
+  text-align: right;
+`;
 
 const TableRow = styled.div`
   display: flex;
   justify-content: space-between;
-`
+`;
 
 const Cell = styled.div`
   flex: 1;
   text-align: left;
-`
+`;
+
+const CellLast = styled.div`
+  flex: 1;
+  text-align: right;
+`;
 
 const Total = styled.div`
   display: flex;
   justify-content: space-between;
   font-weight: bold;
   margin-top: 2mm;
-`
+`;
 
 const TotalLabel = styled.span`
   font-size: 14px;
-`
+`;
 
 const TotalAmount = styled.span`
   font-size: 14px;
-`
+`;
 
 const Observations = styled.div`
   margin-top: 3mm;
-`
+`;
 
 const ObservationsTitle = styled.h3`
   font-size: 12px;
   font-weight: bold;
   margin: 0 0 1mm 0;
-`
+`;
 
 const ObservationsText = styled.p`
-  font-size: 10px;
+  font-size: 12px;
   margin: 0;
-`
+`;
 
 const Footer = styled.div`
   text-align: center;
   margin-top: 5mm;
-`
+`;
 
 const ThankYouMessage = styled.p`
   font-size: 12px;
   font-weight: bold;
-  `
+`;
 
 const ModuleContainer = styled.div`
   width: 100%;
@@ -268,9 +284,8 @@ const OrderDetails = styled.div`
     margin: 25px;
   }
 `;
-
-const AnimatedOrderDetails = motion(OrderDetails);
-const AnimatedListItem = motion.li;
+const AnimatedOrderDetails = motion.create(OrderDetails);
+const AnimatedListItem = motion.create('li');
 export default function Invoice() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -376,16 +391,8 @@ export default function Invoice() {
     content: () => printRef.current,
     onBeforeGetContent: () => {
       return new Promise<void>((resolve) => {
-        const formattedDate = new Date().toLocaleString("es-CO", {
-          timeZone: "America/Bogota",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
-        setCurrentDate(formattedDate);
+        const currentDate = new Date().toLocaleString("es-CO");
+        setCurrentDate(currentDate);
         resolve();
       });
     },
@@ -482,13 +489,13 @@ export default function Invoice() {
           ))}
         </TableGrid>
         <AnimatePresence>
-          {!isMobile && selectedOrder && (
-            <AnimatedOrderDetails
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={containerVariants}
-            >
+        {!isMobile && selectedOrder && (
+          <AnimatedOrderDetails
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={containerVariants}
+          >
               <div className="header">
                 <h2>
                   Detalles de{" "}
@@ -496,8 +503,8 @@ export default function Invoice() {
                 </h2>
               </div>
               <motion.ul variants={containerVariants}>
-                {selectedOrder.Products.map((item, index) => (
-                  <AnimatedListItem key={index} variants={itemVariants}>
+              {selectedOrder.Products.map((item, index) => (
+                <AnimatedListItem key={index} variants={itemVariants}>
                     <div>{item.Quantity}</div>
                     <div>{item.Name}</div>=
                     <div>${item.Price * item.Quantity}</div>
@@ -531,7 +538,9 @@ export default function Invoice() {
           {company && selectedOrder && (
             <>
               <Header>
-                <CompanyLogo src={company.LogoURL} alt={company.Name} />
+                <CompanyLogoDiv>
+                  <CompanyLogo src={company.LogoURL} alt={company.Name} />
+                </CompanyLogoDiv>
                 <CompanyName>{company.Name}</CompanyName>
               </Header>
               <CompanyInfo>
@@ -553,22 +562,20 @@ export default function Invoice() {
                 <TableHeader>
                   <HeaderCell>Cant.</HeaderCell>
                   <HeaderCell>Producto</HeaderCell>
-                  <HeaderCell>Precio</HeaderCell>
+                  <HeaderCellLast>Precio</HeaderCellLast>
                 </TableHeader>
                 {selectedOrder.Products.map((item, index) => (
                   <TableRow key={index}>
                     <Cell>{item.Quantity}x</Cell>
                     <Cell>{item.Name}</Cell>
-                    <Cell>${item.Price}</Cell>
+                    <CellLast>${item.Price}</CellLast>
                   </TableRow>
                 ))}
               </ProductsTable>
               <Divider />
               <Total>
                 <TotalLabel>Total:</TotalLabel>
-                <TotalAmount>
-                  ${calculateTotal(selectedOrder)}
-                </TotalAmount>
+                <TotalAmount>${calculateTotal(selectedOrder)}</TotalAmount>
               </Total>
               {selectedOrder.Observations && (
                 <Observations>
