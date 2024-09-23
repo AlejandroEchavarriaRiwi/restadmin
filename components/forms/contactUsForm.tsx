@@ -1,114 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useForm, FieldError } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import emailjs from '@emailjs/browser'
-import styled from 'styled-components'
-
-interface InputProps {
-  hasError?: FieldError | undefined;
-}
-
-const FormContainer = styled.div`
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`
-
-const Title = styled.h2`
-  font-size: 1.5rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
-`
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-`
-
-const Label = styled.label`
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  color: #4a5568;
-`
-
-const Input = styled.input<InputProps>`
-  padding: 0.5rem;
-  border: 1px solid ${props => props.hasError ? '#e53e3e' : '#cbd5e0'};
-  border-radius: 4px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:focus {
-    border-color: #4299e1;
-  }
-`
-
-const Textarea = styled.textarea`
-  padding: 0.5rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-  resize: vertical;
-  min-height: 100px;
-
-  &:focus {
-    border-color: #4299e1;
-  }
-`
-
-const ErrorMessage = styled.p`
-  color: #e53e3e;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-`
-
-const Button = styled.button`
-  background-color: #F2CF5B;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #3182ce;
-  }
-
-  &:disabled {
-    background-color: #a0aec0;
-    cursor: not-allowed;
-  }
-`
-
-const Toast = styled.div<{ isError: boolean }>`
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  padding: 1rem;
-  background-color: ${props => props.isError ? '#fed7d7' : '#c6f6d5'};
-  color: ${props => props.isError ? '#9b2c2c' : '#276749'};
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`
 
 interface FormularioCitasProps {
   titulo?: string;
@@ -152,86 +46,94 @@ export default function FormularioCitas({ titulo = "Agendar Cita", emailDestino 
   };
 
   return (
-    <FormContainer>
-      <Title>{titulo}</Title>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <FormGroup>
-          <Label htmlFor="nombre">Nombre</Label>
-          <Input
-            id="nombre"
-            {...register("nombre", { required: "Este campo es requerido" })}
-            hasError={errors.nombre}
-          />
-          {errors.nombre && <ErrorMessage>{errors.nombre.message}</ErrorMessage>}
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            {...register("email", { 
-              required: "Este campo es requerido",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Dirección de email inválida"
-              }
-            })}
-            hasError={errors.email}
-          />
-          {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="telefono">Teléfono de contacto</Label>
-          <Input
-            id="telefono"
-            type="tel"
-            {...register("telefono", { 
-              required: "Este campo es requerido",
-              pattern: {
-                value: /^[0-9]{9,}$/,
-                message: "Número de teléfono inválido"
-              }
-            })}
-            hasError={errors.telefono}
-          />
-          {errors.telefono && <ErrorMessage>{errors.telefono.message}</ErrorMessage>}
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="fecha">Fecha preferida</Label>
-          <Input
-            id="fecha"
-            type="date"
-            {...register("fecha", { required: "Este campo es requerido" })}
-            hasError={errors.fecha}
-          />
-          {errors.fecha && <ErrorMessage>{errors.fecha.message}</ErrorMessage>}
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="hora">Hora estimada</Label>
-          <Input
-            id="hora"
-            type="time"
-            {...register("hora", { required: "Este campo es requerido" })}
-            hasError={errors.hora}
-          />
-          {errors.hora && <ErrorMessage>{errors.hora.message}</ErrorMessage>}
-        </FormGroup>
-        <FormGroup>
-          <Label htmlFor="mensaje">Mensaje (opcional)</Label>
-          <Textarea
-            id="mensaje"
-            {...register("mensaje")}
-          />
-        </FormGroup>
-        <Button type="submit" disabled={enviando}>
-          {enviando ? "Enviando..." : "Agendar Cita"}
-        </Button>
-      </Form>
+    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+      <div className="px-6 py-8">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">{titulo}</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input
+              id="nombre"
+              type="text"
+              {...register("nombre", { required: "Este campo es requerido" })}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.nombre && <p className="mt-1 text-xs text-red-500">{errors.nombre.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              id="email"
+              type="email"
+              {...register("email", { 
+                required: "Este campo es requerido",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Dirección de email inválida"
+                }
+              })}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">Teléfono de contacto</label>
+            <input
+              id="telefono"
+              type="tel"
+              {...register("telefono", { 
+                required: "Este campo es requerido",
+                pattern: {
+                  value: /^[0-9]{9,}$/,
+                  message: "Número de teléfono inválido"
+                }
+              })}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.telefono ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.telefono && <p className="mt-1 text-xs text-red-500">{errors.telefono.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">Fecha preferida</label>
+            <input
+              id="fecha"
+              type="date"
+              {...register("fecha", { required: "Este campo es requerido" })}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.fecha ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.fecha && <p className="mt-1 text-xs text-red-500">{errors.fecha.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="hora" className="block text-sm font-medium text-gray-700 mb-1">Hora estimada</label>
+            <input
+              id="hora"
+              type="time"
+              {...register("hora", { required: "Este campo es requerido" })}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.hora ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.hora && <p className="mt-1 text-xs text-red-500">{errors.hora.message}</p>}
+          </div>
+          <div>
+            <label htmlFor="mensaje" className="block text-sm font-medium text-gray-700 mb-1">Mensaje (opcional)</label>
+            <textarea
+              id="mensaje"
+              {...register("mensaje")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none h-24"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={enviando}
+            className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200 ${enviando ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {enviando ? "Enviando..." : "Agendar Cita"}
+          </button>
+        </form>
+      </div>
       {toast.show && (
-        <Toast isError={toast.isError}>
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${toast.isError ? 'bg-red-500' : 'bg-green-500'} transition-all duration-300 transform translate-y-0 opacity-100`}>
           {toast.message}
-        </Toast>
+        </div>
       )}
-    </FormContainer>
+    </div>
   )
 }
