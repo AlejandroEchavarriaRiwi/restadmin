@@ -163,11 +163,15 @@ const RightColumn = styled.div<{ $isOpen: boolean }>`
   padding: 20px;
   transform: translateX(${(props) => (props.$isOpen ? "0" : "100%")});
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
   box-shadow: ${(props) =>
     props.$isOpen ? "-5px 0 25px rgba(0,0,0,0.1)" : "none"};
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 767px) {
+    overflow-y: auto;
+  }
 
   @media (min-width: 768px) {
     position: static;
@@ -177,6 +181,19 @@ const RightColumn = styled.div<{ $isOpen: boolean }>`
     box-shadow: none;
     border-left: 1px solid #e0e0e0;
   }
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+`;
+
+const FixedBottom = styled.div`
+  position: sticky;
+  bottom: 0;
+  background-color: #ffffff;
+  padding-top: 15px;
 `;
 
 const CloseButton = styled.button`
@@ -303,9 +320,9 @@ const MenuItemCard = styled.div`
 `;
 
 const OrderSection = styled.div`
-  height: 100%;
+  height: 100%; 
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
 `;
 
 const OrderHeader = styled.h2`
@@ -316,10 +333,11 @@ const OrderHeader = styled.h2`
 `;
 
 const OrderItemList = styled.div`
-  flex-grow: 1;
-  overflow-y: auto;
-  margin-bottom: 20px;
+  flex-grow: 1; // This will ensure the list takes available space
+  overflow-y: auto; // And this will make it scrollable if content overflows
+  margin-bottom: 20px; 
 `;
+
 
 const OrderItem = styled.div`
   display: flex;
@@ -373,7 +391,6 @@ const NoResultsMessage = styled.div`
 `;
 
 const TotalSection = styled.div`
-  margin-top: 20px;
   border-top: 2px solid #67b7f7;
   padding-top: 15px;
 `;
@@ -944,16 +961,16 @@ export default function DeliveryModule() {
                 <CategoryTabsSkeleton />
               ) : (
                 <CategoryTabs>
-                {categories.map((category) => (
-                  <CategoryTab
-                    key={category.Id}
-                    $active={selectedCategory === category.Id}
-                    onClick={() => setSelectedCategory(category.Id)}
-                  >
-                    {category.Name}
-                  </CategoryTab>
-                ))}
-              </CategoryTabs>
+                  {categories.map((category) => (
+                    <CategoryTab
+                      key={category.Id}
+                      $active={selectedCategory === category.Id}
+                      onClick={() => setSelectedCategory(category.Id)}
+                    >
+                      {category.Name}
+                    </CategoryTab>
+                  ))}
+                </CategoryTabs>
               )}
               {isLoading ? (
                 <MenuItemGridSkeleton />
@@ -990,80 +1007,82 @@ export default function DeliveryModule() {
               <IoIosCloseCircleOutline />
             </CloseButton>
 
-            {client.Id !== 0 && (
-              <div>
-                <OrderHeader>Cliente seleccionado</OrderHeader>
-                <p>Nombre: {client.Name}</p>
-                <p>Teléfono: {client.Phone}</p>
-                <p>Dirección: {client.Address}</p>
-              </div>
-            )}
+            <ScrollableContent>
+              {client.Id !== 0 && (
+                <div>
+                  <OrderHeader>Cliente seleccionado</OrderHeader>
+                  <p>Nombre: {client.Name}</p>
+                  <p>Teléfono: {client.Phone}</p>
+                  <p>Dirección: {client.Address}</p>
+                </div>
+              )}
 
-            <OrderSection>
-              <OrderHeader>Pedido actual</OrderHeader>
-              <OrderItemList>
-                {order.OrderProducts.map((item) => {
-                  const product = products.find((p) => p.Id === item.ProductId);
-                  return product ? (
-                    <OrderItem key={item.ProductId}>
-                      <OrderItemDetails>
-                        <OrderItemName>{product.Name}</OrderItemName>
-                        <OrderItemPrice>
-                          ${product.Price} x {item.Quantity}
-                        </OrderItemPrice>
-                      </OrderItemDetails>
-                      <QuantityControl>
-                        <QuantityButton
-                          onClick={() => updateItemQuantity(item.ProductId, -1)}
-                        >
-                          -
-                        </QuantityButton>
-                        <QuantityDisplay>{item.Quantity}</QuantityDisplay>
-                        <QuantityButton
-                          onClick={() => updateItemQuantity(item.ProductId, 1)}
-                        >
-                          +
-                        </QuantityButton>
-                      </QuantityControl>
-                    </OrderItem>
-                  ) : null;
-                })}
-              </OrderItemList>
-              <ObservationSection>
-                <ObservationLabel htmlFor="observation">
-                  Observaciones
-                </ObservationLabel>
-                <ObservationTextArea
-                  id="observation"
-                  value={observations}
-                  onChange={(e) => updateObservations(e.target.value)}
-                  placeholder="Añade observaciones generales para tu orden..."
+              <OrderSection>
+                <OrderHeader>Pedido actual</OrderHeader>
+                <OrderItemList>
+                  {order.OrderProducts.map((item) => {
+                    const product = products.find((p) => p.Id === item.ProductId);
+                    return product ? (
+                      <OrderItem key={item.ProductId}>
+                        <OrderItemDetails>
+                          <OrderItemName>{product.Name}</OrderItemName>
+                          <OrderItemPrice>
+                            ${product.Price} x {item.Quantity}
+                          </OrderItemPrice>
+                        </OrderItemDetails>
+                        <QuantityControl>
+                          <QuantityButton
+                            onClick={() => updateItemQuantity(item.ProductId, -1)}
+                          >
+                            -
+                          </QuantityButton>
+                          <QuantityDisplay>{item.Quantity}</QuantityDisplay>
+                          <QuantityButton
+                            onClick={() => updateItemQuantity(item.ProductId, 1)}
+                          >
+                            +
+                          </QuantityButton>
+                        </QuantityControl>
+                      </OrderItem>
+                    ) : null;
+                  })}
+                </OrderItemList>
+                <ObservationSection>
+                  <ObservationLabel htmlFor="observation">
+                    Observaciones
+                  </ObservationLabel>
+                  <ObservationTextArea
+                    id="observation"
+                    value={observations}
+                    onChange={(e) => updateObservations(e.target.value)}
+                    placeholder="Añade observaciones generales para tu orden..."
+                  />
+                </ObservationSection>
+
+                <DeliveryFeeInput
+                  type="number"
+                  value={deliveryFee}
+                  onChange={handleDeliveryFeeChange}
+                  placeholder="Costo de domicilio"
+                  required
                 />
-              </ObservationSection>
+              </OrderSection>
+            </ScrollableContent>
 
-              <DeliveryFeeInput
-                type="number"
-                value={deliveryFee}
-                onChange={handleDeliveryFeeChange}
-                placeholder="Costo de domicilio"
-                required
-              />
-
+            <FixedBottom>
               <TotalSection>
-                <TotalItem>
-                  <span>Subtotal:</span>
-                  <span>
-                    $
-                    {order.OrderProducts.reduce((sum, item) => {
-                      const product = products.find(
-                        (p) => p.Id === item.ProductId
-                      );
-                      return (
-                        sum + (product ? product.Price * item.Quantity : 0)
-                      );
-                    }, 0)}
-                  </span>
-                </TotalItem>
+                <span>Subtotal:</span>
+                <span>
+                  $
+                  {order.OrderProducts.reduce((sum, item) => {
+                    const product = products.find(
+                      (p) => p.Id === item.ProductId
+                    );
+                    return (
+                      sum + (product ? product.Price * item.Quantity : 0)
+                    );
+                  }, 0)}
+                </span>
                 <TotalItem>
                   <span>Valor domicilio:</span>
                   <span>${deliveryFee}</span>
@@ -1075,14 +1094,13 @@ export default function DeliveryModule() {
               </TotalSection>
 
               {error && <ErrorMessage>{error}</ErrorMessage>}
-
               <SendButton
                 onClick={sendToKitchenAndInvoice}
                 disabled={!isOrderValid() || isLoading}
               >
                 {isLoading ? "Procesando..." : "Generar orden"}
               </SendButton>
-            </OrderSection>
+            </FixedBottom>
           </RightColumn>
 
           {showNewClientModal && (
@@ -1123,7 +1141,7 @@ export default function DeliveryModule() {
             </Modal>
           )}
         </DeliveryContainer>
-      </ModuleContainer>
+      </ModuleContainer >
     </>
   );
 }
