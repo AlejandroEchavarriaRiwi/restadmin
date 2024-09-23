@@ -1,5 +1,6 @@
 import Image from "next/image"
 import "./style/stylehero.sass"
+import Link from "next/link"
 
 export default function Mainhero() {
     return (
@@ -9,7 +10,7 @@ export default function Mainhero() {
 
                     <h1><span>Software POS</span> para Restaurantes y Retail general</h1>
                     <h5>Revoluciona tu negocio con una moderna solución de punto de venta y tienda virtual integrada. Incluye Factura electrónica y Pos Electrónico</h5>
-                    <button>Agenda una demo</button>
+                    <Link href="/contactus"><button>Agenda una demo</button></Link>
                 </div>
                 <div className="contentright">
                     <Image

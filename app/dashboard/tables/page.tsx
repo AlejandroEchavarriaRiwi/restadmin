@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
 import { PlusCircle, Trash2, CreditCard, ChefHat, Minus, RefreshCw } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
+import InputAlert from "@/components/alerts/successAlert";
 
 interface Table {
   Id: number;
@@ -307,11 +308,7 @@ export default function Tables() {
       const data: Order[] = await response.json();
       setOrders(data);
     } catch (error) {
-      console.error("Error fetching orders:", error);
-      alert(
-        `Error fetching orders: ${error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+
     }
   };
 
@@ -348,13 +345,9 @@ export default function Tables() {
       }
       const data: Table[] = await response.json();
       setTables(data);
-      console.log("Tables updated:", data);
+      
     } catch (error) {
-      console.error("Error fetching tables:", error);
-      alert(
-        `Error fetching tables: ${error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      
     }
   };
 
@@ -373,11 +366,8 @@ export default function Tables() {
       const enabledProducts = data.filter((product: Product) => product.Status === 0);
       setMenuItems(enabledProducts);
     } catch (error) {
-      console.error("Error fetching menu data:", error);
-      alert(
-        `Error fetching menu items: ${error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      
+      
     }
   };
 
@@ -445,11 +435,7 @@ export default function Tables() {
         setCurrentOrder(null);
 
       } catch (error) {
-        console.error("Error handling pre-invoice:", error);
-        alert(
-          `Error handling pre-invoice: ${error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
+
       }
     }
   };
@@ -495,6 +481,8 @@ export default function Tables() {
           );
         }
 
+        await InputAlert('La orden se ha enviado a cocina exitosamente', 'success')
+
         // Update table state to "Cocinando" after sending the order
         updateTableState(selectedTable.Id, "Cocinando");
 
@@ -502,11 +490,10 @@ export default function Tables() {
         setSelectedTable(null);
         setCurrentOrder(null);
       } catch (error) {
-        console.error("Error processing order:", error);
-        alert(
-          `Error processing order: ${error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
+        
+        await InputAlert('Ha ocurrido un error mientras se envia a cocina', 'error')
+        
+       
       }
     }
   };
@@ -546,7 +533,7 @@ export default function Tables() {
         setCurrentOrder(null);
 
       } catch (error) {
-        console.error("Error updating order:", error);
+      
         alert(`Error updating order: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
@@ -579,7 +566,7 @@ export default function Tables() {
       const data = await response.json();
       setTables([...tables, data]);
     } catch (error) {
-      console.error("Error adding table:", error);
+      
       alert(
         `Error adding table: ${error instanceof Error ? error.message : "Unknown error"
         }`
@@ -588,9 +575,16 @@ export default function Tables() {
   };
 
   const getTableStatus = useCallback((tableId: number): TableState => {
-    const tableOrder = orders.find(order => order.TablesId === tableId);
-    if (!tableOrder) return "Disponible";
-    switch (tableOrder.Status) {
+    const tableOrders = orders.filter(order => order.TablesId === tableId);
+    if (tableOrders.length === 0) return "Disponible";
+
+    // Ordenar las órdenes por ID de forma descendente (la última creada primero)
+    tableOrders.sort((a, b) => b.Id - a.Id);
+
+    // Tomar el estado de la primera orden (la última creada)
+    const latestOrder = tableOrders[0];
+
+    switch (latestOrder.Status) {
       case 0: return "Cocinando";
       case 1: return "Ocupada";
       case 2: return "Por Facturar";
@@ -599,7 +593,7 @@ export default function Tables() {
         return "Disponible";
       default: return "Disponible";
     }
-  }, [orders]); // Dependency array for useCallback
+  }, [orders]);
 
   const updateTableState = useCallback(async (tableId: number, newState: string) => {
     try {
@@ -628,10 +622,6 @@ export default function Tables() {
         )
       );
     } catch (error) {
-      console.error("Error updating table state:", error);
-      alert(
-        `Error updating table state: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
     }
   }, [tables]); // Dependency array for useCallback - 'tables' is included here
 
@@ -682,9 +672,9 @@ export default function Tables() {
           }
 
           setTables((prevTables) => prevTables.filter(t => t.Id !== tableToRemove.Id));
-          console.log("Table removed successfully");
+          
         } catch (error) {
-          console.error("Error removing table:", error);
+          
           alert(
             `Error removing table: ${error instanceof Error ? error.message : "Unknown error"
             }`
@@ -717,10 +707,11 @@ export default function Tables() {
             <PlusCircle className="mr-2 h-6 w-6 text-green-500" />
             Agregar Mesa
           </Button>
-          <Button className={`flex items-center`} onClick={removeTable}>
+          {/* <Button className={`flex items-center`} onClick={removeTable}
+          disabled>
             <Trash2 className="mr-2 h-6 w-6 text-red-500" />
             Eliminar Mesa
-          </Button>
+          </Button> */}
         </div>
       </NavBar>
       <Container>
