@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
 import "./style.sass";
 import Button from "../../../components/ui/Button";
@@ -414,12 +414,23 @@ export default function Tables() {
   const handlePreInvoice = async () => {
     if (currentOrder && currentOrder.Id !== 0) {
       try {
+        const bodyForUpdate = {
+          TablesId: currentOrder.TablesId || 0,
+          Observations: currentOrder.Observations,
+          Status: 2,
+          OrderProducts: currentOrder.Products.map(product => ({
+            ProductId: product.Id,
+            OrderId: currentOrder.Id || 0,
+            Quantity: product.Quantity
+          }))
+        };
+
         const response = await fetch(
           `/api/v1/Order/${currentOrder.Id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...currentOrder, Status: 2 }), // Cambio a Status 2
+            body: JSON.stringify(bodyForUpdate),
           }
         );
 
@@ -442,7 +453,6 @@ export default function Tables() {
       }
     }
   };
-
   const handleSendToKitchen = async () => {
     if (currentOrder && selectedTable) {
       try {
@@ -577,7 +587,7 @@ export default function Tables() {
     }
   };
 
-  const getTableStatus = (tableId: number): TableState => {
+  const getTableStatus = useCallback((tableId: number): TableState => {
     const tableOrder = orders.find(order => order.TablesId === tableId);
     if (!tableOrder) return "Disponible";
     switch (tableOrder.Status) {
@@ -589,33 +599,29 @@ export default function Tables() {
         return "Disponible";
       default: return "Disponible";
     }
-  };
+  }, [orders]); // Dependency array for useCallback
 
-
-  const updateTableState = async (tableId: number, newState: string) => {
+  const updateTableState = useCallback(async (tableId: number, newState: string) => {
     try {
-
       const updatedTableData = {
-        Id: tableId, // Include the table Id in the request body
-        Name: tables.find((table) => table.Id === tableId)?.Name || "", // Retrieve the existing name or provide a default
+        Id: tableId,
+        Name: tables.find((table) => table.Id === tableId)?.Name || "",
         State: newState,
       };
-      const response = await fetch(
-        `/api/v1/Tables/${tableId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedTableData),
-        }
-      );
+      const response = await fetch(`/api/v1/Tables/${tableId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedTableData),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to update table state. Status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to update table state. Status: ${response.status}. Error: ${errorText}`);
       }
 
-      // Actualizar el estado local de las mesas
+      // Update local table state
       setTables(prevTables =>
         prevTables.map(table =>
           table.Id === tableId ? { ...table, State: newState } : table
@@ -623,19 +629,34 @@ export default function Tables() {
       );
     } catch (error) {
       console.error("Error updating table state:", error);
+      alert(
+        `Error updating table state: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
-  };
+  }, [tables]); // Dependency array for useCallback - 'tables' is included here
+
+  const prevOrders = useRef<Order[]>([]); // Initialize prevOrders ref
 
   useEffect(() => {
-    // Actualizar el estado de las mesas cada vez que cambian las órdenes
-    tables.forEach(table => {
-      const newState = getTableStatus(table.Id);
-      if (newState !== table.State) {
-        updateTableState(table.Id, newState);
-      }
+    // Check if there's any change in order statuses that affect the tables
+    const hasOrderStatusChanged = orders.some(order => {
+      const prevOrder = prevOrders.current.find(prev => prev.Id === order.Id);
+      return prevOrder ? prevOrder.Status !== order.Status : true; // New order or status changed
     });
-  }, [orders, tables]);
 
+    if (hasOrderStatusChanged) {
+      // Update table states only if there's a relevant change in orders
+      tables.forEach(table => {
+        const newState = getTableStatus(table.Id);
+        if (newState !== table.State) {
+          updateTableState(table.Id, newState);
+        }
+      });
+    }
+
+    // Store the current orders for comparison in the next render
+    prevOrders.current = orders;
+  }, [orders, tables, getTableStatus, updateTableState]);
 
   const removeTable = async () => {
     if (tables.length > 0) {
@@ -782,24 +803,19 @@ export default function Tables() {
                   rows={4}
                 />{" "}
                 <div className="buttons">
-                  {/* Show "Send to Kitchen" only when there's no active order or the order is 'Disponible' with items */}
-                  {(!currentOrder ||
-                    (currentOrder.Status === 1 &&
-                      currentOrder.Products.length > 0)) && (
-                      <Button
-                        className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
-                        onClick={handleSendToKitchen}
-                        disabled={
-                          currentOrder && currentOrder.Products.length === 0
-                        }
-                      >
-                        <ChefHat className="text-[#d97706]" />
-                        Enviar a Cocina
-                      </Button>
-                    )}
+                  {/* Show "Send to Kitchen" only when the table is "Disponible" and there are items in the order */}
+                  {selectedTable?.State === "Disponible" && currentOrder?.Products?.length > 0 && (
+                    <Button
+                      className="flex gap-1 border-2 p-2 rounded-lg bg-[#fdfaef] border-[#d97706] items-center text-gray-600 flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                      onClick={handleSendToKitchen}
+                    >
+                      <ChefHat className="text-[#d97706]" />
+                      Enviar a Cocina
+                    </Button>
+                  )}
 
-                  {/* Show "Update Order" only when the order is "Cocinando" */}
-                  {currentOrder.Status === 0 && (
+                  {/* Show "Update Order" only when the table is "Cocinando" or "Ocupada" */}
+                  {(selectedTable?.State === "Cocinando" || selectedTable?.State === "Ocupada") && (
                     <Button
                       className="flex gap-1 border-2 p-2 rounded-lg bg-[#dbeafe] border-[#2563eb] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
                       onClick={handleUpdateOrder}
@@ -809,15 +825,18 @@ export default function Tables() {
                     </Button>
                   )}
 
-                  <Button
-                    className="flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
-                    onClick={handlePreInvoice}
-                    disabled={currentOrder.Products.length === 0}
-                  >
-                    <CreditCard className="text-[#a71c1c]" />
-                    Pre-facturar
-                  </Button>
+                  {selectedTable?.State === "Ocupada" && currentOrder?.Products?.length > 0 && (
+                    <Button
+                      className="flex gap-1 border-2 p-2 rounded-lg bg-[#fff4f4] border-[#a71c1c] text-gray-600 items-center flex-col lg:flex-row w-[150px] justify-center lg:w-[180px]"
+                      onClick={handlePreInvoice}
+                      disabled={currentOrder.Products.length === 0}
+                    >
+                      <CreditCard className="text-[#a71c1c]" />
+                      Pre-facturar
+                    </Button>
+                  )}
                 </div>
+
               </OrderSection>
             </ModalBody>
           </ModalContent>
