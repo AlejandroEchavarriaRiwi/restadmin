@@ -1,108 +1,46 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from "react";
-import ContactUsForm from "@/components/forms/contactUsForm";
-import Mainnav from "@/components/navbars/mainnav";
-import Image from "next/image";
-import styled from "styled-components";
-
-const MainDiv = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  position: relative;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    padding: 0;
-  }
-`;
-
-const LeftDiv = styled.div`
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  padding: 2rem;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    order: 1;
-  }
-`;
-
-const RightDiv = styled.div`
-  width: 50%;
-  position: sticky;
-  top: 2rem;
-  margin-top: 4rem;
-  height: calc(100vh - 4rem);
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    position: static;
-    margin-top: 0px;
-    height: auto;
-    order: 2;
-    margin-bottom: 2rem;
-  }
-`;
-
-const StyledImage = styled(Image)`
-  object-fit: cover;
-  padding: 0px 20px;
-  border-radius: 80px;
-`;
-
-const Title = styled.h1`
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  font-weight: bold;
-  text-align: center;
-
-  span {
-    color: #f2cf5b;
-  }
-
-  @media (max-width: 768px) {
-    margin-top: 30px;
-    font-size: 2rem;
-  }
-`;
+import React, { useEffect, useState } from "react"
+import ContactUsForm from "@/components/forms/contactUsForm"
+import Mainnav from "@/components/navbars/mainnav"
+import Image from "next/image"
 
 export default function ContactPage() {
-  const [pageTitle, setPageTitle] = useState("Contáctanos");
+  const [pageTitle, setPageTitle] = useState("Contáctanos")
 
   useEffect(() => {
-    const storedTitle = localStorage.getItem("selectedNavItem");
+    const storedTitle = localStorage.getItem("selectedNavItem")
     if (storedTitle) {
-      setPageTitle(storedTitle);
+      setPageTitle(storedTitle)
     }
-  }, []);
+  }, [])
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       <Mainnav />
-      <MainDiv>
-        <LeftDiv>
-          <Title>
-            Tu mejor aliado para <span>{pageTitle}</span>
-          </Title>
-          <ContactUsForm emailDestino={"aechavarriaj@gmail.com"} />
-        </LeftDiv>
-        <RightDiv>
-          <StyledImage
-            src="/images/contactus.png"
-            width={500}
-            height={500}
-            alt="Contact Us"
-            layout="responsive"
-          />
-        </RightDiv>
-      </MainDiv>
-    </>
-  );
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col lg:flex-row justify-between">
+          <div className="w-full lg:w-1/2 lg:pr-8">
+            <h1 className="text-4xl sm:text-5xl font-bold text-center lg:text-left mb-8">
+              Tu mejor aliado para{' '}
+              <span className="text-primary">{pageTitle}</span>
+            </h1>
+            <ContactUsForm emailDestino={"aechavarriaj@gmail.com"} />
+          </div>
+          <div className="w-full lg:w-1/2 mt-12 lg:mt-0">
+            <div className="sticky top-24">
+              <Image
+                src="/images/contactus.png"
+                width={500}
+                height={500}
+                alt="Contact Us"
+                className="w-full h-auto object-cover rounded-3xl shadow-lg"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
