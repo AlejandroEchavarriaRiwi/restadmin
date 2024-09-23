@@ -139,7 +139,7 @@ export default function FormularioCitas({ titulo = "Agendar Cita", emailDestino 
           ...data,
           email_destino: emailDestino
         },
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC!
       );
       setToast({ show: true, message: 'Tu cita ha sido agendada. Te contactaremos pronto.', isError: false });
       reset();
