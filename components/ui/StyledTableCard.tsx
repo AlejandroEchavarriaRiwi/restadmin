@@ -84,7 +84,7 @@ const TableState = styled.p<{ state: 'Disponible' | 'Ocupada' | 'Cocinando' | 'P
 `
 
 const TableCard: React.FC<{
-    table: { Id: number; Name: string; State: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por Facturar' },
+    table: { Id: number; Name: string; State: 'Disponible' | 'Ocupada' | 'Cocinando' | 'Por Facturar'  },
     onClick: () => void
 }> = ({ table, onClick }) => {
     const getIcon = () => {
