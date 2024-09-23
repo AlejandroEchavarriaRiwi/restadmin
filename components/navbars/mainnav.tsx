@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import "./styles/navbarstyles.sass";
@@ -18,9 +19,10 @@ interface NavItem {
 interface SubMenuProps {
   items: SubItem[];
   isOpen: boolean;
+  onItemClick: (label: string, href: string) => void;
 }
 
-const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen }) => {
+const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen, onItemClick }) => {
   const subMenuRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -33,7 +35,10 @@ const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen }) => {
     <ul ref={subMenuRef} className={`submenu ${isOpen ? 'open' : ''}`}>
       {items.map((item, index) => (
         <li key={index}>
-          <Link href={item.href}>{item.label}</Link>
+          <Link href={item.href} onClick={(e) => {
+            e.preventDefault();
+            onItemClick(item.label, item.href);
+          }}>{item.label}</Link>
         </li>
       ))}
     </ul>
@@ -41,6 +46,7 @@ const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen }) => {
 };
 
 export default function Mainnav() {
+  const router = useRouter();
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -50,27 +56,27 @@ export default function Mainnav() {
       label: "Restaurantes",
       href: "#",
       subItems: [
-        { label: "Gestión de Menú", href: "#" },
-        { label: "Reservaciones", href: "#" },
-        { label: "Análisis de Ventas", href: "#" },
+        { label: "Gestión de Menú", href: "/contactus" },
+        { label: "Reservaciones", href: "/contactus" },
+        { label: "Análisis de Ventas", href: "/contactus" },
       ],
     },
     {
       label: "Retail",
       href: "#",
       subItems: [
-        { label: "Inventario", href: "#" },
-        { label: "POS", href: "#" },
-        { label: "Fidelización", href: "#" },
+        { label: "Inventario", href: "/contactus" },
+        { label: "POS", href: "/contactus" },
+        { label: "Fidelización", href: "/contactus" },
       ],
     },
     {
       label: "Mas",
       href: "#",
       subItems: [
-        { label: "Soporte", href: "#" },
-        { label: "Blog", href: "#" },
-        { label: "Contacto", href: "#" },
+        { label: "Soporte", href: "/contactus" },
+        { label: "Blog", href: "/contactus" },
+        { label: "Contacto", href: "/contactus" },
       ],
     },
     { label: "Precios", href: "#" },
@@ -96,6 +102,13 @@ export default function Mainnav() {
     setOpenSubmenu(openSubmenu === index ? null : index);
   };
 
+  const handleItemClick = (label: string, href: string) => {
+    localStorage.setItem('selectedNavItem', label);
+    
+    // Usar la nueva API de navegación
+    router.push(href);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
@@ -118,10 +131,14 @@ export default function Mainnav() {
           <Link
             className="link"
             href={item.href}
-            onClick={isMobile && item.subItems ? (e) => {
+            onClick={(e) => {
               e.preventDefault();
-              toggleSubmenu(index);
-            } : undefined}
+              if (isMobile && item.subItems) {
+                toggleSubmenu(index);
+              } else {
+                handleItemClick(item.label, item.href);
+              }
+            }}
           >
             {item.label}
             {item.subItems && (
@@ -132,6 +149,7 @@ export default function Mainnav() {
             <SubMenu
               items={item.subItems}
               isOpen={isMobile ? openSubmenu === index : openSubmenu === index}
+              onItemClick={handleItemClick}
             />
           )}
         </li>
@@ -139,11 +157,12 @@ export default function Mainnav() {
     </ul>
   );
 
+
   return (
     <nav className="mainnav">
       <div className='highPart'>
         <div className="logo">
-          <h1><span>Rest</span>Admin</h1>
+        <Link className="link" href="/"><h1><span>Rest</span>Admin</h1></Link>
         </div>
         <button className="menu-toggle" onClick={toggleMobileMenu}>
           {mobileMenuOpen ? <X size={24} /> : '☰'}
@@ -167,7 +186,7 @@ export default function Mainnav() {
         <li>
           <Link className="link" href="/login">Entrar</Link>
           <button className='buttonDemo'>
-            <Link className="link" href="#">Agenda una demo</Link>
+            <Link className="link" href="/contactus">Agenda una demo</Link>
           </button>
         </li>
       </ul>
