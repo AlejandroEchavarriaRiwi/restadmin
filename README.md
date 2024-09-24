@@ -115,7 +115,7 @@ To contribute to the project:
 
 ## License and Copyright
 
-© 2023 RIWI. All rights reserved.
+© 2024 RIWI. All rights reserved.
 
 This software and its source code are protected by copyright laws and international treaties.
 
@@ -123,7 +123,7 @@ Non-Commercial Use: This software is intended for non-commercial use only. Any u
 
 Prohibition of Commercial Use: The use of this software for commercial purposes without a specific license agreement with RIWI is explicitly prohibited.
 
-For additional permissions or license inquiries, please contact RIWI at [insert appropriate contact information].
+For additional permissions or license inquiries, please contact RIWI at www.restadmin.co.
 
 ## Contribution
 
