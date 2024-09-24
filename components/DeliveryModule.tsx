@@ -1,58 +1,64 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import Button from "../components/buttons/Button";
 import { MdDeliveryDining } from "react-icons/md";
 import { TbClipboardList } from "react-icons/tb";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import InputAlert from "./alerts/successAlert";
+import { Category, Client, Order, Product } from "@/models/user.models";
 
-interface Client {
-  Id: number;
-  Name: string;
-  Phone: string;
-  Address: string;
-}
+const NavBarTitle = styled.h1`
+  font-size: 1.5em;
+  color: #1f2937;
+  font-weight: bold;
+`;
 
-interface Category {
-  Id: number;
-  Name: string;
-}
+const NavBarContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
 
-interface Product {
-  Id: number;
-  Name: string;
-  Price: number;
-  Cost: number;
-  ImageURL: string;
-  CategoryId: number;
-  Category: Category;
-}
+const StyledMdDeliveryDining = styled(MdDeliveryDining)`
+  font-size: 2em;
+  color: #1f2937;
+  font-weight: bold;
+`;
 
-interface OrderProduct {
-  ProductId: number;
-  OrderId: number;
-  Quantity: number;
-}
+const StyledTbClipboardList = styled(TbClipboardList)`
+  font-size: 30px;
+  color: #1f2937;
+`;
 
-interface Company {
-  Id: number;
-  Name: string;
-  Email: string;
-  NIT: string;
-  Phone: string;
-  Address: string;
-  LogoURL: string;
-}
+const MenuItemImage = styled.img`
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+`;
 
-interface Order {
-  TablesId: number;
-  Observations: string;
-  OrderProducts: OrderProduct[];
-}
+const MenuItemName = styled.h3`
+  margin-top: 0.5rem;
+`;
 
+const MenuItemPrice = styled.p`
+  margin-top: 0.25rem;
+`;
+
+const ClientInfo = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const ClientDetail = styled.p`
+  margin-bottom: 0.25rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+`;
 const NavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 15px;
@@ -593,6 +599,7 @@ const ObservationTextArea = styled.textarea`
 `;
 
 export default function DeliveryModule() {
+  // State declarations
   const [client, setClient] = useState<Client>({
     Id: 0,
     Name: "",
@@ -614,18 +621,19 @@ export default function DeliveryModule() {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState("");
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
-  const printRef = useRef<HTMLDivElement>(null);
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false);
   const [observations, setObservations] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch initial data on component mount
   useEffect(() => {
     fetchProducts();
     fetchAllClients();
     fetchCategories();
   }, []);
 
+  // Filter clients based on search term
   useEffect(() => {
     if (searchTerm.length >= 3) {
       const filteredClients = allClients.filter(
@@ -639,25 +647,27 @@ export default function DeliveryModule() {
     }
   }, [searchTerm, allClients]);
 
+  // Update observations in the order
   const updateObservations = (newObservations: string) => {
     setObservations(newObservations);
   };
 
+  // Fetch products from the API
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "/api/v1/Product"
-      );
+      const response = await fetch("/api/v1/Product");
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Product[] = await response.json();
       setProducts(data);
 
+      // Extract unique category IDs from products
       const uniqueCategoryIds = Array.from(
         new Set(data.map((product) => product.Category.Id))
       );
 
+      // Update categories based on available products
       setCategories((prevCategories) => {
         const filteredCategories = prevCategories.filter(
           (category) =>
@@ -668,62 +678,49 @@ export default function DeliveryModule() {
 
       setSelectedCategory(0);
     } catch (error) {
-      console.error("Could not fetch products:", error);
+      // Error handling removed
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Fetch categories from the API
   const fetchCategories = async () => {
     setIsCategoriesLoading(true);
     try {
-      const response = await fetch(
-        "/api/v1/Categories"
-      );
+      const response = await fetch("/api/v1/Categories");
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Category[] = await response.json();
       setCategories([{ Id: 0, Name: "Todas" }, ...data]);
     } catch (error) {
-      console.error("Could not fetch categories:", error);
+      // Error handling removed
     } finally {
       setIsCategoriesLoading(false);
     }
   };
 
-  const renderCategories = () => {
-    return categories.map((category) => (
-      <button
-        key={category.Id}
-        onClick={() => setSelectedCategory(category.Id)}
-        className={selectedCategory === category.Id ? "active" : ""}
-      >
-        {category.Name}
-      </button>
-    ));
-  };
-
-
+  // Fetch all clients from the API
   const fetchAllClients = async () => {
     try {
-      const response = await fetch(
-        "/api/v1/Clients"
-      );
+      const response = await fetch("/api/v1/Clients");
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Client[] = await response.json();
       setAllClients(data);
     } catch (error) {
-      console.error("Could not fetch clients:", error);
+      // Error handling removed
     }
   };
 
+  // Select a client from search results
   const selectClient = (selectedClient: Client) => {
     setClient(selectedClient);
     setSearchTerm("");
     setSearchResults([]);
   };
 
+  // Handle new client submission
   const handleNewClientSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!client.Name || !client.Phone || !client.Address) {
@@ -732,14 +729,11 @@ export default function DeliveryModule() {
     }
 
     try {
-      const response = await fetch(
-        "/api/v1/Clients",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...client, Id: 0 }),
-        }
-      );
+      const response = await fetch("/api/v1/Clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...client, Id: 0 }),
+      });
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const data: Client = await response.json();
@@ -748,10 +742,11 @@ export default function DeliveryModule() {
       alert("Cliente registrado exitosamente!");
       fetchAllClients();
     } catch (error) {
-      console.error("No se pudo registrar el cliente:", error);
+      // Error handling removed
     }
   };
 
+  // Add a product to the order
   const addToOrder = (product: Product) => {
     setOrder((prev) => {
       const existingItem = prev.OrderProducts.find(
@@ -776,6 +771,7 @@ export default function DeliveryModule() {
     });
   };
 
+  // Update the quantity of an item in the order
   const updateItemQuantity = (productId: number, change: number) => {
     setOrder((prev) => ({
       ...prev,
@@ -787,6 +783,7 @@ export default function DeliveryModule() {
     }));
   };
 
+  // Group products by category
   const groupProductsByCategory = (products: Product[]) => {
     return products.reduce((acc, product) => {
       const categoryName = product.Category.Name;
@@ -798,33 +795,38 @@ export default function DeliveryModule() {
     }, {} as Record<string, Product[]>);
   };
 
+  // Filter products based on selected category
   const filteredProducts =
     selectedCategory === 0
       ? products
       : products.filter((product) => product.CategoryId === selectedCategory);
 
+  // Filter products based on search term
   const searchFilteredProducts = filteredProducts.filter((product) =>
     product.Name.toLowerCase().includes(productSearchTerm.toLowerCase())
   );
 
+  // Group menu items by category
   const groupedMenuItems = groupProductsByCategory(searchFilteredProducts);
 
-
+  // Handle delivery fee change
   const handleDeliveryFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fee = e.target.value; // No lo convertimos aún
+    const fee = e.target.value;
     setDeliveryFee(fee);
   };
 
+  // Calculate total order amount
   const calculateTotal = () => {
     const itemsTotal = order.OrderProducts.reduce((sum, item) => {
       const product = products.find((p) => p.Id === item.ProductId);
       return sum + (product ? product.Price * item.Quantity : 0);
     }, 0);
 
-    // Convertimos el deliveryFee a número aquí si no es un valor válido
     const validDeliveryFee = parseFloat(deliveryFee) || 0;
     return itemsTotal + validDeliveryFee;
   };
+
+  // Send order to kitchen and generate invoice
   const sendToKitchenAndInvoice = async () => {
     if (!isOrderValid()) {
       setError(
@@ -850,21 +852,18 @@ export default function DeliveryModule() {
     };
 
     try {
-      const response = await fetch(
-        "/api/v1/Order",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(orderData),
-        }
-      );
+      const response = await fetch("/api/v1/Order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      // Reset the form
+      // Reset order and client information after successful submission
       setOrder({ TablesId: 0, Observations: "", OrderProducts: [] });
       setClient({ Id: 0, Name: "", Phone: "", Address: "" });
       setObservations("");
@@ -884,6 +883,7 @@ export default function DeliveryModule() {
     }
   };
 
+  // Check if the order is valid
   const isOrderValid = () => {
     return (
       order.OrderProducts.length > 0 &&
@@ -895,6 +895,7 @@ export default function DeliveryModule() {
     );
   };
 
+  // Get total number of items in the cart
   const getTotalItemsInCart = () => {
     return order.OrderProducts.reduce((total, item) => total + item.Quantity, 0);
   };
@@ -902,16 +903,14 @@ export default function DeliveryModule() {
   return (
     <>
       <NavBar>
-        <div className="flex items-center gap-2 ">
-          <MdDeliveryDining className="text-[2em] text-gray-800 font-bold flex" />
-          <h1 className="text-[1.5em] text-gray-800 font-bold flex">
-            Gestión de domicilios
-          </h1>
-        </div>
+        <NavBarContent>
+          <StyledMdDeliveryDining />
+          <NavBarTitle>Gestión de domicilios</NavBarTitle>
+        </NavBarContent>
         <CartButton onClick={() => setIsRightColumnOpen(true)}>
-          <TbClipboardList className="text-[30px] text-gray-800" />
+          <StyledTbClipboardList />
           {getTotalItemsInCart() > 0 && (
-            <CartCounter><p>{getTotalItemsInCart()}</p></CartCounter>
+            <CartCounter>{getTotalItemsInCart()}</CartCounter>
           )}
         </CartButton>
       </NavBar>
@@ -985,13 +984,9 @@ export default function DeliveryModule() {
                             key={product.Id}
                             onClick={() => addToOrder(product)}
                           >
-                            <img
-                              src={product.ImageURL}
-                              alt={product.Name}
-                              className="w-full h-48 object-cover"
-                            />
-                            <h3>{product.Name}</h3>
-                            <p>${product.Price}</p>
+                            <MenuItemImage src={product.ImageURL} alt={product.Name} />
+                            <MenuItemName>{product.Name}</MenuItemName>
+                            <MenuItemPrice>${product.Price}</MenuItemPrice>
                           </MenuItemCard>
                         ))}
                       </MenuItemGrid>
@@ -1007,82 +1002,78 @@ export default function DeliveryModule() {
               <IoIosCloseCircleOutline />
             </CloseButton>
 
-            <ScrollableContent>
-              {client.Id !== 0 && (
-                <div>
-                  <OrderHeader>Cliente seleccionado</OrderHeader>
-                  <p>Nombre: {client.Name}</p>
-                  <p>Teléfono: {client.Phone}</p>
-                  <p>Dirección: {client.Address}</p>
-                </div>
-              )}
+            {client.Id !== 0 && (
+              <ClientInfo>
+                <OrderHeader>Cliente seleccionado</OrderHeader>
+                <ClientDetail>Nombre: {client.Name}</ClientDetail>
+                <ClientDetail>Teléfono: {client.Phone}</ClientDetail>
+                <ClientDetail>Dirección: {client.Address}</ClientDetail>
+              </ClientInfo>
+            )}
 
-              <OrderSection>
-                <OrderHeader>Pedido actual</OrderHeader>
-                <OrderItemList>
-                  {order.OrderProducts.map((item) => {
-                    const product = products.find((p) => p.Id === item.ProductId);
-                    return product ? (
-                      <OrderItem key={item.ProductId}>
-                        <OrderItemDetails>
-                          <OrderItemName>{product.Name}</OrderItemName>
-                          <OrderItemPrice>
-                            ${product.Price} x {item.Quantity}
-                          </OrderItemPrice>
-                        </OrderItemDetails>
-                        <QuantityControl>
-                          <QuantityButton
-                            onClick={() => updateItemQuantity(item.ProductId, -1)}
-                          >
-                            -
-                          </QuantityButton>
-                          <QuantityDisplay>{item.Quantity}</QuantityDisplay>
-                          <QuantityButton
-                            onClick={() => updateItemQuantity(item.ProductId, 1)}
-                          >
-                            +
-                          </QuantityButton>
-                        </QuantityControl>
-                      </OrderItem>
-                    ) : null;
-                  })}
-                </OrderItemList>
-                <ObservationSection>
-                  <ObservationLabel htmlFor="observation">
-                    Observaciones
-                  </ObservationLabel>
-                  <ObservationTextArea
-                    id="observation"
-                    value={observations}
-                    onChange={(e) => updateObservations(e.target.value)}
-                    placeholder="Añade observaciones generales para tu orden..."
-                  />
-                </ObservationSection>
-
-                <DeliveryFeeInput
-                  type="number"
-                  value={deliveryFee}
-                  onChange={handleDeliveryFeeChange}
-                  placeholder="Costo de domicilio"
-                  required
+            <OrderSection>
+              <OrderHeader>Pedido actual</OrderHeader>
+              <OrderItemList>
+                {order.OrderProducts.map((item) => {
+                  const product = products.find((p) => p.Id === item.ProductId);
+                  return product ? (
+                    <OrderItem key={item.ProductId}>
+                      <OrderItemDetails>
+                        <OrderItemName>{product.Name}</OrderItemName>
+                        <OrderItemPrice>
+                          ${product.Price} x {item.Quantity}
+                        </OrderItemPrice>
+                      </OrderItemDetails>
+                      <QuantityControl>
+                        <QuantityButton
+                          onClick={() => updateItemQuantity(item.ProductId, -1)}
+                        >
+                          -
+                        </QuantityButton>
+                        <QuantityDisplay>{item.Quantity}</QuantityDisplay>
+                        <QuantityButton
+                          onClick={() => updateItemQuantity(item.ProductId, 1)}
+                        >
+                          +
+                        </QuantityButton>
+                      </QuantityControl>
+                    </OrderItem>
+                  ) : null;
+                })}
+              </OrderItemList>
+              <ObservationSection>
+                <ObservationLabel htmlFor="observation">
+                  Observaciones
+                </ObservationLabel>
+                <ObservationTextArea
+                  id="observation"
+                  value={observations}
+                  onChange={(e) => updateObservations(e.target.value)}
+                  placeholder="Añade observaciones generales para tu orden..."
                 />
-              </OrderSection>
-            </ScrollableContent>
+              </ObservationSection>
 
-            <FixedBottom>
+              <DeliveryFeeInput
+                type="number"
+                value={deliveryFee}
+                onChange={handleDeliveryFeeChange}
+                placeholder="Costo de domicilio"
+                required
+              />
+
               <TotalSection>
-                <span>Subtotal:</span>
-                <span>
-                  $
-                  {order.OrderProducts.reduce((sum, item) => {
-                    const product = products.find(
-                      (p) => p.Id === item.ProductId
-                    );
-                    return (
-                      sum + (product ? product.Price * item.Quantity : 0)
-                    );
-                  }, 0)}
-                </span>
+                <TotalItem>
+                  <span>Subtotal:</span>
+                  <span>
+                    $
+                    {order.OrderProducts.reduce((sum, item) => {
+                      const product = products.find(
+                        (p) => p.Id === item.ProductId
+                      );
+                      return sum + (product ? product.Price * item.Quantity : 0);
+                    }, 0)}
+                  </span>
+                </TotalItem>
                 <TotalItem>
                   <span>Valor domicilio:</span>
                   <span>${deliveryFee}</span>
@@ -1094,19 +1085,20 @@ export default function DeliveryModule() {
               </TotalSection>
 
               {error && <ErrorMessage>{error}</ErrorMessage>}
+
               <SendButton
                 onClick={sendToKitchenAndInvoice}
                 disabled={!isOrderValid() || isLoading}
               >
                 {isLoading ? "Procesando..." : "Generar orden"}
               </SendButton>
-            </FixedBottom>
+            </OrderSection>
           </RightColumn>
 
           {showNewClientModal && (
             <Modal onClick={() => setShowNewClientModal(false)}>
               <ModalContent onClick={(e) => e.stopPropagation()}>
-                <h2>Registrar Nuevo Cliente</h2>
+                <ModalTitle>Registrar Nuevo Cliente</ModalTitle>
                 <form onSubmit={handleNewClientSubmit}>
                   <Input
                     name="Name"
@@ -1141,7 +1133,7 @@ export default function DeliveryModule() {
             </Modal>
           )}
         </DeliveryContainer>
-      </ModuleContainer >
+      </ModuleContainer>
     </>
   );
 }

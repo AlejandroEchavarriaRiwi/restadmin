@@ -56,3 +56,37 @@ export interface User {
     address: string;
     roleId: number;
   }
+
+  export interface Client {
+    Id: number;
+    Name: string;
+    Phone: string;
+    Address: string;
+  }
+  
+  export interface Category {
+    Id: number;
+    Name: string;
+  }
+  
+  export interface Product {
+    Id: number;
+    Name: string;
+    Price: number;
+    Cost: number;
+    ImageURL: string;
+    CategoryId: number;
+    Category: Category;
+  }
+  
+  export interface OrderProduct {
+    ProductId: number;
+    OrderId: number;
+    Quantity: number;
+  }
+  
+  export interface Order {
+    TablesId: number;
+    Observations: string;
+    OrderProducts: OrderProduct[];
+  }
