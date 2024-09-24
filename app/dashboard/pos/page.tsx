@@ -647,7 +647,7 @@ export default function MenuOrder() {
             Total: ${order.OrderProducts.reduce((sum, item) => {
               const menuItem = menuItems.find(menuItem => menuItem.Id === item.ProductId);
               return sum + (menuItem ? menuItem.Price * item.Quantity : 0);
-            }, 0).toFixed(2)}
+            }, 0)}
           </TotalSection>
           <ActionButton
             onClick={sendOrderToKitchen}
