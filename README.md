@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# REST Admin
 
-## Getting Started
+REST Admin is a modern and comprehensive web application for integrated restaurant management. Designed to optimize daily operations, from table and order management to sales analysis and statistics.
 
-First, run the development server:
+## Website
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Visit our production application: [www.restadmin.co](https://www.restadmin.co)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Repository
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The source code is available on GitHub: [https://github.com/AlejandroEchavarriaRiwi/restadmin.git](https://github.com/AlejandroEchavarriaRiwi/restadmin.git)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Key Features
 
-## Learn More
+- Table and order management
+- Quick order system for staff
+- Kitchen dashboard
+- Menu and product management
+- Sales analysis and statistics
+- Customer management and delivery orders
+- Interactive dashboard
 
-To learn more about Next.js, take a look at the following resources:
+## Technologies Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Frontend
+- Next.js 13+
+- React 18+
+- TypeScript
+- Styled Components
+- Tailwind CSS
+- Lucide React (icons)
+- React Icons
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Backend
+- .NET (deployed on Azure)
 
-## Deploy on Vercel
+### APIs and Integration
+- RESTful API
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Data Visualization
+- Recharts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Global State and Context
+- React Context API (NotificationContext)
+
+### Authentication and Authorization
+- User role management
+
+### Deployment
+- Frontend: Vercel
+- Backend: Azure
+
+## Project Structure
+
+The project is organized into different modules, each corresponding to a specific restaurant functionality:
+
+- `Dashboard`: Main control panel view
+- `Tables`: Restaurant table and order management
+- `KitchenDashboard`: Control panel for the kitchen
+- `Menu`: Menu product and category management
+- `MenuOrder`: Quick order system for staff
+- `Sales`: Sales visualization and analysis
+- `Statistics`: Performance graphs and metrics
+
+## Main Components
+
+- `NavBarAsideDashboard`: Side navigation bar
+- `TableCard`: Component for displaying table information
+- `ProductCard`: Component for displaying menu products
+- `NotificationWrapper`: Real-time notification system
+
+## Installation and Setup for Local Development
+
+1. Clone the repository
+   ```
+   git clone https://github.com/AlejandroEchavarriaRiwi/restadmin.git
+   cd restadmin
+   ```
+
+2. Install dependencies
+   ```
+   npm install
+   ```
+
+3. Configure environment variables
+   Create a `.env.local` file in the project root and add the following variables:
+   ```
+   NEXT_PUBLIC_API_URL=https://restadmin.azurewebsites.net/api/v1
+   ```
+
+4. Start the development server
+   ```
+   npm run dev
+   ```
+
+## Usage
+
+Access the production application at [www.restadmin.co](https://www.restadmin.co). For local development, use `http://localhost:3000`. Use the provided credentials to log in and access different functionalities based on the user's role.
+
+## Development
+
+To contribute to the project:
+
+1. Fork the repository on GitHub
+2. Clone your fork: `git clone https://github.com/your-username/restadmin.git`
+3. Create a new branch for your feature: `git checkout -b feature/new-feature`
+4. Make your changes and commit: `git commit -am 'Add new feature'`
+5. Push your changes: `git push origin feature/new-feature`
+6. Create a Pull Request on GitHub for review
+
+## Deployment
+
+- Frontend: The project is deployed on Vercel and updates automatically with each push to the main branch.
+- Backend: The API is hosted on Azure and managed separately.
+
+## License and Copyright
+
+© 2023 RIWI. All rights reserved.
+
+This software and its source code are protected by copyright laws and international treaties.
+
+Non-Commercial Use: This software is intended for non-commercial use only. Any use, reproduction, or distribution of the software without express written authorization from RIWI is strictly prohibited.
+
+Prohibition of Commercial Use: The use of this software for commercial purposes without a specific license agreement with RIWI is explicitly prohibited.
+
+For additional permissions or license inquiries, please contact RIWI at [insert appropriate contact information].
+
+## Contribution
+
+While we appreciate interest in contributing to the project, due to the proprietary nature of the software, all contributions must be reviewed and approved by RIWI. By submitting a contribution, you agree that RIWI will have the right to use and modify your contribution, and that you will not acquire any ownership rights to the software.
+
+## Contact
+
+For more information, support, or license inquiries, please contact the RIWI development team at www.restadmin.co.
