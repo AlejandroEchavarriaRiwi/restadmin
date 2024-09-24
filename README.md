@@ -85,7 +85,7 @@ The project is organized into different modules, each corresponding to a specifi
 3. Configure environment variables
    Create a `.env.local` file in the project root and add the following variables:
    ```
-   NEXT_PUBLIC_API_URL=https://restadmin.azurewebsites.net/api/v1
+   For more information contact with us www.restadmin.co
    ```
 
 4. Start the development server
