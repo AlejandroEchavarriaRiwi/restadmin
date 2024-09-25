@@ -20,13 +20,6 @@ import { GiForkKnifeSpoon } from "react-icons/gi"
 
 import './styles/navbarstyles.sass'
 
-interface User {
-    token: string;
-    email: string;
-    name: string;
-    roleId: number;
-}
-
 const pulseAnimation = keyframes`
   0% {
     box-shadow: 0 0 0 0 rgba(34, 73, 229, 0.7);
