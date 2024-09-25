@@ -45,22 +45,22 @@ const PulsingButton = styled(motion.button)`
 
 const SkeletonLoader = () => (
     <div className="flex items-center justify-center h-screen ">
-      <div className="relative">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-azulclaro"></div>
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-          <div className="animate-pulse">
-            <Image
-              src="/images/restadmin.png"
-              width={100}
-              height={100}
-              quality={25}
-              priority={true}
-              alt="RestAdmin Logo"
-              className="rounded-full"
-            />
-          </div>
+        <div className="relative">
+            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-amarillo"></div>
+            <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+                <div className="animate-pulse">
+                    <Image
+                        src="/images/restadmin.png"
+                        width={100}
+                        height={100}
+                        quality={25}
+                        priority={true}
+                        alt="RestAdmin Logo"
+                        className="rounded-full"
+                    />
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 );
 
@@ -195,10 +195,10 @@ export default function NavBarAsideDashboard() {
             <div className="flex text-center items-center justify-between p-4">
                 {isOpen && (
                     <div className="flex items-center gap-3">
-                        <Image 
-                            width={40} 
-                            height={40} 
-                            src="/images/restadmin.png" 
+                        <Image
+                            width={40}
+                            height={40}
+                            src="/images/restadmin.png"
                             alt="RestAdmin Logo"
                             quality={15}
                             priority
@@ -215,11 +215,11 @@ export default function NavBarAsideDashboard() {
 
             {isOpen && (
                 <div className="flex flex-col items-center mb-4">
-                    <Image 
-                        width={80} 
-                        height={80} 
-                        className="rounded-full object-cover" 
-                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png" 
+                    <Image
+                        width={80}
+                        height={80}
+                        className="rounded-full object-cover"
+                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png"
                         alt="Company Logo"
                         quality={15}
                         priority={false}
@@ -233,12 +233,12 @@ export default function NavBarAsideDashboard() {
 
             {!isOpen && (
                 <div className="flex flex-col items-center mb-4">
-                    <Image 
-                        width={64} 
-                        height={64} 
-                        className="rounded-full object-cover" 
-                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png" 
-                        alt="Company Logo" 
+                    <Image
+                        width={64}
+                        height={64}
+                        className="rounded-full object-cover"
+                        src="https://images.rappi.com/restaurants_logo/il-forno-logo1-1568819470999.png"
+                        alt="Company Logo"
                         priority={false}
                     />
                 </div>
