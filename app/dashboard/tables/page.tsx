@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
-import "./style.sass";
 import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
 import { PlusCircle, Trash2, CreditCard, ChefHat, Minus, RefreshCw } from "lucide-react";
