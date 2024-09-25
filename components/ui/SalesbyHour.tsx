@@ -1,13 +1,70 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import InputAlert from '../alerts/successAlert';
 
+// Interface for the SalesByHour data structure
 interface SalesByHour {
   Hour: number;
   TotalInvoices: number;
 }
 
+// Styled components
+const ChartContainer = styled.div`
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  width: 100%;
+`;
+
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+`;
+
+const ChartWrapper = styled.div`
+  height: 20rem;
+`;
+
+const LoadingContainer = styled(ChartContainer)`
+  height: 24rem;
+  text-align: center;
+`;
+
+const LoadingAnimation = styled.div`
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: #e5e7eb;
+  width: 100%;
+  height: 20rem;
+  border-radius: 0.25rem;
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
+  }
+`;
+
+const TooltipContainer = styled.div`
+  background-color: white;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const TooltipLabel = styled.p`
+  font-weight: bold;
+`;
+
+// Helper functions
 const formatHour = (hour: number) => {
   return `${hour}:00`;
 };
@@ -16,30 +73,33 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value);
 };
 
+// Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-2 border border-gray-200 shadow-md">
-        <p className="font-bold">{`${formatHour(label)}`}</p>
+      <TooltipContainer>
+        <TooltipLabel>{`${formatHour(label)}`}</TooltipLabel>
         <p>{`Total: ${formatCurrency(payload[0].value)}`}</p>
-      </div>
+      </TooltipContainer>
     );
   }
   return null;
 };
 
+// Main component
 export default function SalesByHourChart() {
   const [salesData, setSalesData] = useState<SalesByHour[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
+  // Fetch data on component mount
   useEffect(() => {
     fetchSalesByHour();
   }, []);
 
+  // Function to fetch sales by hour data
   const fetchSalesByHour = async () => {
     try {
-      const response = await fetch('https://restadmin.azurewebsites.net/api/v1/Product/salesByHour');
+      const response = await fetch('/api/v1/Product/salesByHour');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -47,36 +107,29 @@ export default function SalesByHourChart() {
       setSalesData(data);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching sales by hour data:", error);
-      setError('Error al cargar los datos de ventas por hora');
+      await InputAlert(
+        "Error al obtener ventas por hora. Por favor, intente de nuevo.",
+        "error"
+      );
       setIsLoading(false);
     }
   };
 
+  // Render loading state
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 w-full h-96 text-center">
-        <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
-        <div className="flex items-center justify-center h-80">
-          <div className="animate-pulse bg-gray-200 w-full h-full rounded"></div>
-        </div>
-      </div>
+      <LoadingContainer>
+        <Title>Ventas por Hora</Title>
+        <LoadingAnimation />
+      </LoadingContainer>
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6 w-full text-center">
-        <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
+  // Render chart
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 w-full">
-      <h2 className="text-2xl font-bold mb-4 text-center">Ventas por Hora</h2>
-      <div className="h-80">
+    <ChartContainer>
+      <Title>Ventas por Hora</Title>
+      <ChartWrapper>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={salesData}>
             <XAxis dataKey="Hour" tickFormatter={formatHour} />
@@ -85,7 +138,7 @@ export default function SalesByHourChart() {
             <Bar dataKey="TotalInvoices" fill="#0070f3" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </ChartWrapper>
+    </ChartContainer>
   );
 }
