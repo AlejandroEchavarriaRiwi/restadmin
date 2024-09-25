@@ -1,14 +1,98 @@
 import React, { useState } from 'react';
+import styled from 'styled-components';
 import { Product } from '@/types/Imenu';
 import { CldUploadWidget } from 'next-cloudinary';
 import CategorySelection, { Category } from '../buttons/selectCategoriesButton';
+import InputAlert from '../alerts/successAlert';
 
-// Interfaz para el estado editable del producto
+// Interface for editable product state
 interface EditableProduct extends Omit<Product, 'Category' | 'CategoryId'> {
     Category: Category | null;
     CategoryId: number | null;
 }
 
+// Styled-components
+const Overlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+`;
+
+const ModalContainer = styled.div`
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto; /* Enable scroll if content is too large */
+`;
+
+const Title = styled.h2`
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+`;
+
+const Form = styled.form`
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+`;
+
+const Label = styled.label`
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+`;
+
+const Input = styled.input`
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+`;
+
+const Button = styled.button<{ variant?: string }>`
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    ${(props) =>
+        props.variant === 'primary'
+            ? `
+        background-color: #3b82f6;
+        color: white;
+        &:hover {
+            background-color: #2563eb;
+        }
+    `
+            : `
+        background-color: #e5e7eb;
+        color: black;
+    `}
+`;
+
+const ImagePreview = styled.img`
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+`;
+
+const ButtonGroup = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+`;
+
+// Main EditProductModal component
 const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSave: (updatedProduct: Product) => void, onClose: () => void }) => {
     const [editedProduct, setEditedProduct] = useState<EditableProduct>({
         ...product,
@@ -19,9 +103,9 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setEditedProduct(prev => ({ 
-            ...prev, 
-            [name]: name === 'Price' || name === 'Cost' ? parseFloat(value) : value 
+        setEditedProduct(prev => ({
+            ...prev,
+            [name]: name === 'Price' || name === 'Cost' ? parseFloat(value) : value
         }));
     };
 
@@ -39,7 +123,7 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
         setEditedProduct(prev => ({ ...prev, ImageURL: imageURL }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editedProduct.Category && editedProduct.CategoryId !== null) {
             const productToSave: Product = {
@@ -49,90 +133,83 @@ const EditProductModal = ({ product, onSave, onClose }: { product: Product, onSa
             };
             onSave(productToSave);
         } else {
-            console.error('No se ha seleccionado una categoría válida');
-            // Aquí puedes mostrar un mensaje de error al usuario
+            await InputAlert('No se ha seleccionado una categoria valida', 'error')
+            // You can show an error message here to the user
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full">
-                <h2 className="text-xl font-bold mb-4">Editar Producto</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <Overlay>
+            <ModalContainer>
+                <Title>Editar Producto</Title>
+                <Form onSubmit={handleSubmit}>
                     <div>
-                        <label htmlFor="Name" className="block font-semibold mb-1">Nombre:</label>
-                        <input
+                        <Label htmlFor="Name">Nombre:</Label>
+                        <Input
                             type="text"
                             id="Name"
                             name="Name"
                             value={editedProduct.Name}
                             onChange={handleChange}
-                            className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
                     <div>
-                        <label htmlFor="Cost" className="block font-semibold mb-1">Costo:</label>
-                        <input
+                        <Label htmlFor="Cost">Costo:</Label>
+                        <Input
                             type="number"
                             id="Cost"
                             name="Cost"
                             value={editedProduct.Cost}
                             onChange={handleChange}
-                            className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
                     <div>
-                        <label htmlFor="Price" className="block font-semibold mb-1">Precio:</label>
-                        <input
+                        <Label htmlFor="Price">Precio:</Label>
+                        <Input
                             type="number"
                             id="Price"
                             name="Price"
                             value={editedProduct.Price}
                             onChange={handleChange}
-                            className="w-full border rounded-lg px-3 py-2"
                         />
                     </div>
-
                     <div>
                         <CategorySelection
                             category={editedProduct.Category}
                             setCategory={handleCategoryChange}
                         />
                     </div>
-
                     <div>
-                        <label htmlFor="image" className="block font-semibold mb-1">Imagen del producto:</label>
+                        <Label htmlFor="image">Imagen del producto:</Label>
                         <CldUploadWidget
                             uploadPreset="my_preset"
                             onSuccess={handleUploadSuccess}
                         >
                             {({ open }) => (
-                                <button
-                                    type="button"
-                                    className="px-4 py-2 bg-[#4b9fea] text-white rounded-lg hover:bg-[#4b9fea]"
-                                    onClick={() => open()}
-                                >
+                                <Button type="button" onClick={() => open()} variant="primary">
                                     Cargar imagen
-                                </button>
+                                </Button>
                             )}
                         </CldUploadWidget>
                         {localImageURL && (
-                            <img
+                            <ImagePreview
                                 src={localImageURL}
                                 alt="Producto"
-                                className="mt-4 rounded-md"
-                                style={{ width: '200px', height: '200px', objectFit: 'cover' }}
                             />
                         )}
                     </div>
 
-                    <div className="flex justify-end space-x-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded-lg">Cancelar</button>
-                        <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-lg">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    <ButtonGroup>
+                        <Button type="button" onClick={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary">
+                            Guardar
+                        </Button>
+                    </ButtonGroup>
+                </Form>
+            </ModalContainer>
+        </Overlay>
     );
 };
 

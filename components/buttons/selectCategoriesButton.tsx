@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Select from 'react-select';
+import styled from 'styled-components';
 
+// Category interface
 export interface Category {
   Id: number;
   Name: string;
@@ -11,7 +13,7 @@ interface CategorySelectionProps {
   setCategory: (category: Category | null) => void;
 }
 
-// Hook personalizado para detectar clics fuera del elemento
+// Custom hook to detect clicks outside an element
 const useClickOutside = (ref: React.RefObject<HTMLElement>, callback: () => void) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -27,6 +29,70 @@ const useClickOutside = (ref: React.RefObject<HTMLElement>, callback: () => void
   }, [ref, callback]);
 };
 
+// Styled components for the various elements
+const Container = styled.div`
+  position: relative;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+`;
+
+const AddButton = styled.button`
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #67b7f7;
+  color: white;
+  border-radius: 0.5rem;
+  &:hover {
+    background-color: #4b9fea;
+  }
+`;
+
+const AddCategoryContainer = styled.div`
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  z-index: 10;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  border-bottom: 1px solid #d1d5db;
+  padding: 0.5rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+`;
+
+const ConfirmButton = styled.button`
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #67b7f7;
+  color: white;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  &:hover {
+    background-color: #4b9fea;
+  }
+`;
+
+const DeleteButton = styled.button`
+  color: #f87171;
+  &:hover {
+    color: #ef4444;
+  }
+`;
+
+// Main component
 const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCategory }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -37,7 +103,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
     fetchCategories();
   }, []);
 
-  // Usar el hook personalizado
+  // Use the custom hook
   useClickOutside(addCategoryRef, () => {
     setIsAddingCategory(false);
   });
@@ -102,21 +168,20 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
   const CategoryOption = ({ innerProps, label, data }: any) => (
     <div {...innerProps} className="flex justify-between items-center p-2">
       <span>{label}</span>
-      <button
+      <DeleteButton
         onClick={(e) => {
           e.stopPropagation();
           handleDeleteCategory(data.value.Id);
         }}
-        className="text-red-500 hover:text-red-700"
       >
         Eliminar
-      </button>
+      </DeleteButton>
     </div>
   );
 
   return (
-    <div className="relative">
-      <label htmlFor="category" className="block font-semibold mb-1">Categoría:</label>
+    <Container>
+      <Label htmlFor="category">Categoría:</Label>
       <Select
         id="category"
         value={category ? { value: category, label: category.Name } : null}
@@ -126,32 +191,23 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ category, setCate
         className="w-full"
         classNamePrefix="react-select"
       />
-      <button
-        type="button"
-        onClick={() => setIsAddingCategory(true)}
-        className="mt-2 w-full py-2 bg-[#67b7f7] text-white rounded-lg hover:bg-[#4b9fea]"
-      >
+      <AddButton type="button" onClick={() => setIsAddingCategory(true)}>
         Añadir Nueva Categoría
-      </button>
+      </AddButton>
       {isAddingCategory && (
-        <div ref={addCategoryRef} className="absolute left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
-          <input
+        <AddCategoryContainer ref={addCategoryRef}>
+          <Input
             type="text"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            className="w-full border-b border-gray-300 px-3 py-2 rounded-t-lg"
             placeholder="Nombre de nueva categoría"
           />
-          <button
-            type="button"
-            onClick={handleAddCategory}
-            className="w-full py-2 bg-[#67b7f7] text-white rounded-b-lg hover:bg-[#4b9fea]"
-          >
+          <ConfirmButton type="button" onClick={handleAddCategory}>
             Añadir Categoría
-          </button>
-        </div>
+          </ConfirmButton>
+        </AddCategoryContainer>
       )}
-    </div>
+    </Container>
   );
 };
 

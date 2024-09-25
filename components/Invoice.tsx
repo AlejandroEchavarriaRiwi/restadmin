@@ -1,3 +1,5 @@
+
+
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
@@ -8,37 +10,40 @@ import { FaFileInvoiceDollar } from "react-icons/fa6";
 import { MdTableRestaurant } from "react-icons/md";
 import { useReactToPrint } from "react-to-print";
 import InputAlert from "./alerts/successAlert";
-interface Product {
-  Id: number;
-  Name: string;
-  Price: number;
-  Quantity: number;
-  ImageURL: string;
-  Category: {
-    Id: number;
-    Name: string;
-  };
-  Status: number;
-}
+import { Company, Order } from "@/types/IInvoice";
 
-interface Order {
-  Id: number;
-  TablesId: number | null;
-  TableName: string | null;
-  Status: number;
-  Products: Product[];
-  Observations: string;
-}
+// Styled components definitions...
 
-interface Company {
-  Id: number;
-  Name: string;
-  Email: string;
-  Nit: string;
-  Phone: string;
-  Address: string;
-  LogoURL: string;
-}
+const HeaderContainer = styled.div`
+  background-color: #f8f9fa;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    justify-content: flex-start;
+  }
+`;
+
+const IconWrapper = styled(FaFileInvoiceDollar)`
+  font-size: 2em;
+  color: #1f2937;
+`;
+
+const HeaderText = styled.h1`
+  font-size: 1.5em;
+  color: #1f2937;
+  font-weight: bold;
+  display: flex;
+  margin-left: 0.5rem;
+
+  @media (min-width: 640px) {
+    align-items: center;
+  }
+`;
+
 
 const PrintableInvoice = styled.div`
   @media print {
@@ -286,16 +291,21 @@ const OrderDetails = styled.div`
 `;
 const AnimatedOrderDetails = motion.create(OrderDetails);
 const AnimatedListItem = motion.create('li');
-export default function Invoice() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [currentDate, setCurrentDate] = useState("");
-  const printRef = useRef<HTMLDivElement>(null);
 
+
+export default function Invoice() {
+  // State declarations
+  const [orders, setOrders] = useState<Order[]>([]); // Stores all orders
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Currently selected order
+  const [isModalOpen, setIsModalOpen] = useState(false); // Controls modal visibility
+  const [isMobile, setIsMobile] = useState(false); // Tracks if the device is mobile
+  const [isLoading, setIsLoading] = useState(false); // Loading state for async operations
+  const [company, setCompany] = useState<Company | null>(null); // Stores company information
+  const [currentDate, setCurrentDate] = useState(""); // Current date for invoice
+  const printRef = useRef<HTMLDivElement>(null); // Reference for printable content
+
+  // Effect hook to fetch initial data and set up event listeners
+  
   useEffect(() => {
     fetchOrders();
     fetchCompanyInfo();
@@ -305,6 +315,7 @@ export default function Invoice() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Function to fetch company information from the API
   const fetchCompanyInfo = async () => {
     try {
       const response = await fetch("/api/v1/Company");
@@ -315,10 +326,11 @@ export default function Invoice() {
         setCompany(data[0]); // Set the first (and likely only) company in the array
       }
     } catch (error) {
-      console.error("Could not fetch company info:", error);
+      await InputAlert('No se pudo traer la informacion de la compañia', 'error')
     }
   };
 
+  // Animation variants for Framer Motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -338,6 +350,7 @@ export default function Invoice() {
     },
   };
 
+  // Function to fetch orders from the API
   const fetchOrders = async () => {
     try {
       const response = await fetch("/api/v1/Order");
@@ -346,10 +359,11 @@ export default function Invoice() {
       const data: Order[] = await response.json();
       setOrders(data.filter((order) => order.Status === 2));
     } catch (error) {
-      console.error("Could not fetch orders:", error);
+      await InputAlert('No se pudieron traer las ordenes', 'error')
     }
   };
 
+  // Handler for selecting an order
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
     if (isMobile) {
@@ -357,6 +371,7 @@ export default function Invoice() {
     }
   };
 
+  // Function to generate an invoice for a given order
   const generateInvoice = async (orderId: number) => {
     setIsLoading(true);
     try {
@@ -375,18 +390,17 @@ export default function Invoice() {
           `Failed to generate invoice. Status: ${response.status}`
         );
       }
-
+      await InputAlert('La factura ha sido generada', 'success')
       const invoiceData = await response.json();
-      console.log("Invoice generated:", invoiceData);
       return invoiceData;
     } catch (error) {
-      console.error("Error generating invoice:", error);
-      throw error;
+      await InputAlert('Error generando la factura', 'error')
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Setup for printing functionality
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     onBeforeGetContent: () => {
@@ -405,6 +419,7 @@ export default function Invoice() {
     },
   });
 
+  // Function to complete an order and generate invoice
   const completeOrder = async (order: Order) => {
     if (isLoading) return; // Prevent multiple clicks
     setIsLoading(true);
@@ -451,8 +466,7 @@ export default function Invoice() {
       );
     } catch (error) {
       alert(
-        `Error al completar la orden y generar la factura: ${
-          error instanceof Error ? error.message : "Error desconocido"
+        `Error al completar la orden y generar la factura: ${error instanceof Error ? error.message : "Error desconocido"
         }`
       );
     } finally {
@@ -460,6 +474,7 @@ export default function Invoice() {
     }
   };
 
+  // Function to calculate total price of an order
   const calculateTotal = (order: Order) => {
     return order.Products.reduce(
       (total, product) => total + product.Price * product.Quantity,
@@ -467,15 +482,16 @@ export default function Invoice() {
     );
   };
 
+  // Main component render
   return (
     <ModuleContainer>
-      <div className="bg-[#f8f9fa] p-[20px] flex items-center justify-center lg:justify-start gap-2  w-full ">
-        <FaFileInvoiceDollar className="text-[2em] text-gray-800" />
-        <h1 className="text-[1.5em] text-gray-800 font-bold flex sm:items-center">
-          Órdenes por Completar
-        </h1>
-      </div>
+      <HeaderContainer>
+        <IconWrapper />
+        <HeaderText>Órdenes por Completar</HeaderText>
+      </HeaderContainer>
+
       <div className="container-invoices">
+        {/* Grid to display all orders */}
         <TableGrid>
           {orders.map((order) => (
             <TableCard
@@ -488,14 +504,16 @@ export default function Invoice() {
             </TableCard>
           ))}
         </TableGrid>
+
+        {/* Animated order details section (visible on non-mobile devices) */}
         <AnimatePresence>
-        {!isMobile && selectedOrder && (
-          <AnimatedOrderDetails
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={containerVariants}
-          >
+          {!isMobile && selectedOrder && (
+            <AnimatedOrderDetails
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={containerVariants}
+            >
               <div className="header">
                 <h2>
                   Detalles de{" "}
@@ -503,8 +521,8 @@ export default function Invoice() {
                 </h2>
               </div>
               <motion.ul variants={containerVariants}>
-              {selectedOrder.Products.map((item, index) => (
-                <AnimatedListItem key={index} variants={itemVariants}>
+                {selectedOrder.Products.map((item, index) => (
+                  <AnimatedListItem key={index} variants={itemVariants}>
                     <div>{item.Quantity}</div>
                     <div>{item.Name}</div>=
                     <div>${item.Price * item.Quantity}</div>
@@ -526,6 +544,8 @@ export default function Invoice() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Modal for mobile view */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -533,10 +553,13 @@ export default function Invoice() {
         onGenerateInvoice={() => selectedOrder && completeOrder(selectedOrder)}
         isLoading={isLoading}
       />
+
+      {/* Hidden printable invoice section */}
       <div style={{ display: "none" }}>
         <PrintableInvoice ref={printRef}>
           {company && selectedOrder && (
             <>
+              {/* Invoice header with company info */}
               <Header>
                 <CompanyLogoDiv>
                   <CompanyLogo src={company.LogoURL} alt={company.Name} />
@@ -550,6 +573,7 @@ export default function Invoice() {
                 <InfoItem>Email: {company.Email}</InfoItem>
               </CompanyInfo>
               <Divider />
+              {/* Order information */}
               <OrderInfo>
                 <OrderTitle>Orden de venta</OrderTitle>
                 <OrderNumber>
@@ -558,6 +582,7 @@ export default function Invoice() {
                 <OrderDate>Fecha: {currentDate}</OrderDate>
               </OrderInfo>
               <Divider />
+              {/* Product table */}
               <ProductsTable>
                 <TableHeader>
                   <HeaderCell>Cant.</HeaderCell>
@@ -573,10 +598,12 @@ export default function Invoice() {
                 ))}
               </ProductsTable>
               <Divider />
+              {/* Total amount */}
               <Total>
                 <TotalLabel>Total:</TotalLabel>
                 <TotalAmount>${calculateTotal(selectedOrder)}</TotalAmount>
               </Total>
+              {/* Observations if any */}
               {selectedOrder.Observations && (
                 <Observations>
                   <ObservationsTitle>Observaciones:</ObservationsTitle>
@@ -585,6 +612,7 @@ export default function Invoice() {
                   </ObservationsText>
                 </Observations>
               )}
+              {/* Footer */}
               <Footer>
                 <ThankYouMessage>¡Gracias por su compra!</ThankYouMessage>
                 <InfoItem>Elaborado desde www.restadmin.co</InfoItem>

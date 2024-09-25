@@ -5,8 +5,8 @@ export interface Order {
     TablesId: number | null;
     TableName: string | null;
     Products: {
-      Id: any;
-      Name: string;
-      Quantity: number;
+        Id: number;
+        Name: string;
+        Quantity: number;
     }[];
-  }
+}

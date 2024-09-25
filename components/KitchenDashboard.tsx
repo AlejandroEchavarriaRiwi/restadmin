@@ -5,23 +5,12 @@ import styled from "styled-components";
 import { useReactToPrint } from "react-to-print";
 import { CheckCircle, ClipboardList, Printer, Utensils } from "lucide-react";
 import { FaKitchenSet } from "react-icons/fa6";
+import InputAlert from "./alerts/successAlert";
+import { Order } from "@/models/order.models";
 
-interface Order {
-  Id: number;
-  Observations: string;
-  Status: number;
-  TablesId: number | null;
-  TableName: string | null;
-  Products: {
-    Id: number;
-    Name: string;
-    Quantity: number;
-  }[];
-}
+const amarillo = '#f4d87b';
 
-
-
-const NavBar = styled.nav`
+const StyledNavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 20px;
   display: flex;
@@ -32,11 +21,14 @@ const NavBar = styled.nav`
     font-weight: bold;
     font-size: 1.5em;
   }
+
   @media screen and (max-width: 600px) {
     flex-direction: column;
+
     h1 {
       margin-left: 0;
     }
+
     div {
       flex-direction: row;
       gap: 10px;
@@ -45,23 +37,29 @@ const NavBar = styled.nav`
   }
 `;
 
-const DashboardContainer = styled.div`
+const StyledDashboardContainer = styled.div`
   padding: 20px;
   max-width: 100%;
 `;
 
-const TicketGrid = styled.div`
+const StyledTicketGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
 `;
 
-const TicketCard: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-4">
-    {children}
-  </div>
-);
-const ObservationText = styled.p`
+const StyledTicketCard = styled.div`
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 1rem;
+`;
+
+const StyledObservationText = styled.p`
   font-style: italic;
   color: #555;
   margin-top: 5px;
@@ -69,52 +67,84 @@ const ObservationText = styled.p`
   text-align: center;
 `;
 
-const TicketHeader: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="px-6 py-4  bg-amarillo border-b border-gray-200">
-    <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
-      <Utensils className="h-5 w-5" />
-      <span>{children}</span>
-    </h2>
-  </div>
-);
+const StyledTicketHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding: 1.5rem 1.5rem;
+  background-color: ${amarillo};
+  border-bottom: 1px solid #e2e8f0;
 
-const ItemList: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="p-6 flex flex-col items-center">
-    <h3 className="font-semibold mb-2 text-gray-700 flex items-center gap-2">
-      <ClipboardList className="h-5 w-5" />
-      Productos
-    </h3>
-    <ul className="list-disc flex flex-col items-center list-inside space-y-1 text-gray-600">
-      {children}
-    </ul>
-  </div>
-);
+  h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+`;
 
-const ItemListItem: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <li>{children}</li>
-);
+const StyledItemList = styled.div`
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-const Button: React.FC<{ onClick: () => void; children: ReactNode }> = ({
-  onClick,
-  children,
-}) => (
-  <button
-    onClick={onClick}
-    className="px-4 py-2 border border-amarillo rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center w-full mb-2"
-  >
-    {children}
-  </button>
-);
+  h3 {
+    font-weight: 600;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
 
-const PrintableTicket = styled.div`
+  ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    color: #718096;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+`;
+
+const StyledItemListItem = styled.li``;
+
+const StyledButton = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid ${amarillo};
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+  background-color: transparent;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #f7fafc;
+  }
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+`;
+
+const StyledPrintableTicket = styled.div`
   padding: 10mm;
   font-family: Arial, sans-serif;
   text-align: center;
   margin: 10px;
+
   h2 {
     font-size: large;
     font-weight: bold;
   }
+
   @media print {
     width: 80mm;
     padding: 0;
@@ -139,7 +169,7 @@ export default function KitchenDashboard() {
       const cookingOrders = data.filter(order => order.Status === 0);
       setOrders(cookingOrders);
     } catch (error) {
-      console.error("Could not fetch orders:", error);
+      await InputAlert('No se pudieron traer las ordenes', 'error')
     }
   };
 
@@ -150,7 +180,7 @@ export default function KitchenDashboard() {
   const completeOrder = async (order: Order) => {
     try {
       const newStatus = order.TablesId !== null ? 1 : 2;
-      
+
       let updatedOrderData: any = {
         Observations: order.Observations,
         Status: newStatus,
@@ -180,7 +210,7 @@ export default function KitchenDashboard() {
       // Actualizar el estado local
       setOrders(orders.filter(o => o.Id !== order.Id));
     } catch (error) {
-      console.error("Error completing order:", error);
+      await InputAlert('Error completando la orden', 'error')
     }
   };
 
@@ -188,9 +218,9 @@ export default function KitchenDashboard() {
     return (
       <>
         {order.Observations && (
-          <ObservationText>
+          <StyledObservationText>
             Observaciones generales: {order.Observations}
-          </ObservationText>
+          </StyledObservationText>
         )}
       </>
     );
@@ -198,65 +228,67 @@ export default function KitchenDashboard() {
 
   return (
     <>
-      <NavBar>
+      <StyledNavBar>
         <div className="flex items-center gap-2 ">
           <FaKitchenSet className="text-[2em] text-gray-800" />
           <h1 className="text-[1.5em] text-gray-800">Cocina</h1>
         </div>
-      </NavBar>
-      <DashboardContainer>
-        <div className="bg-primary text-primary-foreground py-2 px-2 mb-5 rounded-xl">
-          <div className="flex justify-center">
-            <h1 className="text-2xl font-bold mb-4 sm:mb-0">Órdenes en Preparación</h1>
-          </div>
-        </div>
-        <TicketGrid>
+      </StyledNavBar>
+      <StyledDashboardContainer>
+        <StyledTicketGrid>
           {orders.map((order) => (
-            <TicketCard key={order.Id}>
-              <TicketHeader>
+            <StyledTicketCard key={order.Id}>
+              <StyledTicketHeader>
+                <Utensils className="h-5 w-5" />
                 {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
-              </TicketHeader>
-              <ItemList>
-                {order.Products.map((item, index) => (
-                  <ItemListItem key={index}>
-                    {item.Quantity}x {item.Name}
-                  </ItemListItem>
-                ))}
-              </ItemList>
+              </StyledTicketHeader>
+              <StyledItemList>
+                <h3>
+                  <ClipboardList className="h-5 w-5" />
+                  Productos
+                </h3>
+                <ul>
+                  {order.Products.map((item, index) => (
+                    <StyledItemListItem key={index}>
+                      {item.Quantity}x {item.Name}
+                    </StyledItemListItem>
+                  ))}
+                </ul>
+              </StyledItemList>
               {renderObservations(order)}
               <div className="px-6 py-4">
-                <Button onClick={handlePrint}>
-                  <Printer className="h-4 w-4 mr-2 text-amarillo" />
+                <StyledButton onClick={handlePrint}>
+                  <Printer className="h-4 w-4 mr-2" style={{ color: amarillo }} />
                   Imprimir Ticket
-                </Button>
-                <Button onClick={() => completeOrder(order)}>
+                </StyledButton>
+                <StyledButton onClick={() => completeOrder(order)}>
                   <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
                   Marcar como Completado
-                </Button>
+                </StyledButton>
               </div>
-            </TicketCard>
+            </StyledTicketCard>
           ))}
-        </TicketGrid>
+        </StyledTicketGrid>
         <div style={{ display: "none" }}>
-          <PrintableTicket ref={printRef}>
+          <StyledPrintableTicket ref={printRef}>
             {orders.map((order) => (
               <div key={order.Id}>
                 <h2>
                   {order.TableName || (order.TablesId ? `Mesa ${order.TablesId}` : 'Pedido para llevar')}
                 </h2>
-                <ItemList>
+                <StyledItemList>
                   {order.Products.map((item, index) => (
                     <li key={index}>
                       {item.Quantity}x {item.Name}
                     </li>
                   ))}
-                </ItemList>
+                </StyledItemList>
                 {renderObservations(order)}
               </div>
             ))}
-          </PrintableTicket>
+          </StyledPrintableTicket>
         </div>
-      </DashboardContainer>
+      </StyledDashboardContainer>
     </>
   );
 }

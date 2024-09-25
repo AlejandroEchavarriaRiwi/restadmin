@@ -1,41 +1,13 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
-import "./style.sass";
 import Button from "../../../components/ui/Button";
 import TableCard from "@/components/ui/StyledTableCard";
-import { PlusCircle, Trash2, CreditCard, ChefHat, Minus, RefreshCw } from "lucide-react";
+import { PlusCircle, CreditCard, ChefHat, Minus, RefreshCw } from "lucide-react";
 import { MdTableRestaurant } from "react-icons/md";
 import InputAlert from "@/components/alerts/successAlert";
+import { Order, Product, Table } from "@/models/table.models";
 
-interface Table {
-  Id: number;
-  Name: string;
-  State: string;
-}
-interface Category {
-  Id: number;
-  Name: string;
-}
-
-interface Product {
-  Id: number;
-  Name: string;
-  Price: number;
-  Quantity: number;
-  ImageURL: string;
-  Category: Category;
-  Status: number;
-}
-
-interface Order {
-  Id: number;
-  Observations: string;
-  Status: number;
-  TablesId: number | null;
-  TableName: string | null;
-  Products: Product[];
-}
 
 
 const Container = styled.div`
@@ -273,6 +245,7 @@ const DivOrder = styled.div`
 type TableState = "Disponible" | "Cocinando" | "Ocupada" | "Por Facturar";
 
 export default function Tables() {
+  // State definitions
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<Product[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
@@ -281,12 +254,14 @@ export default function Tables() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [orders, setOrders] = useState<Order[]>([]);
 
+  // Fetch initial data on component mount
   useEffect(() => {
     fetchTables();
     fetchMenuItems();
     fetchOrders();
   }, []);
 
+  // Set up categories when menu items are loaded
   useEffect(() => {
     if (menuItems.length > 0) {
       const uniqueCategories = Array.from(
@@ -297,21 +272,21 @@ export default function Tables() {
     }
   }, [menuItems]);
 
+  // Fetch orders from the API
   const fetchOrders = async () => {
     try {
-      const response = await fetch(
-        "/api/v1/Order"
-      );
+      const response = await fetch("/api/v1/Order");
       if (!response.ok) {
         throw new Error(`Failed to fetch orders. Status: ${response.status}`);
       }
       const data: Order[] = await response.json();
       setOrders(data);
     } catch (error) {
-
+      await InputAlert("Error actualizando el estado de las ordenes","error")
     }
   };
 
+  // Handle table selection
   const handleTableClick = (table: Table) => {
     setSelectedTable(table);
     const tableOrder = orders.find((order) => order.TablesId === table.Id && (order.Status === 0 || order.Status === 1 || order.Status === 2));
@@ -321,9 +296,10 @@ export default function Tables() {
       updateTableState(table.Id, getTableStatus(table.Id));
     } else {
       setCurrentOrder(createEmptyOrder(table.Id));
-      // No need to update table state here, it will be updated in handleSendToKitchen
     }
   };
+
+  // Create an empty order for a new table
   const createEmptyOrder = (tableId: number): Order => {
     return {
       Id: 0,
@@ -335,42 +311,37 @@ export default function Tables() {
     };
   };
 
+  // Fetch tables from the API
   const fetchTables = async () => {
     try {
-      const response = await fetch(
-        "/api/v1/Tables"
-      );
+      const response = await fetch("/api/v1/Tables");
       if (!response.ok) {
         throw new Error(`Failed to fetch tables. Status: ${response.status}`);
       }
       const data: Table[] = await response.json();
       setTables(data);
-      
     } catch (error) {
-      
+      await InputAlert("Error actualizando el estado de las mesas","error")
     }
   };
 
+  // Fetch menu items from the API
   const fetchMenuItems = async () => {
     try {
-      const response = await fetch(
-        "/api/v1/Product"
-      );
+      const response = await fetch("/api/v1/Product");
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch menu items. Status: ${response.status}`
-        );
+        throw new Error(`Failed to fetch menu items. Status: ${response.status}`);
       }
       const data = await response.json();
-      // Filtra los productos para incluir solo los que tienen Status = 0
+      // Filter products to include only those with Status = 0
       const enabledProducts = data.filter((product: Product) => product.Status === 0);
       setMenuItems(enabledProducts);
     } catch (error) {
-      
-      
+      await InputAlert("Error obteniendo el menú","error")
     }
   };
 
+  // Add a menu item to the current order
   const handleAddMenuItem = (menuItem: Product) => {
     if (currentOrder) {
       const existingItem = currentOrder.Products.find(
@@ -385,6 +356,7 @@ export default function Tables() {
     }
   };
 
+  // Remove a menu item from the current order
   const handleRemoveMenuItem = (menuItem: Product) => {
     if (currentOrder) {
       const existingItemIndex = currentOrder.Products.findIndex(
@@ -401,6 +373,7 @@ export default function Tables() {
     }
   };
 
+  // Handle pre-invoice action
   const handlePreInvoice = async () => {
     if (currentOrder && currentOrder.Id !== 0) {
       try {
@@ -425,9 +398,7 @@ export default function Tables() {
         );
 
         if (!response.ok) {
-          throw new Error(
-            `Failed to update order status. Status: ${response.status}`
-          );
+          throw new Error(`Failed to update order status. Status: ${response.status}`);
         }
 
         await fetchOrders();
@@ -435,10 +406,12 @@ export default function Tables() {
         setCurrentOrder(null);
 
       } catch (error) {
-
+        await InputAlert("Error actualizando el estado de la prefactura","error")
       }
     }
   };
+
+  // Handle sending order to kitchen
   const handleSendToKitchen = async () => {
     if (currentOrder && selectedTable) {
       try {
@@ -476,8 +449,7 @@ export default function Tables() {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Failed to ${currentOrder.Id !== 0 ? "update" : "create"
-            } order. Status: ${response.status}, Response: ${errorText}`
+            `Failed to ${currentOrder.Id !== 0 ? "update" : "create"} order. Status: ${response.status}, Response: ${errorText}`
           );
         }
 
@@ -490,14 +462,12 @@ export default function Tables() {
         setSelectedTable(null);
         setCurrentOrder(null);
       } catch (error) {
-        
         await InputAlert('Ha ocurrido un error mientras se envia a cocina', 'error')
-        
-       
       }
     }
   };
 
+  // Handle updating an existing order
   const handleUpdateOrder = async () => {
     if (currentOrder && selectedTable) {
       try {
@@ -533,13 +503,12 @@ export default function Tables() {
         setCurrentOrder(null);
 
       } catch (error) {
-      
-        alert(`Error updating order: ${error instanceof Error ? error.message : "Unknown error"}`);
+        await InputAlert("Error actualizando el estado de la orden","error")
       }
     }
   };
 
-
+  // Add a new table
   const addTable = async () => {
     try {
       const newTable: Omit<Table, "Id"> = {
@@ -566,22 +535,19 @@ export default function Tables() {
       const data = await response.json();
       setTables([...tables, data]);
     } catch (error) {
-      
-      alert(
-        `Error adding table: ${error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      await InputAlert("Error añadiendo la mesa","error")
     }
   };
 
+  // Get the current status of a table
   const getTableStatus = useCallback((tableId: number): TableState => {
     const tableOrders = orders.filter(order => order.TablesId === tableId);
     if (tableOrders.length === 0) return "Disponible";
 
-    // Ordenar las órdenes por ID de forma descendente (la última creada primero)
+    // Sort orders by ID in descending order (latest created first)
     tableOrders.sort((a, b) => b.Id - a.Id);
 
-    // Tomar el estado de la primera orden (la última creada)
+    // Take the status of the first order (latest created)
     const latestOrder = tableOrders[0];
 
     switch (latestOrder.Status) {
@@ -595,6 +561,7 @@ export default function Tables() {
     }
   }, [orders]);
 
+  // Update the state of a table
   const updateTableState = useCallback(async (tableId: number, newState: string) => {
     try {
       const updatedTableData = {
@@ -622,11 +589,13 @@ export default function Tables() {
         )
       );
     } catch (error) {
+      await InputAlert("Error actualizando el estado de la mesa","error")
     }
-  }, [tables]); // Dependency array for useCallback - 'tables' is included here
+  }, [tables]);
 
   const prevOrders = useRef<Order[]>([]); // Initialize prevOrders ref
 
+  // Effect to update table states when order statuses change
   useEffect(() => {
     // Check if there's any change in order statuses that affect the tables
     const hasOrderStatusChanged = orders.some(order => {
@@ -648,9 +617,10 @@ export default function Tables() {
     prevOrders.current = orders;
   }, [orders, tables, getTableStatus, updateTableState]);
 
+  // Remove the last available table
   const removeTable = async () => {
     if (tables.length > 0) {
-      // Encontrar la última mesa que no tenga una orden activa
+      // Find the last table that doesn't have an active order
       const tableToRemove = [...tables].reverse().find(table => {
         const tableOrder = orders.find(order => order.TablesId === table.Id && order.Status !== 4 && order.Status !== 5);
         return !tableOrder;
@@ -674,24 +644,21 @@ export default function Tables() {
           setTables((prevTables) => prevTables.filter(t => t.Id !== tableToRemove.Id));
           
         } catch (error) {
-          
-          alert(
-            `Error removing table: ${error instanceof Error ? error.message : "Unknown error"
-            }`
-          );
+          await InputAlert("Error actualizando el estado de la mesa","error")
         }
       } else {
-        alert("No hay mesas disponibles para eliminar.");
+        await InputAlert("No hay mesas para eliminar","error")
       }
     }
   };
 
-
+  // Filter menu items based on selected category
   const filteredMenuItems =
     selectedCategory === "Todos"
       ? menuItems
       : menuItems.filter((item) => item.Category.Name === selectedCategory);
 
+  // Render component
   return (
     <>
       <NavBar>

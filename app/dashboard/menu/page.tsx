@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import ProductCard from "@/components/cards/ProductCard";
@@ -6,12 +7,12 @@ import EditProductModal from "@/components/modals/EditProductModal";
 import { AlertConfirm } from "@/components/alerts/questionAlert";
 import InputAlert from "@/components/alerts/successAlert";
 import ProductForm from "@/components/forms/NewProductForm";
-import { PlusCircle, Edit, Trash2, Minimize2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { Product } from "@/types/Imenu";
 
-
+// Styled components
 const NavBar = styled.nav`
   background-color: #f8f9fa;
   padding: 20px;
@@ -128,7 +129,58 @@ const ProductGridSkeleton = () => (
   </Container>
 );
 
+// Styled components for the layout
+const PageWrapper = styled.div``;
+
+const ContentWrapper = styled.div`
+  margin: 1.25rem;
+  @media (min-width: 1024px) {
+    margin: 2.5rem;
+  }
+`;
+
+const ProductGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
+const ModalContent = styled.div`
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  width: 100%;
+`;
+
+const NoProductsMessage = styled.p`
+  grid-column: 1 / -1;
+  text-align: center;
+`;
+
+// Main component
 export default function Menu() {
+  // State variables
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDisableMode, setIsDisableMode] = useState(false);
@@ -139,10 +191,12 @@ export default function Menu() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [categories, setCategories] = useState<string[]>(['Todas']);
 
+  // Fetch products on component mount
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // Function to fetch products from the API
   const fetchProducts = () => {
     setIsLoading(true);
     fetch("/api/v1/Product")
@@ -150,33 +204,35 @@ export default function Menu() {
       .then((data: Product[]) => {
         if (Array.isArray(data)) {
           setProducts(data);
-          console.log("Productos cargados:", data);
 
-          // Extract categories
+          // Extract unique categories
           const categorySet = new Set<string>();
           data.forEach((item: Product) => categorySet.add(item.Category.Name));
           const uniqueCategories = ['Todas', ...Array.from(categorySet)];
           setCategories(uniqueCategories);
         } else {
-          console.error("Formato de datos incorrecto");
+          InputAlert('Incorrect data format', 'error');
         }
       })
-      .catch((error) => console.error("Error fetching data:", error))
+      .catch((error) => InputAlert('Error fetching information', 'error'))
       .finally(() => setIsLoading(false));
   };
+
+  // Function to handle adding a new product
   const handleProductAdded = (newProduct: Product) => {
     setProducts([...products, newProduct]);
   };
 
+  // Function to handle disabling a product
   const handleDisableProduct = async (id: number) => {
     try {
       const result = await AlertConfirm(
-        "¿Estás seguro de querer eliminar este producto?"
+        "Are you sure you want to delete this product?"
       );
 
       if (result.isConfirmed) {
         const productToUpdate = products.find(p => p.Id === id);
-        if (!productToUpdate) throw new Error("Producto no encontrado");
+        if (!productToUpdate) throw new Error("Product not found");
 
         const response = await fetch(`/api/v1/Product/${id}`, {
           method: "PUT",
@@ -190,7 +246,7 @@ export default function Menu() {
           setProducts(products.map(p => p.Id === id ? { ...p, Status: 1 } : p));
           setIsDisableMode(false);
           await InputAlert(
-            "El producto ha sido eliminado exitosamente",
+            "The product has been successfully deleted",
             "success"
           );
         } else {
@@ -198,10 +254,11 @@ export default function Menu() {
         }
       }
     } catch (error) {
-      await InputAlert("Error eliminando el producto", "error");
+      await InputAlert("Error deleting the product", "error");
     }
   };
 
+  // Function to handle editing a product
   const handleEditProduct = async (updatedProduct: Product) => {
     try {
       const response = await fetch(`/api/v1/Product/${updatedProduct.Id}`, {
@@ -218,28 +275,30 @@ export default function Menu() {
         );
         setEditingProduct(null);
         await InputAlert(
-          "El producto ha sido actualizado exitosamente",
+          "El producto ha sido exitosamente actualizado",
           "success"
         );
       } else {
         throw new Error("Network response was not ok");
       }
     } catch (error) {
-      console.error("Error al enviar solicitud PUT:", error);
-      await InputAlert("Error actualizando el producto", "error");
+      await InputAlert("Error updating the product", "error");
     }
   };
 
+  // Toggle disable mode
   const toggleDisableMode = () => {
     setIsDisableMode(!isDisableMode);
     setIsEditMode(false);
   };
 
+  // Toggle edit mode
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
     setIsDisableMode(false);
   };
 
+  // Handle product click based on current mode
   const handleProductClick = (id: number) => {
     if (isDisableMode) {
       handleDisableProduct(id);
@@ -251,8 +310,10 @@ export default function Menu() {
     }
   };
 
+  // Filter enabled products
   const enabledProducts = products.filter(p => p.Status === 0);
 
+  // Filter products based on search term and selected category
   const filteredProducts = enabledProducts.filter(product => {
     const matchesCategory = selectedCategory === 'Todas' || product.Category.Name === selectedCategory;
     const matchesSearch = product.Name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -260,11 +321,11 @@ export default function Menu() {
   });
 
   return (
-    <div className="">
+    <PageWrapper>
       <NavBar>
-        <div className="flex items-center gap-2 ">
+        <div className="flex items-center gap-2">
           <BiSolidFoodMenu className="text-[2em] text-gray-800" />
-          <h1 className="text-[1.5em] text-gray-800">Gestión de productos</h1>
+          <h1 className="text-[1.5em] text-gray-800">Product Management</h1>
         </div>
         <div className="flex gap-8 mt-3 lg:mt-0">
           <Button
@@ -272,37 +333,34 @@ export default function Menu() {
             className="flex flex-col items-center lg:flex-row"
             onClick={() => setIsModalOpen(true)}
           >
-            <PlusCircle className="mr-2 w-6 h-6   text-green-500 " />
-            Agregar Producto
-
+            <PlusCircle className="mr-2 w-6 h-6 text-green-500" />
+            Add Product
           </Button>
           <Button
-            className={`flex flex-col items-center lg:flex-row  ${isEditMode ? "text-blue-600" : "text-black"
-              }`}
+            className={`flex flex-col items-center lg:flex-row ${isEditMode ? "text-blue-600" : "text-black"}`}
             variant="secondary"
             onClick={toggleEditMode}
             disabled={isDisableMode}
           >
             <Edit className="mr-2 w-6 h-6 text-blue-500" />
-            {isEditMode ? "Cancelar Edición" : "Editar Productos"}
+            {isEditMode ? "Cancel Edit" : "Edit Products"}
           </Button>
           <Button
-            className={`flex flex-col items-center lg:flex-row ${isDisableMode ? "text-red-600" : "text-black"
-              }`}
+            className={`flex flex-col items-center lg:flex-row ${isDisableMode ? "text-red-600" : "text-black"}`}
             variant="secondary"
             onClick={toggleDisableMode}
             disabled={isEditMode}
           >
             <Trash2 className="mr-2 w-6 h-6 text-red-500" />
-            {isDisableMode ? "Cancelar Eliminación" : "Eliminar Productos"}
+            {isDisableMode ? "Cancel Delete" : "Delete Products"}
           </Button>
         </div>
       </NavBar>
 
-      <div className="m-5 lg:m-10">
+      <ContentWrapper>
         <SearchBar
           type="text"
-          placeholder="Buscar..."
+          placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -322,7 +380,7 @@ export default function Menu() {
         {isLoading ? (
           <ProductGridSkeleton />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <ProductGrid>
             {filteredProducts.length > 0 ? (
               filteredProducts.map((product, index) => (
                 <ProductCard
@@ -333,23 +391,22 @@ export default function Menu() {
                 />
               ))
             ) : (
-              <p className="col-span-full text-center">No hay productos disponibles</p>
+              <NoProductsMessage>No products available</NoProductsMessage>
             )}
-          </div>
+          </ProductGrid>
         )}
-      </div>
-      
+      </ContentWrapper>
+
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative p-4 rounded-lg w-full">
-            
+        <ModalOverlay>
+          <ModalContent>
             <ProductForm
               onProductAdded={handleProductAdded}
               setIsModalOpen={setIsModalOpen}
               onClose={() => setIsModalOpen(false)}
             />
-          </div>
-        </div>
+          </ModalContent>
+        </ModalOverlay>
       )}
 
       {editingProduct && (
@@ -359,6 +416,6 @@ export default function Menu() {
           onClose={() => setEditingProduct(null)}
         />
       )}
-    </div>
+    </PageWrapper>
   );
 }

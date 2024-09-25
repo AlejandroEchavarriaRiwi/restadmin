@@ -19,4 +19,3 @@ export function getUserRole(): 'Cajero' | 'Mesero' | 'Administrador' | 'guest' {
     // Si estamos en el servidor o no hay información de usuario, devolvemos 'guest'
     return 'guest';
 }
-  
