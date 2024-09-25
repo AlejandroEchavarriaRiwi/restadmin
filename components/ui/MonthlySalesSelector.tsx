@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import styled from "styled-components";
-import { Loader2, ArrowUpDown, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { useReactToPrint } from 'react-to-print';
 
+// Interfaces
 interface Invoice {
   Id: number;
   Number: number;
@@ -27,6 +28,17 @@ interface OrderDetails {
   Observations: string;
 }
 
+interface Company {
+  Id: number;
+  Name: string;
+  Email: string;
+  Nit: string;
+  Phone: string;
+  Address: string;
+  LogoURL: string;
+}
+
+// Styled components
 const Container = styled.div`
   background-color: white;
   border-radius: 8px;
@@ -42,6 +54,7 @@ const Title = styled.h2`
   margin-bottom: 15px;
   color: #333;
 `;
+
 
 const DateSelector = styled.div`
   display: flex;
@@ -158,6 +171,7 @@ const SkeletonCell = styled.td`
   height: 20px;
 `;
 
+// Helper Components
 const TableSkeleton = () => (
   <tbody>
     {[...Array(5)].map((_, index) => (
@@ -324,49 +338,7 @@ const ThankYouMessage = styled.p`
   font-weight: bold;
 `;
 
-interface Invoice {
-  Id: number;
-  Number: number;
-  OrderId: number;
-  Observations: string;
-  Total: number;
-  DateInvoice: string;
-}
-
-interface OrderDetails {
-  Id: number;
-  TablesId: number | null;
-  TableName: string | null;
-  Status: number;
-  Products: {
-    Id: number;
-    Name: string;
-    Price: number;
-    Quantity: number;
-  }[];
-  Observations: string;
-}
-
-interface Company {
-  Id: number;
-  Name: string;
-  Email: string;
-  Nit: string;
-  Phone: string;
-  Address: string;
-  LogoURL: string;
-}
-
-interface Company {
-  Id: number;
-  Name: string;
-  Email: string;
-  Nit: string;
-  Phone: string;
-  Address: string;
-  LogoURL: string;
-}
-
+// Printable Invoice Component
 const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | null, orderDetails: OrderDetails | null }> = ({ invoice, company, orderDetails }) => {
   if (!invoice || !company || !orderDetails) return null;
 
@@ -438,7 +410,9 @@ const InvoiceToPrint: React.FC<{ invoice: Invoice | null, company: Company | nul
   );
 };
 
+// Main Component
 export default function DailySalesSelector() {
+  // State declarations
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -451,6 +425,7 @@ export default function DailySalesSelector() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Effect to fetch invoices and company info
   useEffect(() => {
     if (selectedDate) {
       fetchInvoices(selectedDate);
@@ -458,6 +433,7 @@ export default function DailySalesSelector() {
     fetchCompanyInfo();
   }, [selectedDate]);
 
+  // Function to fetch company information
   const fetchCompanyInfo = async () => {
     try {
       const response = await fetch("/api/v1/Company");
@@ -473,6 +449,7 @@ export default function DailySalesSelector() {
     }
   };
 
+  // Function to fetch order details
   const fetchOrderDetails = async (orderId: number) => {
     try {
       const response = await fetch(`/api/v1/Order/${orderId}`);
@@ -484,7 +461,7 @@ export default function DailySalesSelector() {
     }
   };
 
-
+  // Function to fetch invoices
   const fetchInvoices = async (date: string) => {
     setIsLoading(true);
     setError(null);
@@ -498,24 +475,15 @@ export default function DailySalesSelector() {
       setInvoices(data);
       setCurrentPage(1);
     } catch (error) {
-      console.error("Error fetching invoices:", error);
       setError('No hay facturas generadas en la fecha especificada');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Event handlers
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
-  };
-
-  const formatCurrency = (value: number) => {
-    return value ? `$${value.toLocaleString()}` : 'No hay ventas';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const handleSort = (key: keyof Invoice) => {
@@ -526,7 +494,26 @@ export default function DailySalesSelector() {
     setSortConfig({ key, direction });
   };
 
-  const sortedInvoices = React.useMemo(() => {
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    onAfterPrint: () => {
+      setSelectedInvoice(null);
+      setOrderDetails(null);
+    },
+  });
+
+  // Helper functions
+  const formatCurrency = (value: number) => {
+    return value ? `$${value.toLocaleString()}` : 'No hay ventas';
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Memoized sorted invoices
+  const sortedInvoices = useMemo(() => {
     let sortableItems = [...invoices];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
@@ -542,28 +529,19 @@ export default function DailySalesSelector() {
     return sortableItems;
   }, [invoices, sortConfig]);
 
+  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = sortedInvoices.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= Math.ceil(sortedInvoices.length / itemsPerPage)) {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
     }
   };
 
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    onBeforeGetContent: () => {
-      // You can update any state here if needed before printing
-    },
-    onAfterPrint: () => {
-      setSelectedInvoice(null);
-      setOrderDetails(null);
-    },
-  });
-
+  // Function to print invoice
   const printInvoice = async (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     await fetchOrderDetails(invoice.OrderId);
@@ -572,8 +550,7 @@ export default function DailySalesSelector() {
     }, 100);
   };
 
-  const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
-
+  // Render invoice card
   const renderInvoiceCard = (invoice: Invoice) => (
     <Card key={invoice.Id}>
       <CardField><strong>Número:</strong> {invoice.Number}</CardField>
@@ -589,6 +566,7 @@ export default function DailySalesSelector() {
     </Card>
   );
 
+  // Render component
   return (
     <Container>
       <Title>Facturas Diarias</Title>
