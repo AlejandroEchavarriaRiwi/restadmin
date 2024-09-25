@@ -1,11 +1,67 @@
 import React from 'react';
 import Image from 'next/image';
+import styled from 'styled-components';
 import { Product } from '@/types/Imenu';
 
+// Function to format the price
 const formatPrice = (price: number): string => {
     return `$${price.toLocaleString()}`;
 };
 
+// Styled-components
+const Card = styled.div`
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    &:hover {
+        transform: scale(1.05);
+    }
+`;
+
+const ImageWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    padding-top: 100%; /* Aspect ratio of square */
+`;
+
+const Content = styled.div`
+    padding: 1rem;
+`;
+
+const Title = styled.h3`
+    font-size: 1.125rem;
+    font-weight: 600;
+`;
+
+const Category = styled.p`
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+`;
+
+const PriceContainer = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    gap: 1rem;
+`;
+
+const Price = styled.span`
+    color: #f2cf5b; /* Tailwind "text-primary" equivalent */
+    font-weight: 600;
+`;
+
+const Cost = styled.span`
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: right;
+`;
+
+// Main ProductCard component
 interface ProductCardProps {
     product: Product;
     onClick: (id: number) => void;
@@ -14,11 +70,8 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, priority = false }) => {
     return (
-        <div
-            className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105"
-            onClick={() => onClick(product.Id)}
-        >
-            <div className="relative aspect-square">
+        <Card onClick={() => onClick(product.Id)}>
+            <ImageWrapper>
                 <Image
                     src={product.ImageURL || '/placeholder-image.jpg'}
                     alt={product.Name}
@@ -27,16 +80,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, priority = 
                     priority={priority}
                     className="object-cover"
                 />
-            </div>
-            <div className="p-4">
-                <h3 className="text-lg font-semibold">{product.Name}</h3>
-                <p className="text-sm text-gray-500 mt-1">Categoría: {product.Category?.Name || 'N/A'}</p>
-                <div className="flex justify-between items-center mt-2 gap-4">
-                    <span className="text-primary font-semibold">{formatPrice(product.Price)}</span>
-                    <span className="text-sm flex justify-self-end text-gray-500">Costo: {formatPrice(product.Cost)}</span>
-                </div>
-            </div>
-        </div>
+            </ImageWrapper>
+            <Content>
+                <Title>{product.Name}</Title>
+                <Category>Categoría: {product.Category?.Name || 'N/A'}</Category>
+                <PriceContainer>
+                    <Price>{formatPrice(product.Price)}</Price>
+                    <Cost>Costo: {formatPrice(product.Cost)}</Cost>
+                </PriceContainer>
+            </Content>
+        </Card>
     );
 };
 
