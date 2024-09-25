@@ -4,9 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, X, Menu } from 'lucide-react'
-import styled from 'styled-components'
 
-// Interfaces
 interface SubItem {
   label: string
   href: string
@@ -25,53 +23,6 @@ interface SubMenuProps {
   isMobile: boolean
 }
 
-// Styled Components
-const Nav = styled.nav.attrs({
-  className: "bg-white shadow-md"
-})``;
-
-const NavContainer = styled.div.attrs({
-  className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-})``;
-
-const NavContent = styled.div.attrs({
-  className: "flex justify-between h-16"
-})``;
-
-const LogoLink = styled(Link).attrs({
-  className: "flex-shrink-0 flex items-center"
-})``;
-
-const LogoText = styled.span<{ secondary?: boolean }>`
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${props => props.secondary ? 'var(--color-secondary, #secondary-color)' : 'var(--color-primary, #primary-color)'};
-`;
-
-const DesktopMenu = styled.div.attrs({
-  className: "hidden lg:flex items-center justify-center flex-grow"
-})``;
-
-const DesktopActions = styled.div.attrs({
-  className: "hidden lg:flex items-center"
-})``;
-
-const MobileMenuButton = styled.button.attrs({
-  className: "lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-})``;
-
-const MobileMenuContainer = styled.div.attrs({
-  className: "lg:hidden fixed inset-0 z-50 bg-white"
-})<{ isOpen: boolean }>`
-  transform: ${props => props.isOpen ? 'translateX(0)' : 'translateX(100%)'};
-  transition: transform 300ms ease-in-out;
-`;
-
-const MobileMenuContent = styled.div.attrs({
-  className: "px-2 pt-2 pb-3 h-full overflow-y-auto"
-})``;
-
-// SubMenu Component
 const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen, onItemClick, isMobile }) => {
   return (
     <ul className={`
@@ -98,14 +49,12 @@ const SubMenu: React.FC<SubMenuProps> = ({ items, isOpen, onItemClick, isMobile 
   )
 }
 
-// Main Navigation Component
 export default function MainNav() {
   const router = useRouter()
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
 
-  // Navigation items data
   const navItems: NavItem[] = [
     {
       label: "Restaurantes",
@@ -137,7 +86,6 @@ export default function MainNav() {
     { label: "Precios", href: "#" },
   ]
 
-  // Event handlers
   const handleMouseEnter = (index: number) => {
     setOpenSubmenu(index)
   }
@@ -213,48 +161,59 @@ export default function MainNav() {
   )
 
   return (
-    <Nav>
-      <NavContainer>
-        <NavContent>
+    <nav className="bg-white shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <LogoLink href="/">
-              <LogoText>Rest</LogoText>
-              <LogoText secondary>Admin</LogoText>
-            </LogoLink>
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <span className="text-2xl font-bold text-primary">Rest</span>
+              <span className="text-2xl font-bold text-secondary">Admin</span>
+            </Link>
           </div>
-          <DesktopMenu>
+          <div className="hidden lg:flex items-center justify-center flex-grow">
             {renderNavItems(false)}
-          </DesktopMenu>
-          <DesktopActions>
+          </div>
+          <div className="hidden lg:flex items-center">
             <Link href="/login" className="text-gray-800 hover:bg-primary hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
               Entrar
             </Link>
             <Link href="/contactus" className="ml-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-primary hover:bg-hover transition-colors duration-200">
               Agenda una demo
             </Link>
-          </DesktopActions>
+          </div>
           <div className="flex items-center lg:hidden">
-            <MobileMenuButton onClick={toggleMobileMenu}>
+            <button
+              onClick={toggleMobileMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            >
               <span className="sr-only">Open main menu</span>
               {mobileMenuOpen ? (
                 <X className="block h-6 w-6" aria-hidden="true" />
               ) : (
                 <Menu className="block h-6 w-6" aria-hidden="true" />
               )}
-            </MobileMenuButton>
+            </button>
           </div>
-        </NavContent>
-      </NavContainer>
-      <MobileMenuContainer ref={mobileMenuRef} isOpen={mobileMenuOpen}>
-        <MobileMenuContent>
+        </div>
+      </div>
+      <div
+        ref={mobileMenuRef}
+        className={`lg:hidden fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="px-2 pt-2 pb-3 h-full overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
-            <LogoLink href="/">
-              <LogoText>Rest</LogoText>
-              <LogoText secondary>Admin</LogoText>
-            </LogoLink>
-            <MobileMenuButton onClick={closeMobileMenu}>
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <span className="text-2xl font-bold text-primary">Rest</span>
+              <span className="text-2xl font-bold text-secondary">Admin</span>
+            </Link>
+            <button
+              onClick={closeMobileMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+            >
               <X className="block h-6 w-6" aria-hidden="true" />
-            </MobileMenuButton>
+            </button>
           </div>
           {renderNavItems(true)}
           <div className="mt-4 flex flex-col space-y-2">
@@ -265,8 +224,8 @@ export default function MainNav() {
               Agenda una demo
             </Link>
           </div>
-        </MobileMenuContent>
-      </MobileMenuContainer>
-    </Nav>
+        </div>
+      </div>
+    </nav>
   )
 }
